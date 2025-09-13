@@ -1,0 +1,456 @@
+# Azure DevOps Pipeline for Dyad Web Platform
+# Builds, tests, and deploys the application to Azure
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - release/*
+  paths:
+    exclude:
+      - docs/*
+      - README.md
+      - .gitignore
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - docs/*
+      - README.md
+      - .gitignore
+
+variables:
+  # Build configuration
+  buildConfiguration: 'Release'
+  nodeVersion: '20.x'
+
+  # Azure configuration
+  azureSubscription: 'Dyad-Production-Service-Connection'
+  resourceGroupName: 'rg-dyad-prod'
+  containerRegistryName: 'crdyadprod'
+
+  # Application configuration
+  frontendAppName: 'app-dyad-frontend-prod'
+  backendAppName: 'app-dyad-backend-prod'
+
+  # Image names
+  frontendImageName: '$(containerRegistryName).azurecr.io/dyad-frontend'
+  backendImageName: '$(containerRegistryName).azurecr.io/dyad-backend'
+
+stages:
+- stage: Build
+  displayName: 'Build and Test'
+  jobs:
+  - job: BuildAndTest
+    displayName: 'Build and Test Application'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    # Checkout code
+    - checkout: self
+      displayName: 'Checkout Repository'
+
+    # Setup Node.js
+    - task: NodeTool@0
+      displayName: 'Setup Node.js $(nodeVersion)'
+      inputs:
+        versionSpec: '$(nodeVersion)'
+
+    # Cache dependencies
+    - task: Cache@2
+      displayName: 'Cache node modules'
+      inputs:
+        key: 'npm | "$(Agent.OS)" | package-lock.json'
+        restoreKeys: |
+          npm | "$(Agent.OS)"
+          npm
+        path: '~/.npm'
+
+    # Install dependencies
+    - script: |
+        npm ci
+      displayName: 'Install Dependencies'
+
+    # Install frontend dependencies
+    - script: |
+        cd frontend
+        npm ci
+      displayName: 'Install Frontend Dependencies'
+
+    # Install backend dependencies
+    - script: |
+        cd backend
+        npm ci
+      displayName: 'Install Backend Dependencies'
+
+    # Lint code
+    - script: |
+        npm run lint
+      displayName: 'Lint Code'
+
+    # Type check
+    - script: |
+        npm run type-check
+      displayName: 'Type Check'
+      continueOnError: false
+
+    # Run tests
+    - script: |
+        npm run test:ci
+      displayName: 'Run Tests'
+      env:
+        CI: true
+
+    # Build shared package
+    - script: |
+        cd shared
+        npm run build
+      displayName: 'Build Shared Package'
+
+    # Build backend
+    - script: |
+        cd backend
+        npm run build
+      displayName: 'Build Backend'
+
+    # Build frontend
+    - script: |
+        cd frontend
+        npm run build
+      displayName: 'Build Frontend'
+      env:
+        NEXT_PUBLIC_API_URL: $(NEXT_PUBLIC_API_URL)
+        NEXT_PUBLIC_APP_URL: $(NEXT_PUBLIC_APP_URL)
+        NEXTAUTH_URL: $(NEXTAUTH_URL)
+        NEXTAUTH_SECRET: $(NEXTAUTH_SECRET)
+
+    # Run security audit
+    - script: |
+        npm audit --audit-level high
+      displayName: 'Security Audit'
+      continueOnError: true
+
+    # Publish test results
+    - task: PublishTestResults@2
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-results.xml'
+        testRunTitle: 'Unit Tests'
+
+    # Publish code coverage
+    - task: PublishCodeCoverageResults@1
+      displayName: 'Publish Code Coverage'
+      condition: succeededOrFailed()
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '**/coverage/cobertura-coverage.xml'
+        reportDirectory: '**/coverage'
+
+- stage: BuildImages
+  displayName: 'Build Docker Images'
+  dependsOn: Build
+  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
+  jobs:
+  - job: BuildDockerImages
+    displayName: 'Build and Push Docker Images'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    # Checkout code
+    - checkout: self
+      displayName: 'Checkout Repository'
+
+    # Login to Azure Container Registry
+    - task: AzureCLI@2
+      displayName: 'Login to ACR'
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(containerRegistryName)
+
+    # Build and push frontend image
+    - task: Docker@2
+      displayName: 'Build and Push Frontend Image'
+      inputs:
+        containerRegistry: '$(containerRegistryName)'
+        repository: 'dyad-frontend'
+        command: 'buildAndPush'
+        Dockerfile: 'frontend/Dockerfile'
+        buildContext: '.'
+        tags: |
+          $(Build.BuildNumber)
+          latest
+        arguments: |
+          --build-arg NEXT_PUBLIC_API_URL=$(NEXT_PUBLIC_API_URL)
+          --build-arg NEXT_PUBLIC_APP_URL=$(NEXT_PUBLIC_APP_URL)
+          --build-arg NEXTAUTH_URL=$(NEXTAUTH_URL)
+          --build-arg NEXTAUTH_SECRET=$(NEXTAUTH_SECRET)
+
+    # Build and push backend image
+    - task: Docker@2
+      displayName: 'Build and Push Backend Image'
+      inputs:
+        containerRegistry: '$(containerRegistryName)'
+        repository: 'dyad-backend'
+        command: 'buildAndPush'
+        Dockerfile: 'backend/Dockerfile'
+        buildContext: '.'
+        tags: |
+          $(Build.BuildNumber)
+          latest
+
+- stage: DeployStaging
+  displayName: 'Deploy to Staging'
+  dependsOn: BuildImages
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+  variables:
+    environment: 'staging'
+    resourceGroupName: 'rg-dyad-staging'
+    frontendAppName: 'app-dyad-frontend-staging'
+    backendAppName: 'app-dyad-backend-staging'
+  jobs:
+  - deployment: DeployToStaging
+    displayName: 'Deploy to Staging Environment'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: 'dyad-staging'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Deploy infrastructure
+          - task: AzureCLI@2
+            displayName: 'Deploy Infrastructure'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: 'scripts/deploy-infrastructure.sh'
+              arguments: '$(environment) $(resourceGroupName)'
+
+          # Deploy backend
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy Backend to Azure App Service'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(backendAppName)'
+              imageName: '$(backendImageName):$(Build.BuildNumber)'
+
+          # Deploy frontend
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy Frontend to Azure App Service'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(frontendAppName)'
+              imageName: '$(frontendImageName):$(Build.BuildNumber)'
+
+          # Run database migrations
+          - task: AzureCLI@2
+            displayName: 'Run Database Migrations'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Run migrations using Azure Container Instances
+                az container create \
+                  --resource-group $(resourceGroupName) \
+                  --name dyad-migration-$(Build.BuildNumber) \
+                  --image $(backendImageName):$(Build.BuildNumber) \
+                  --command-line "npx prisma migrate deploy" \
+                  --environment-variables \
+                    DATABASE_URL="$(STAGING_DATABASE_URL)" \
+                  --restart-policy Never \
+                  --no-wait
+
+          # Run smoke tests
+          - script: |
+              curl -f https://$(frontendAppName).azurewebsites.net/api/health
+              curl -f https://$(backendAppName).azurewebsites.net/health
+            displayName: 'Run Smoke Tests'
+            retryCountOnTaskFailure: 3
+
+- stage: DeployProduction
+  displayName: 'Deploy to Production'
+  dependsOn: BuildImages
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  variables:
+    environment: 'production'
+  jobs:
+  - deployment: DeployToProduction
+    displayName: 'Deploy to Production Environment'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: 'dyad-production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # Manual approval gate (configured in Azure DevOps environment)
+
+          # Deploy infrastructure
+          - task: AzureCLI@2
+            displayName: 'Deploy Infrastructure'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'scriptPath'
+              scriptPath: 'scripts/deploy-infrastructure.sh'
+              arguments: '$(environment) $(resourceGroupName)'
+
+          # Blue-Green Deployment: Deploy to slot first
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy Backend to Staging Slot'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(backendAppName)'
+              slotName: 'staging'
+              imageName: '$(backendImageName):$(Build.BuildNumber)'
+
+          - task: AzureWebAppContainer@1
+            displayName: 'Deploy Frontend to Staging Slot'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(frontendAppName)'
+              slotName: 'staging'
+              imageName: '$(frontendImageName):$(Build.BuildNumber)'
+
+          # Run database migrations
+          - task: AzureCLI@2
+            displayName: 'Run Database Migrations'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az container create \
+                  --resource-group $(resourceGroupName) \
+                  --name dyad-migration-$(Build.BuildNumber) \
+                  --image $(backendImageName):$(Build.BuildNumber) \
+                  --command-line "npx prisma migrate deploy" \
+                  --environment-variables \
+                    DATABASE_URL="$(PRODUCTION_DATABASE_URL)" \
+                  --restart-policy Never \
+                  --no-wait
+
+          # Wait for migration to complete
+          - script: |
+              while [ "$(az container show --resource-group $(resourceGroupName) --name dyad-migration-$(Build.BuildNumber) --query containers[0].instanceView.currentState.state -o tsv)" != "Terminated" ]; do
+                echo "Waiting for migration to complete..."
+                sleep 10
+              done
+            displayName: 'Wait for Migration'
+
+          # Run integration tests against staging slots
+          - script: |
+              curl -f https://$(backendAppName)-staging.azurewebsites.net/health
+              curl -f https://$(frontendAppName)-staging.azurewebsites.net/api/health
+              # Run comprehensive integration tests here
+            displayName: 'Run Integration Tests'
+            retryCountOnTaskFailure: 2
+
+          # Swap staging slot to production (Blue-Green deployment)
+          - task: AzureCLI@2
+            displayName: 'Swap Slots (Blue-Green Deploy)'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Swap backend
+                az webapp deployment slot swap \
+                  --resource-group $(resourceGroupName) \
+                  --name $(backendAppName) \
+                  --slot staging \
+                  --target-slot production
+
+                # Swap frontend
+                az webapp deployment slot swap \
+                  --resource-group $(resourceGroupName) \
+                  --name $(frontendAppName) \
+                  --slot staging \
+                  --target-slot production
+
+          # Verify production deployment
+          - script: |
+              curl -f https://$(frontendAppName).azurewebsites.net/api/health
+              curl -f https://$(backendAppName).azurewebsites.net/health
+            displayName: 'Verify Production Deployment'
+            retryCountOnTaskFailure: 3
+
+          # Post-deployment tasks
+          - task: AzureCLI@2
+            displayName: 'Post-Deployment Tasks'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                # Clear CDN cache
+                az cdn endpoint purge \
+                  --resource-group $(resourceGroupName) \
+                  --name dyad-cdn \
+                  --profile-name dyad-cdn-profile \
+                  --content-paths "/*" \
+                  --no-wait || echo "CDN purge failed or not configured"
+
+                # Send deployment notification
+                curl -X POST "$(SLACK_WEBHOOK_URL)" \
+                  -H 'Content-type: application/json' \
+                  --data '{"text":"🚀 Dyad Web Platform deployed to production successfully! Build: $(Build.BuildNumber)"}' \
+                  || echo "Slack notification failed"
+
+- stage: PostDeployment
+  displayName: 'Post-Deployment Monitoring'
+  dependsOn:
+    - DeployStaging
+    - DeployProduction
+  condition: or(succeeded('DeployStaging'), succeeded('DeployProduction'))
+  jobs:
+  - job: MonitorDeployment
+    displayName: 'Monitor Application Health'
+    pool:
+      vmImage: 'ubuntu-latest'
+
+    steps:
+    # Wait and monitor application health
+    - script: |
+        echo "Monitoring application health for 5 minutes..."
+
+        for i in {1..30}; do
+          echo "Health check $i/30"
+
+          # Check staging if deployed
+          if [ "$STAGE_DEPLOYED" = "staging" ]; then
+            curl -f https://app-dyad-frontend-staging.azurewebsites.net/api/health || echo "Staging frontend health check failed"
+            curl -f https://app-dyad-backend-staging.azurewebsites.net/health || echo "Staging backend health check failed"
+          fi
+
+          # Check production if deployed
+          if [ "$STAGE_DEPLOYED" = "production" ]; then
+            curl -f https://$(frontendAppName).azurewebsites.net/api/health || echo "Production frontend health check failed"
+            curl -f https://$(backendAppName).azurewebsites.net/health || echo "Production backend health check failed"
+          fi
+
+          sleep 10
+        done
+
+        echo "Health monitoring completed"
+      displayName: 'Monitor Application Health'
+      env:
+        STAGE_DEPLOYED: ${{ coalesce(variables['DeployStaging.result'], variables['DeployProduction.result']) }}
+
+# Variable groups (configured in Azure DevOps Library):
+# - dyad-shared: Common variables like container registry
+# - dyad-staging: Staging-specific variables
+# - dyad-production: Production-specific variables
