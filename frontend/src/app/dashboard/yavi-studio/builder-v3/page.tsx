@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { YaviStudioLayout } from '@/components/layouts/YaviStudioLayout';
 import { PromptInterface } from '@/components/Builder/PromptInterface';
 import { FileTreeVisualizer } from '@/components/Builder/FileTreeVisualizer';
-import { LivePreviewPanel } from '@/components/Builder/LivePreviewPanel';
+import { LivePreviewPanel } from '@/components/Builder/LivePreviewPanel_v2';
 import { ApprovalModal } from '@/components/Builder/ApprovalModal';
 import { useProjectStore, ProjectFile } from '@/store/projectStore';
 import { generationService } from '@/services/GenerationService';
+import { BundlerService } from '@/services/BundlerService';
 
 export default function AppBuilderV3Page() {
   const { currentProject, createProject, updateProjectFiles, updateProjectStatus } = useProjectStore();
@@ -19,6 +20,13 @@ export default function AppBuilderV3Page() {
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [currentStreamingFile, setCurrentStreamingFile] = useState<ProjectFile | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
+
+  // Initialize esbuild on component mount
+  useEffect(() => {
+    BundlerService.initialize().catch((error) => {
+      console.error('[App] Failed to initialize bundler:', error);
+    });
+  }, []);
 
   const handleGeneration = async (prompt: string, settings: any) => {
     setGenerationStatus('generating');

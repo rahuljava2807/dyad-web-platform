@@ -54,6 +54,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
+    "esbuild-wasm": "^0.19.12",
     "framer-motion": "^12.6.3",
     "lucide-react": "^0.487.0",
     "monaco-editor": "^0.52.2",
