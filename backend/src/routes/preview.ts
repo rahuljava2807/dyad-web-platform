@@ -95,8 +95,11 @@ function buildPreviewHTML(files: any[]): string {
     return buildErrorHTML('No entry point found. Expected /src/app/page.tsx');
   }
 
-  // Extract component content
-  const componentContent = extractComponentContent(entryFile.content);
+  // Escape the component code for embedding in HTML
+  const escapedCode = entryFile.content
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$');
 
   // Build complete HTML with React and Recharts CDN
   return `
@@ -117,9 +120,7 @@ function buildPreviewHTML(files: any[]): string {
   </style>
 </head>
 <body>
-  <div id="root">
-    ${componentContent}
-  </div>
+  <div id="root"></div>
 
   <script>
     // Make React and ReactDOM globally available
@@ -187,6 +188,19 @@ function buildPreviewHTML(files: any[]): string {
         message: \`Unhandled Promise Rejection: \${event.reason}\`
       }, '*');
     });
+
+    // Execute the component code
+    try {
+      const componentCode = \`${escapedCode}\`;
+      eval(componentCode);
+      
+      // Render the component
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(App));
+    } catch (error) {
+      console.error('Error rendering component:', error);
+      document.getElementById('root').innerHTML = '<div class="p-8"><h1 class="text-2xl font-bold text-red-600">Error rendering component</h1><p class="text-gray-600">' + error.message + '</p></div>';
+    }
   </script>
 </body>
 </html>
@@ -197,30 +211,52 @@ function buildPreviewHTML(files: any[]): string {
  * Extract JSX content from React component
  */
 function extractComponentContent(code: string): string {
-  // Simple extraction - in production, use a proper parser
   try {
-    // Find the return statement
-    const returnMatch = code.match(/return\s*\(([\s\S]*?)\);?\s*}/);
-
+    console.log('Extracting from code:', code);
+    
+    // Try to find the return statement with better regex
+    const returnMatch = code.match(/return\s*\(([\s\S]*?)\)\s*;?\s*}/);
+    console.log('Return match:', returnMatch);
+    
     if (returnMatch) {
       let jsx = returnMatch[1].trim();
-
-      // Remove template literals
+      console.log('Extracted JSX:', jsx);
+      
+      // Handle template literals and expressions
       jsx = jsx.replace(/\$\{[^}]+\}/g, (match) => {
-        // Replace with placeholder
-        return match.replace(/\$\{|\}/g, '');
+        // Replace with placeholder text
+        return match.replace(/\$\{|\}/g, '').trim() || 'dynamic content';
       });
-
+      
       // Clean up JSX for HTML
       jsx = jsx.replace(/className=/g, 'class=');
       jsx = jsx.replace(/\{\/\*[\s\S]*?\*\/\}/g, ''); // Remove comments
-
+      jsx = jsx.replace(/\{([^}]+)\}/g, (match, content) => {
+        // Handle JSX expressions
+        return content.trim() || 'dynamic';
+      });
+      
+      console.log('Final JSX:', jsx);
       return jsx;
     }
+    
+    // Fallback: try to find JSX without return statement
+    const jsxMatch = code.match(/<div[^>]*>[\s\S]*<\/div>/);
+    if (jsxMatch) {
+      let jsx = jsxMatch[0];
+      jsx = jsx.replace(/className=/g, 'class=');
+      jsx = jsx.replace(/\$\{[^}]+\}/g, 'dynamic');
+      jsx = jsx.replace(/\{([^}]+)\}/g, (match, content) => {
+        return content.trim() || 'dynamic';
+      });
+      return jsx;
+    }
+    
   } catch (error) {
     console.error('Error extracting component:', error);
   }
 
+  console.log('Failed to extract JSX, returning error message');
   return '<div class="p-8"><h1 class="text-2xl font-bold">Unable to render preview</h1></div>';
 }
 
