@@ -121,6 +121,41 @@ class AIService {
   private buildSystemPrompt(context?: GenerationContext): string {
     let systemPrompt = `You are a world-class software architect and design expert specializing in creating BEAUTIFUL, production-ready web applications that would make Steve Jobs proud.
 
+🚨🚨🚨 CRITICAL TAILWIND CSS REQUIREMENT - THIS IS MANDATORY 🚨🚨🚨
+🚨 YOUR APPLICATION WILL HAVE ZERO STYLING IF YOU IGNORE THIS 🚨
+🚨 EVERY className MUST USE REAL TAILWIND CSS UTILITY CLASSES 🚨
+
+❌❌❌ ABSOLUTELY FORBIDDEN - These will cause COMPLETE FAILURE:
+❌ className="metric-card" ❌ className="dashboard" ❌ className="navigation"
+❌ className="sidebar" ❌ className="data-table" ❌ className="chart"
+❌ className="container" ❌ className="wrapper" ❌ className="header"
+❌ className="footer" ❌ className="content" ❌ className="main"
+❌ ANY generic class names that are not Tailwind utilities
+
+✅✅✅ MANDATORY - Use ONLY these Tailwind utility patterns:
+✅ className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
+✅ className="flex items-center justify-between gap-4"
+✅ className="text-2xl font-bold text-gray-900"
+✅ className="grid grid-cols-1 md:grid-cols-4 gap-6"
+✅ className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+✅ className="w-full h-full min-h-screen bg-gray-50"
+✅ className="max-w-7xl mx-auto px-4 py-8"
+
+🚨 VALIDATION RULE: Before generating ANY className, ask yourself:
+1. Is this a real Tailwind CSS utility class? (bg-, text-, flex-, grid-, etc.)
+2. If not, replace it with proper Tailwind utilities
+3. EVERY element must have Tailwind classes for styling
+
+🚨 EXAMPLES OF CORRECT TAILWIND USAGE:
+- Cards: className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+- Buttons: className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+- Layouts: className="flex flex-col md:flex-row gap-6 items-center justify-between"
+- Text: className="text-3xl font-bold text-gray-900 mb-4"
+- Spacing: className="p-8 m-4 space-y-6 gap-4"
+
+🚨 IF YOU USE GENERIC CLASS NAMES, THE PREVIEW WILL BE COMPLETELY UNSTYLED!
+🚨 THIS IS A CRITICAL PRODUCTION ISSUE - TAILWIND CLASSES ARE MANDATORY!
+
 CORE DESIGN PHILOSOPHY:
 - "Simplicity is the ultimate sophistication" - Every UI element must be clean, purposeful, and beautiful
 - "Design is how it works" - Beauty AND functionality are equally important
@@ -371,26 +406,36 @@ Use strict TypeScript with proper type definitions and interfaces.`
       // Add production-quality requirements to the prompt
       enhancedPrompt += `
 
-CRITICAL GENERATION REQUIREMENTS:
+🚨🚨🚨 CRITICAL GENERATION REQUIREMENTS 🚨🚨🚨
 1. Generate a COMPLETE, BEAUTIFUL application with at least 8-10 files
 2. Include rich UI components with Framer Motion animations
 3. Add data visualizations using Recharts
-4. Use Tailwind CSS for modern, responsive design
+4. 🚨 MANDATORY: Use ONLY Tailwind CSS utility classes for ALL styling 🚨
 5. Include realistic mock data (20-50 items)
 6. Add proper TypeScript types and interfaces
 7. Implement smooth hover effects and transitions
 8. Make it production-ready and portfolio-worthy
 
+🚨 TAILWIND CSS REQUIREMENTS (NON-NEGOTIABLE):
+- EVERY className must use Tailwind utilities (bg-white, text-xl, flex, grid, etc.)
+- NO generic class names (metric-card, dashboard, navigation, sidebar, etc.)
+- Use proper Tailwind patterns: bg-white p-6 rounded-lg shadow-lg
+- Include responsive classes: md:grid-cols-2, lg:text-3xl
+- Add hover effects: hover:shadow-xl, hover:bg-blue-700
+- Use proper spacing: p-6, m-4, gap-4, space-y-6
+
 Generate files that include:
 - Complete React components with animations
-- Reusable UI components (Card, MetricCard, DataTable, etc.)
+- Reusable UI components (Card, MetricCard, DataTable, etc.) - ALL with Tailwind classes
 - Data visualization charts
 - Mock data utilities
 - Animation configuration
 - Complete package.json with all dependencies
 - Comprehensive README.md
 
-Make every component beautiful, interactive, and polished!`
+🚨 REMEMBER: Generic class names = ZERO styling in preview!
+🚨 ONLY Tailwind CSS utility classes will work!
+🚨 Make every component beautiful, interactive, and polished with proper Tailwind classes!`
 
       const result = await generateObject({
         model,
@@ -399,11 +444,11 @@ Make every component beautiful, interactive, and polished!`
         schema: z.object({
           code: z.string().describe('DEPRECATED: Leave empty, use files array instead'),
           explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
-          files: z.array(z.object({
-            path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
-            content: z.string().describe('CRITICAL: ONLY the raw source code. NO explanations, NO placeholders, NO comments about what the code should do. Generate COMPLETE, WORKING, EXECUTABLE code with imports, exports, and full implementation. For React components, include proper JSX/TSX syntax, useState/useEffect hooks, event handlers, and styled with Tailwind classes. For data files, include realistic data arrays (20-50 items). DO NOT write "This is a placeholder" or "Implementation here" - write the ACTUAL CODE.'),
-            type: z.enum(['create', 'modify', 'delete']),
-          })).min(8).describe('MUST generate minimum 8-10 complete files with REAL code'),
+            files: z.array(z.object({
+              path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
+              content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
+              type: z.enum(['create', 'modify', 'delete']),
+            })).min(8).describe('MUST generate minimum 8-10 complete files with REAL code using ONLY Tailwind CSS classes'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
@@ -414,6 +459,75 @@ Make every component beautiful, interactive, and polished!`
         promptLength: request.prompt.length,
         filesCount: result.object.files.length,
       })
+
+      // VALIDATE TAILWIND CSS CLASSES - Reject if generic classes found
+      const genericClassPatterns = [
+        /className=["'](metric-card|dashboard|navigation|sidebar|data-table|chart|container|wrapper|header|footer|content|main|card|button|input|form|section|article|aside|nav|div|span)["']/gi,
+        /className=["'][^"']*[^-](card|button|input|form|section|article|aside|nav|div|span)(?!\w)["']/gi
+      ]
+      
+      const hasGenericClasses = result.object.files.some(file => {
+        if (file.path.endsWith('.tsx') || file.path.endsWith('.jsx')) {
+          return genericClassPatterns.some(pattern => pattern.test(file.content))
+        }
+        return false
+      })
+
+      if (hasGenericClasses) {
+        console.warn(`AI generated code with generic class names, regenerating with stronger Tailwind enforcement...`)
+        
+        const tailwindEnforcementPrompt = `${enhancedPrompt}
+
+🚨🚨🚨 CRITICAL: YOU GENERATED GENERIC CLASS NAMES! 🚨🚨🚨
+🚨 THIS WILL CAUSE ZERO STYLING IN THE PREVIEW! 🚨
+🚨 YOU MUST USE ONLY TAILWIND CSS UTILITY CLASSES! 🚨
+
+FORBIDDEN PATTERNS YOU USED (DO NOT USE THESE AGAIN):
+❌ className="metric-card" ❌ className="dashboard" ❌ className="navigation"
+❌ className="sidebar" ❌ className="data-table" ❌ className="chart"
+❌ className="container" ❌ className="wrapper" ❌ className="header"
+❌ className="footer" ❌ className="content" ❌ className="main"
+
+MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
+✅ className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
+✅ className="flex items-center justify-between gap-4"
+✅ className="text-2xl font-bold text-gray-900"
+✅ className="grid grid-cols-1 md:grid-cols-4 gap-6"
+✅ className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
+✅ className="w-full h-full min-h-screen bg-gray-50"
+✅ className="max-w-7xl mx-auto px-4 py-8"
+
+🚨 BEFORE GENERATING ANY className, VERIFY IT'S A TAILWIND UTILITY:
+- Background: bg-white, bg-blue-500, bg-gradient-to-r
+- Text: text-white, text-gray-900, text-xl, font-bold
+- Layout: flex, grid, block, inline
+- Spacing: p-6, m-4, px-8, py-4, gap-4, space-y-6
+- Sizing: w-full, h-screen, max-w-7xl, min-h-screen
+- Borders: rounded-lg, border, shadow-lg
+- Effects: hover:shadow-xl, transition-all, backdrop-blur
+
+🚨 REGENERATE WITH PROPER TAILWIND CLASSES OR THE APP WILL BE UNSTYLED!`
+
+        const retryResult = await generateObject({
+          model,
+          system: this.buildSystemPrompt(request.context),
+          prompt: tailwindEnforcementPrompt,
+          schema: z.object({
+            code: z.string().describe('DEPRECATED: Leave empty'),
+            explanation: z.string().describe('Brief explanation (2-3 sentences)'),
+            files: z.array(z.object({
+              path: z.string().describe('File path (e.g., src/App.tsx)'),
+              content: z.string().describe('CRITICAL: ONLY raw executable code with PROPER TAILWIND CSS CLASSES. NO generic class names like "metric-card" or "dashboard". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg". EVERY className must be a valid Tailwind CSS utility class.'),
+              type: z.enum(['create', 'modify', 'delete']),
+            })).min(8, 'MUST generate at least 8 complete files'),
+            dependencies: z.array(z.string()).optional(),
+            instructions: z.string().optional(),
+          }),
+        })
+
+        console.log(`Regenerated with proper Tailwind classes: ${retryResult.object.files.length} files`)
+        return retryResult.object
+      }
 
       // ENFORCE MINIMUM FILE COUNT - Regenerate if AI ignored requirements
       if (result.object.files.length < 8) {
