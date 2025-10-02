@@ -17,6 +17,42 @@ export function generatePreviewHTML(bundledCode: string): string {
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 
+  <!-- Recharts from CDN -->
+  <script crossorigin src="https://unpkg.com/recharts@2.5.0/dist/Recharts.js"></script>
+
+  <!-- Framer Motion from CDN (may not work in UMD, will be shimmed) -->
+  <script>
+    // Shim for framer-motion since it doesn't have UMD build
+    window.FramerMotion = {
+      motion: {
+        div: 'div',
+        button: 'button',
+        span: 'span',
+        section: 'section',
+        article: 'article',
+        nav: 'nav',
+        header: 'header',
+        footer: 'footer',
+        main: 'main',
+        aside: 'aside',
+        p: 'p',
+        h1: 'h1',
+        h2: 'h2',
+        h3: 'h3',
+        h4: 'h4',
+        ul: 'ul',
+        li: 'li',
+        a: 'a',
+        img: 'img',
+        form: 'form',
+        input: 'input',
+        label: 'label',
+        textarea: 'textarea'
+      },
+      AnimatePresence: function({ children }) { return children; }
+    };
+  </script>
+
   <style>
     * {
       margin: 0;

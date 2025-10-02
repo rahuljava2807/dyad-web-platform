@@ -144,13 +144,19 @@ if (root) {
                   }
                 }
 
-                // Handle node_modules (React, etc.) - mark as external
+                // Handle node_modules (React, Recharts, Framer Motion, etc.) - mark as external
                 if (
                   args.path === 'react' ||
                   args.path === 'react-dom' ||
                   args.path === 'react-dom/client' ||
                   args.path.startsWith('react/') ||
-                  args.path.startsWith('react-dom/')
+                  args.path.startsWith('react-dom/') ||
+                  args.path === 'recharts' ||
+                  args.path.startsWith('recharts/') ||
+                  args.path === 'framer-motion' ||
+                  args.path.startsWith('framer-motion/') ||
+                  args.path === 'lucide-react' ||
+                  args.path.startsWith('lucide-react/')
                 ) {
                   return { path: args.path, namespace: 'external' };
                 }
@@ -194,7 +200,7 @@ if (root) {
                 return { contents, loader };
               });
 
-              // External modules return empty (React loaded from CDN)
+              // External modules return global variables (loaded from CDN)
               build.onLoad({ filter: /.*/, namespace: 'external' }, (args) => {
                 if (args.path === 'react') {
                   return {
@@ -205,6 +211,32 @@ if (root) {
                 if (args.path === 'react-dom' || args.path === 'react-dom/client') {
                   return {
                     contents: `module.exports = window.ReactDOM`,
+                    loader: 'js',
+                  };
+                }
+                if (args.path === 'recharts') {
+                  return {
+                    contents: `module.exports = window.Recharts || {}`,
+                    loader: 'js',
+                  };
+                }
+                if (args.path.startsWith('recharts/')) {
+                  // Handle recharts sub-imports like 'recharts/BarChart'
+                  return {
+                    contents: `module.exports = window.Recharts || {}`,
+                    loader: 'js',
+                  };
+                }
+                if (args.path === 'framer-motion') {
+                  return {
+                    contents: `module.exports = window.FramerMotion || { motion: {}, AnimatePresence: function({children}) { return children; } }`,
+                    loader: 'js',
+                  };
+                }
+                if (args.path === 'lucide-react') {
+                  // Lucide icons - provide empty stubs
+                  return {
+                    contents: `module.exports = new Proxy({}, { get: function(target, prop) { return function(props) { return null; } } })`,
                     loader: 'js',
                   };
                 }
