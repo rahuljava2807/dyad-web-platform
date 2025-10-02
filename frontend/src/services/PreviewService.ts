@@ -113,10 +113,32 @@ export class PreviewService {
   private static transformToJS(file: ProjectFile): string {
     let content = file.content;
 
-    // Remove TypeScript type annotations (basic)
-    content = content.replace(/:\s*\w+(\[\])?/g, '');
-    content = content.replace(/interface\s+\w+\s*\{[^}]*\}/g, '');
+    // Remove ALL import statements since we're using global React from CDN
+    content = content.replace(/import\s+.*?from\s+['"][^'"]+['"]\s*;?\n?/g, '');
+
+    // Remove export statements - we'll use global scope
+    content = content.replace(/export\s+default\s+/g, '');
+    content = content.replace(/export\s+\{[^}]+\}\s*;?\n?/g, '');
+    content = content.replace(/export\s+const\s+/g, 'const ');
+    content = content.replace(/export\s+function\s+/g, 'function ');
+
+    // Remove TypeScript-specific syntax
+    // Remove interface declarations
+    content = content.replace(/interface\s+\w+\s*\{[^}]*\}/gs, '');
+
+    // Remove type aliases
     content = content.replace(/type\s+\w+\s*=\s*[^;]+;/g, '');
+
+    // Remove type annotations from variables/constants (but preserve the value)
+    // Match patterns like: const name: Type = value
+    content = content.replace(/:\s*React\.FC(\<[^>]*\>)?(?=\s*=)/g, '');
+    content = content.replace(/:\s*\w+(\[\])?(\<[^>]*\>)?(?=\s*[=,)\]])/g, '');
+
+    // Remove generic type parameters from function calls
+    content = content.replace(/\<[^>]+\>(?=\()/g, '');
+
+    // Remove 'as' type assertions
+    content = content.replace(/\s+as\s+\w+/g, '');
 
     // Add file comment
     content = `// File: ${file.path}\n${content}`;
@@ -129,6 +151,11 @@ export class PreviewService {
    */
   private static addInitScript(html: string): string {
     const initScript = `
+<script>
+  // Shim for CommonJS exports (prevents "exports is not defined" error)
+  window.exports = window.exports || {};
+  window.module = window.module || { exports: {} };
+</script>
 <script type="text/babel">
   // Auto-initialize React app
   (function() {

@@ -16,6 +16,16 @@ export const PromptInterface: React.FC<PromptInterfaceProps> = ({
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [useYaviContext, setUseYaviContext] = useState(true);
 
+  // Debug: Log when component mounts and state changes
+  React.useEffect(() => {
+    console.log('PromptInterface mounted');
+    return () => console.log('PromptInterface unmounted');
+  }, []);
+
+  React.useEffect(() => {
+    console.log('selectedIndustry state changed to:', selectedIndustry);
+  }, [selectedIndustry]);
+
   const templates: Record<string, string[]> = {
     legal: [
       'Create a contract analyzer that extracts key terms and obligations',
@@ -59,37 +69,42 @@ export const PromptInterface: React.FC<PromptInterfaceProps> = ({
 
       {/* Industry Selection */}
       <div className="p-4 border-b border-gray-200">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: '#ffffff' }}>
           Select Industry
         </label>
         <select
           value={selectedIndustry}
           onChange={(e) => setSelectedIndustry(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{ backgroundColor: '#ffffff', color: '#111827' }}
         >
-          <option value="">Choose an industry...</option>
-          <option value="legal">Legal</option>
-          <option value="construction">Construction</option>
-          <option value="healthcare">Healthcare</option>
-          <option value="financial">Financial Services</option>
+          <option value="" style={{ color: '#6b7280' }}>Choose an industry...</option>
+          <option value="legal" style={{ color: '#111827' }}>Legal</option>
+          <option value="construction" style={{ color: '#111827' }}>Construction</option>
+          <option value="healthcare" style={{ color: '#111827' }}>Healthcare</option>
+          <option value="financial" style={{ color: '#111827' }}>Financial Services</option>
         </select>
       </div>
 
       {/* Templates */}
       {selectedIndustry && templates[selectedIndustry] && (
-        <div className="p-4 border-b border-gray-200">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Quick Templates
+        <div className="p-4 border-b border-gray-200 bg-blue-50">
+          <label className="block text-sm font-medium text-gray-900 mb-3">
+            Quick Templates for {selectedIndustry.charAt(0).toUpperCase() + selectedIndustry.slice(1)}
           </label>
           <div className="space-y-2">
             {templates[selectedIndustry].map((template, idx) => (
               <button
                 key={idx}
-                onClick={() => setPrompt(template)}
-                className="w-full text-left px-3 py-2 text-sm text-gray-900 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => {
+                  console.log('Template clicked:', template);
+                  setPrompt(template);
+                }}
+                className="w-full text-left px-4 py-3 text-sm bg-white border border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-all shadow-sm"
+                style={{ color: '#111827' }}
               >
-                <FileText className="w-4 h-4 inline mr-2 text-gray-500" />
-                <span className="text-gray-900">{template}</span>
+                <FileText className="w-4 h-4 inline mr-2 text-blue-600" />
+                <span className="font-medium" style={{ color: '#111827' }}>{template}</span>
               </button>
             ))}
           </div>
@@ -98,7 +113,7 @@ export const PromptInterface: React.FC<PromptInterfaceProps> = ({
 
       {/* Prompt Input */}
       <div className="flex-1 p-4 overflow-y-auto">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium mb-2" style={{ color: '#ffffff' }}>
           Describe Your Application
         </label>
         <textarea
@@ -106,6 +121,7 @@ export const PromptInterface: React.FC<PromptInterfaceProps> = ({
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="E.g., Create a legal contract analyzer that extracts key terms, identifies risks, and provides summaries..."
           className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          style={{ backgroundColor: '#ffffff', color: '#111827' }}
         />
 
         {/* Yavi Context Toggle */}
