@@ -4,7 +4,8 @@
   "description": "Express.js backend for Dyad Web Platform",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/simple-server.ts",
+    "dev": "tsx src/simple-server.ts",
+    "dev:watch": "tsx watch src/simple-server.ts",
     "dev:full": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",

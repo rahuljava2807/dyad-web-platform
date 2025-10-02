@@ -13,7 +13,11 @@ import {
   Smartphone,
   Database,
   Zap,
-  FileText
+  FileText,
+  Sparkles,
+  ToggleLeft,
+  ToggleRight,
+  Lightbulb
 } from 'lucide-react'
 
 const horizontalTemplates = [
@@ -69,40 +73,64 @@ const horizontalTemplates = [
 
 const traditionalTemplates = [
   {
-    id: 'nextjs',
-    name: 'Next.js',
-    description: 'Full-stack React framework with server-side rendering',
-    icon: Code2,
-    framework: 'Next.js',
-    category: 'Traditional Framework',
-    features: ['React 18', 'TypeScript', 'Tailwind CSS', 'API Routes']
+    id: 'nextjs-fullstack',
+    name: 'Next.js Full-Stack',
+    description: 'Complete web application with frontend and backend',
+    icon: Globe,
+    framework: 'Next.js + API',
+    category: 'Web Application',
+    features: ['React 18', 'TypeScript', 'API Routes', 'Database', 'Authentication'],
+    useCases: ['E-commerce', 'SaaS Apps', 'Portfolio Sites']
   },
   {
-    id: 'react',
-    name: 'React App',
-    description: 'Client-side React application with modern tooling',
+    id: 'react-spa',
+    name: 'React SPA',
+    description: 'Single Page Application with modern React',
     icon: Code2,
-    framework: 'React',
-    category: 'Traditional Framework',
-    features: ['React 18', 'TypeScript', 'Vite', 'Component Library']
+    framework: 'React + Vite',
+    category: 'Frontend',
+    features: ['React 18', 'TypeScript', 'State Management', 'Router'],
+    useCases: ['Dashboards', 'Admin Panels', 'Interactive Apps']
   },
   {
     id: 'express-api',
-    name: 'Express API',
-    description: 'RESTful API with Express.js and TypeScript',
+    name: 'REST API',
+    description: 'Backend API with Express.js and database',
     icon: Database,
-    framework: 'Express',
-    category: 'Traditional Framework',
-    features: ['TypeScript', 'Express.js', 'Prisma ORM', 'Authentication']
+    framework: 'Express.js',
+    category: 'Backend',
+    features: ['TypeScript', 'Express.js', 'Database ORM', 'JWT Auth'],
+    useCases: ['Mobile Backends', 'Microservices', 'Data APIs']
+  },
+  {
+    id: 'task-manager',
+    name: 'Task Manager',
+    description: 'Complete task management application',
+    icon: Zap,
+    framework: 'Next.js',
+    category: 'Application Template',
+    features: ['User Auth', 'CRUD Operations', 'Task Board', 'Notifications'],
+    useCases: ['Project Management', 'Team Collaboration', 'Personal Tasks']
+  },
+  {
+    id: 'blog-cms',
+    name: 'Blog & CMS',
+    description: 'Content management system with blog functionality',
+    icon: FileText,
+    framework: 'Next.js + CMS',
+    category: 'Content',
+    features: ['Content Editor', 'SEO Optimized', 'Comments', 'Media Upload'],
+    useCases: ['Company Blogs', 'News Sites', 'Personal Websites']
   },
   {
     id: 'blank',
-    name: 'Blank Project',
-    description: 'Start from scratch with a minimal setup',
-    icon: FileText,
+    name: 'Blank Canvas',
+    description: 'Start completely from scratch with minimal boilerplate',
+    icon: Smartphone,
     framework: 'Custom',
-    category: 'Traditional Framework',
-    features: ['Minimal Setup', 'Custom Configuration', 'Full Control']
+    category: 'Custom',
+    features: ['Minimal Setup', 'Full Control', 'Custom Architecture'],
+    useCases: ['Unique Requirements', 'Learning Projects', 'Prototypes']
   }
 ]
 
@@ -111,10 +139,57 @@ export default function NewProjectPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [projectData, setProjectData] = useState({
     name: '',
-    description: ''
+    description: '',
+    prompt: ''
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [yaviIntegration, setYaviIntegration] = useState(true)
+  const [showPromptMode, setShowPromptMode] = useState(false)
+  const [suggestedTemplates, setSuggestedTemplates] = useState<string[]>([])
+
+  // Smart template suggestion based on prompt
+  const handlePromptSuggestion = (prompt: string) => {
+    if (!prompt.trim()) {
+      setSuggestedTemplates([])
+      return
+    }
+
+    const keywords = prompt.toLowerCase()
+    const suggestions: string[] = []
+
+    if (yaviIntegration) {
+      // AI-powered suggestions
+      if (keywords.includes('document') || keywords.includes('contract') || keywords.includes('invoice') || keywords.includes('pdf')) {
+        suggestions.push('document-intelligence')
+      }
+      if (keywords.includes('data') || keywords.includes('integration') || keywords.includes('sync') || keywords.includes('database')) {
+        suggestions.push('data-integration-hub')
+      }
+      if (keywords.includes('workflow') || keywords.includes('automation') || keywords.includes('process')) {
+        suggestions.push('workflow-orchestrator')
+      }
+      if (keywords.includes('knowledge') || keywords.includes('search') || keywords.includes('content') || keywords.includes('wiki')) {
+        suggestions.push('knowledge-platform')
+      }
+    } else {
+      // Vanilla development suggestions
+      if (keywords.includes('web') || keywords.includes('website') || keywords.includes('full-stack')) {
+        suggestions.push('nextjs')
+      }
+      if (keywords.includes('react') || keywords.includes('frontend') || keywords.includes('ui')) {
+        suggestions.push('react')
+      }
+      if (keywords.includes('api') || keywords.includes('backend') || keywords.includes('server')) {
+        suggestions.push('express-api')
+      }
+      if (keywords.includes('custom') || keywords.includes('scratch') || keywords.includes('minimal')) {
+        suggestions.push('blank')
+      }
+    }
+
+    setSuggestedTemplates(suggestions.slice(0, 3)) // Limit to top 3 suggestions
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,9 +218,11 @@ export default function NewProjectPage() {
         },
         body: JSON.stringify({
           name: projectData.name,
-          description: projectData.description,
+          description: projectData.description || projectData.prompt,
           template: selectedTemplate,
-          framework: selectedTemplateData?.framework
+          framework: selectedTemplateData?.framework,
+          yaviIntegration: yaviIntegration,
+          prompt: projectData.prompt
         })
       })
 
@@ -230,22 +307,138 @@ export default function NewProjectPage() {
                   placeholder="Describe what your project will do..."
                 />
               </div>
+
+              {/* Yavi.ai Integration Toggle */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700">
+                      Yavi.ai Integration
+                    </label>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Enable AI-powered features and horizontal solutions
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setYaviIntegration(!yaviIntegration)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      yaviIntegration ? 'bg-green-600' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        yaviIntegration ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                {yaviIntegration ? (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-green-700">
+                      <Sparkles className="h-4 w-4" />
+                      <span className="font-medium">AI-Powered Features Enabled</span>
+                    </div>
+                    <p className="text-xs text-green-600 mt-1">
+                      Access to document processing, data integration, and workflow automation
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Code2 className="h-4 w-4" />
+                      <span className="font-medium">Vanilla Development Mode</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Standard frameworks without AI integration
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Smart Prompt Generator */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-slate-700">
+                    Smart Project Generator
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPromptMode(!showPromptMode)}
+                    className="text-xs"
+                  >
+                    <Lightbulb className="h-3 w-3 mr-1" />
+                    {showPromptMode ? 'Hide' : 'Generate from Idea'}
+                  </Button>
+                </div>
+
+                {showPromptMode && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-blue-900 mb-2">
+                        Describe your application idea
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={projectData.prompt}
+                        onChange={(e) => {
+                          setProjectData(prev => ({ ...prev, prompt: e.target.value }))
+                          handlePromptSuggestion(e.target.value)
+                        }}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        placeholder={yaviIntegration
+                          ? "I want to build an application that processes legal contracts and extracts key terms..."
+                          : "I want to build a task management app with user authentication..."
+                        }
+                      />
+                    </div>
+
+                    {suggestedTemplates.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-blue-900">Suggested Templates:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {suggestedTemplates.map((templateId) => {
+                            const template = [...horizontalTemplates, ...traditionalTemplates].find(t => t.id === templateId)
+                            return template ? (
+                              <button
+                                key={templateId}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedTemplate(templateId)
+                                  setShowPromptMode(false)
+                                }}
+                                className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                              >
+                                {template.name}
+                              </button>
+                            ) : null
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
-          {/* Horizontal Business Solutions */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-green-100 text-green-800 border-green-200">
-                  Recommended
-                </Badge>
-                <CardTitle>Horizontal Business Solutions</CardTitle>
-              </div>
-              <CardDescription>
-                Pre-built enterprise solutions that work across any industry. Proven ROI and fast deployment.
-              </CardDescription>
-            </CardHeader>
+          {/* Conditional Template Sections */}
+          {yaviIntegration && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-800 border-green-200">
+                    AI-Powered
+                  </Badge>
+                  <CardTitle>Horizontal Business Solutions</CardTitle>
+                  <Sparkles className="h-5 w-5 text-green-600" />
+                </div>
+                <CardDescription>
+                  Pre-built enterprise solutions with Yavi.ai integration. Proven ROI and fast deployment.
+                </CardDescription>
+              </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {horizontalTemplates.map((template) => (
@@ -307,18 +500,31 @@ export default function NewProjectPage() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          )}
 
           {/* Traditional Development Templates */}
           <Card>
             <CardHeader>
-              <CardTitle>Traditional Development Templates</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle>
+                  {yaviIntegration ? 'Traditional Development Templates' : 'Available Templates'}
+                </CardTitle>
+                {!yaviIntegration && <Code2 className="h-5 w-5 text-blue-600" />}
+              </div>
               <CardDescription>
-                Standard frameworks for custom development projects
+                {yaviIntegration
+                  ? 'Standard frameworks for custom development projects'
+                  : 'Choose from popular development frameworks and setups'
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className={`grid gap-4 ${
+                yaviIntegration
+                  ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+                  : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              }`}>
                 {traditionalTemplates.map((template) => (
                   <div
                     key={template.id}
@@ -333,9 +539,9 @@ export default function NewProjectPage() {
                       <div className={`p-2 rounded ${selectedTemplate === template.id ? 'bg-blue-600' : 'bg-slate-100'}`}>
                         <template.icon className={`h-5 w-5 ${selectedTemplate === template.id ? 'text-white' : 'text-slate-600'}`} />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-semibold text-slate-800 text-sm">{template.name}</h3>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-xs mt-1">
                           {template.framework}
                         </Badge>
                       </div>
@@ -343,12 +549,27 @@ export default function NewProjectPage() {
 
                     <p className="text-sm text-slate-600 mb-3">{template.description}</p>
 
-                    <div className="flex flex-wrap gap-1">
-                      {template.features.map((feature, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {feature}
-                        </Badge>
-                      ))}
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-1">
+                        {template.features.map((feature, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {feature}
+                          </Badge>
+                        ))}
+                      </div>
+
+                      {template.useCases && (
+                        <div>
+                          <p className="text-xs font-medium text-slate-600 mb-1">Use Cases:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {template.useCases.map((useCase, index) => (
+                              <Badge key={index} variant="secondary" className="text-xs bg-green-50 text-green-700">
+                                {useCase}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

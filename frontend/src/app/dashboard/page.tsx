@@ -13,7 +13,8 @@ import {
   Code2,
   Zap,
   Calendar,
-  MoreVertical
+  MoreVertical,
+  Sparkles
 } from 'lucide-react'
 
 interface Project {
@@ -63,6 +64,12 @@ export default function DashboardPage() {
               <p className="text-slate-600">Welcome to your AI Development Platform</p>
             </div>
             <div className="flex items-center gap-4">
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/yavi-studio">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Yavi Studio
+                </Link>
+              </Button>
               <Button variant="outline" asChild>
                 <Link href="/dashboard/settings">
                   <Settings className="mr-2 h-4 w-4" />

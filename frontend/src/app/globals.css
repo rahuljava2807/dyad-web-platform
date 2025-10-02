@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
@@ -51,9 +52,104 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+}
+
+@layer components {
+  .yavi-gradient {
+    @apply bg-gradient-to-br from-blue-600 to-purple-600;
+  }
+
+  .yavi-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+
+  .yavi-button-primary {
+    @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors;
+  }
+
+  .yavi-studio-layout {
+    @apply min-h-screen bg-gradient-to-br from-slate-50 to-blue-50;
+  }
+
+  /* Fix button text visibility */
+  button {
+    position: relative;
+    z-index: 1;
+  }
+
+  button span,
+  button svg {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+@layer utilities {
+  /* Text visibility utilities */
+  .text-visible {
+    color: inherit !important;
+    opacity: 1 !important;
+  }
+
+  .btn-text {
+    color: currentColor;
+    position: relative;
+    z-index: 10;
+  }
+}
+
+/* FORCE ALL TEXT TO BE VISIBLE */
+.sidebar-label,
+.file-tree-item,
+.template-label,
+.quick-template-label,
+button span,
+a span,
+label,
+p,
+h1, h2, h3, h4, h5, h6,
+span,
+div {
+  opacity: 1 !important;
+}
+
+/* Force text colors to be visible */
+h1, h2, h3 {
+  color: #111827 !important;
+}
+
+button span,
+a span,
+label span,
+nav span,
+aside span {
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Prevent text from being transparent or hidden */
+* {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Force visibility on common elements */
+button, a, span, p, div, h1, h2, h3, h4, h5, h6, label {
+  visibility: visible !important;
+}
+
+/* Ensure proper text rendering */
+body, html {
+  color: #1f2937;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }

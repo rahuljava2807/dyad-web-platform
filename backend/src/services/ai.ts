@@ -4,9 +4,9 @@ import { google } from '@ai-sdk/google'
 import { azure } from '@ai-sdk/azure'
 import { generateObject, generateText, streamText } from 'ai'
 import { z } from 'zod'
-import { logger } from '../utils/logger'
-import { yaviService } from './yavi'
-import { usageService } from './usage'
+// import { logger } from '../utils/logger' // Not available
+// import { yaviService } from './yavi' // Not needed for basic generation
+// import { usageService } from './usage' // Not available
 
 interface AIProvider {
   id: string
@@ -119,22 +119,213 @@ class AIService {
   }
 
   private buildSystemPrompt(context?: GenerationContext): string {
-    let systemPrompt = `You are an expert software developer and AI assistant specializing in building modern web applications. You provide high-quality, production-ready code with proper error handling, type safety, and best practices.
+    let systemPrompt = `You are a world-class software architect and design expert specializing in creating BEAUTIFUL, production-ready web applications that would make Steve Jobs proud.
 
-Key principles:
-- Write clean, maintainable, and well-documented code
-- Follow modern development best practices
-- Include proper error handling and validation
-- Use TypeScript when appropriate
-- Focus on performance and accessibility
-- Provide helpful comments and explanations`
+CORE DESIGN PHILOSOPHY:
+- "Simplicity is the ultimate sophistication" - Every UI element must be clean, purposeful, and beautiful
+- "Design is how it works" - Beauty AND functionality are equally important
+- "Details matter" - Perfect spacing, smooth animations, polished interactions
+- "Delight the user" - Add magical moments, smooth transitions, surprising polish
+
+MANDATORY REQUIREMENTS FOR EVERY APPLICATION:
+
+1. VISUAL EXCELLENCE:
+   - Use modern design with gradients, shadows, and glassmorphism effects
+   - Implement smooth animations with Framer Motion
+   - Include hover effects (scale: 1.05, translateY: -5px, enhanced shadows)
+   - Add decorative background elements (floating gradient orbs, subtle patterns)
+   - Use professional color palettes (blues, purples, clean whites, subtle grays)
+   - Ensure pixel-perfect spacing using 8px grid system
+   - Add depth with layered shadows and subtle borders
+
+2. COMPONENT STRUCTURE (Generate 8-12 files):
+   Required files:
+   - src/App.tsx - Main application with beautiful layout
+   - src/components/Dashboard.tsx - Main dashboard with metrics and visualizations
+   - src/components/Navigation.tsx - Animated navbar with glassmorphism
+   - src/components/Sidebar.tsx - Collapsible sidebar with smooth transitions
+   - src/components/MetricCard.tsx - Animated metric cards with icons
+   - src/components/DataTable.tsx - Sortable table with hover effects
+   - src/components/Chart.tsx - Beautiful data visualizations with Recharts
+   - src/components/Card.tsx - Reusable card component with animations
+   - src/utils/mockData.ts - Realistic industry-specific sample data (20-50 items)
+   - src/utils/animations.ts - Reusable Framer Motion animation variants
+   - package.json - Complete dependencies list
+   - README.md - Setup and usage instructions
+
+3. STYLING REQUIREMENTS (Tailwind CSS):
+   - Gradients: bg-gradient-to-r from-blue-500 to-purple-600
+   - Shadows: shadow-lg hover:shadow-2xl transition-shadow duration-300
+   - Glassmorphism: bg-white/30 backdrop-blur-lg border border-white/20
+   - Rounded corners: rounded-xl (12px) or rounded-2xl (16px)
+   - Spacing: Use p-6, p-8, gap-6, space-y-4 consistently
+   - Responsive: Mobile-first with sm:, md:, lg:, xl: breakpoints
+   - Colors: Use blue-500, purple-600, gray-900, gray-50 from Tailwind palette
+
+4. ANIMATIONS (Framer Motion):
+   - Page load: Stagger children with 0.1s delay
+   - Cards: initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+   - Hover: whileHover={{ scale: 1.05, y: -5 }}
+   - Tap: whileTap={{ scale: 0.95 }}
+   - Lists: Container with staggerChildren, items with variants
+   - Modals: Fade backdrop + scale content
+   - Loading: Smooth rotating spinner with gradient border
+
+5. INTERACTIVE ELEMENTS:
+   Must include:
+   - Search bars with Lucide icons and focus effects
+   - Sortable tables with animated sort indicators
+   - Filterable data with dropdown menus
+   - Clickable cards with navigation and hover lift
+   - Dropdown menus with smooth animations
+   - Notification badges with pulse animation
+   - Toast notifications for user actions
+   - Modal dialogs with backdrop blur
+
+6. DATA VISUALIZATION (Recharts):
+   Include at least 2 charts:
+   - Bar charts with gradient fills
+   - Line charts with smooth curves
+   - Pie/Donut charts with custom colors
+   - Add animated tooltips and legends
+   - Responsive container sizing
+   - Professional color schemes
+
+7. CODE QUALITY STANDARDS:
+   - TypeScript with proper type definitions
+   - Comprehensive error handling with try/catch
+   - Loading states with skeleton screens or spinners
+   - Empty states with helpful messages and actions
+   - Success/error feedback with toast notifications
+   - ARIA labels for accessibility
+   - JSDoc comments for complex functions
+   - Meaningful variable names
+
+8. REQUIRED DEPENDENCIES (package.json):
+{
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "framer-motion": "^11.0.0",
+    "lucide-react": "^0.344.0",
+    "recharts": "^2.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.1"
+  }
+}
+
+9. MOCK DATA REQUIREMENTS:
+   - Generate 20-50 realistic items for lists/tables
+   - Include variety: different statuses, categories, dates
+   - Use realistic names, values, and descriptions
+   - Add timestamps in ISO format
+   - Include proper data types (numbers, strings, booleans, dates)
+   - Make data industry-specific and contextual
+
+10. UI PATTERNS TO IMPLEMENT:
+
+    NAVIGATION BAR:
+    - Sticky top with bg-white/80 backdrop-blur-xl
+    - Logo with scale animation on hover
+    - Nav items with animated underline on hover
+    - User avatar with dropdown menu
+    - Notification bell with badge count
+    - Search bar with icon and focus ring
+
+    HERO/HEADER SECTION:
+    - Large heading with gradient text
+    - Subtitle with gray-600 color
+    - Animated on page load (fade + slide up)
+    - Optional background gradient or pattern
+
+    METRICS DASHBOARD (4 cards):
+    - Icon with gradient background
+    - Large number with animated counter
+    - Label text below
+    - Change percentage with color (green/red)
+    - Shadow and hover lift effect
+
+    DATA CARDS:
+    - White background with border
+    - Padding p-6
+    - Hover: -translateY-2 and shadow-xl
+    - Status badges (colored pills)
+    - Action buttons revealed on hover
+
+    TABLES:
+    - Alternating row colors (bg-gray-50)
+    - Sortable headers with click handlers
+    - Pagination controls at bottom
+    - Row hover effects
+    - Action icons in last column
+
+    CHARTS:
+    - Gradient fills (blue to purple)
+    - Smooth entry animations
+    - Interactive tooltips
+    - Legend with colored squares
+    - Responsive container (ResponsiveContainer)
+
+EXAMPLE COLOR SCHEMES BY INDUSTRY:
+- Legal: Deep blues (#1E40AF), Professional grays (#6B7280), Gold accents (#F59E0B)
+- Construction: Orange (#EA580C), Steel gray (#78716C), Safety yellow (#EAB308)
+- Healthcare: Medical blue (#0EA5E9), Health green (#10B981), Purple (#8B5CF6)
+- Financial: Success green (#059669), Navy (#1E3A8A), Gold (#F59E0B)
+- General: Blue (#3B82F6), Purple (#8B5CF6), Gray (#6B7280)
+
+TYPOGRAPHY STANDARDS:
+- Hero headings: text-4xl font-bold (36px)
+- Section headings: text-2xl font-semibold (24px)
+- Card titles: text-lg font-medium (18px)
+- Body text: text-base (16px)
+- Small text: text-sm (14px)
+- Tiny text: text-xs (12px)
+- Font family: Inter (built into Tailwind)
+
+SPACING SYSTEM (8px grid):
+- Extra small: p-2, m-2 (8px)
+- Small: p-4, m-4 (16px)
+- Medium: p-6, m-6 (24px)
+- Large: p-8, m-8 (32px)
+- Extra large: p-12, m-12 (48px)
+- Use gap-4, gap-6, space-y-4 consistently
+
+CRITICAL RULES:
+- Every component must have at least one animation
+- Every interactive element must have a hover effect
+- All spacing must follow the 8px grid
+- Code must be production-ready, not prototype quality
+- Applications should be portfolio-worthy
+- Think Apple, Stripe, Linear, Vercel quality
+
+GENERATION TARGETS:
+- Minimum 8 files (components + utils + config)
+- Minimum 600 lines of total code
+- At least 5 different components
+- At least 2 data visualizations
+- Full responsive design
+- Complete type definitions
+
+If user asks for a "simple" app, still make it BEAUTIFUL and complete.
+If they mention a dashboard, include: metrics, charts, tables, filters.
+If they specify an industry, use appropriate colors and terminology.
+
+Generate code that makes developers say "This AI understands design!"
+Make every application a work of art that users want to show off.`
 
     if (context?.framework) {
-      systemPrompt += `\n\nYou are working with ${context.framework}. Follow ${context.framework}-specific best practices and conventions.`
+      systemPrompt += `\n\nFramework: ${context.framework}
+Use ${context.framework}-specific best practices and modern patterns.
+Leverage ${context.framework} features for optimal performance.`
     }
 
     if (context?.language) {
-      systemPrompt += `\n\nPrimary language: ${context.language}`
+      systemPrompt += `\n\nPrimary language: ${context.language}
+Use strict TypeScript with proper type definitions and interfaces.`
     }
 
     if (context?.dependencies && context.dependencies.length > 0) {
@@ -145,7 +336,8 @@ Key principles:
       systemPrompt += `\n\nProject context:
 - Name: ${context.project.name}
 - Description: ${context.project.description}
-- Framework: ${context.project.framework || 'Not specified'}`
+- Framework: ${context.project.framework || 'React + TypeScript'}
+- Make this project stand out with exceptional design and functionality.`
     }
 
     return systemPrompt
@@ -157,48 +349,120 @@ Key principles:
       const model = this.getModelInstance(provider)
 
       // Track usage
-      await usageService.trackUsage({
-        userId: request.userId,
-        type: 'code_generation',
-        provider,
-        promptTokens: request.prompt.length,
-      })
+      // await usageService.trackUsage({
+      //   userId: request.userId,
+      //   type: 'code_generation',
+      //   provider,
+      //   promptTokens: request.prompt.length,
+      // })
 
       // Enhanced prompt with Yavi.ai integration if available
       let enhancedPrompt = request.prompt
-      if (request.context?.project) {
-        const yaviContext = await yaviService.getRelevantContext(request.prompt, request.context.project.id)
-        if (yaviContext) {
-          enhancedPrompt += `\n\nRelevant context from Yavi.ai:\n${yaviContext}`
-        }
-      }
+      // if (request.context?.project) {
+      //   const yaviContext = await yaviService.getRelevantContext(request.prompt, request.context.project.id)
+      //   if (yaviContext) {
+      //     enhancedPrompt += `\n\nRelevant context from Yavi.ai:\n${yaviContext}`
+      //   }
+      // }
+
+      // Add production-quality requirements to the prompt
+      enhancedPrompt += `
+
+CRITICAL GENERATION REQUIREMENTS:
+1. Generate a COMPLETE, BEAUTIFUL application with at least 8-10 files
+2. Include rich UI components with Framer Motion animations
+3. Add data visualizations using Recharts
+4. Use Tailwind CSS for modern, responsive design
+5. Include realistic mock data (20-50 items)
+6. Add proper TypeScript types and interfaces
+7. Implement smooth hover effects and transitions
+8. Make it production-ready and portfolio-worthy
+
+Generate files that include:
+- Complete React components with animations
+- Reusable UI components (Card, MetricCard, DataTable, etc.)
+- Data visualization charts
+- Mock data utilities
+- Animation configuration
+- Complete package.json with all dependencies
+- Comprehensive README.md
+
+Make every component beautiful, interactive, and polished!`
 
       const result = await generateObject({
         model,
         system: this.buildSystemPrompt(request.context),
         prompt: enhancedPrompt,
         schema: z.object({
-          code: z.string().describe('The generated code'),
-          explanation: z.string().describe('Explanation of what the code does'),
+          code: z.string().describe('The complete, production-ready application code with beautiful UI'),
+          explanation: z.string().describe('Detailed explanation of the application architecture, components, and key features'),
           files: z.array(z.object({
-            path: z.string(),
-            content: z.string(),
+            path: z.string().describe('File path relative to project root (e.g., src/components/Dashboard.tsx)'),
+            content: z.string().describe('Complete, production-ready file content with beautiful components, animations, and polish'),
             type: z.enum(['create', 'modify', 'delete']),
-          })).describe('Files to create or modify'),
-          dependencies: z.array(z.string()).optional().describe('New dependencies to install'),
-          instructions: z.string().optional().describe('Additional setup instructions'),
+          })).describe('Minimum 8-10 files: components (Dashboard, Navigation, Sidebar, MetricCard, DataTable, Chart, Card), utils (mockData, animations), config (package.json), docs (README.md)'),
+          dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, tailwindcss, typescript, @types/react, @types/react-dom'),
+          instructions: z.string().optional().describe('Complete setup instructions including npm install, dependencies, and how to run the application'),
         }),
       })
 
-      logger.info(`Generated code for user ${request.userId}`, {
+      console.log(`Generated code for user ${request.userId}`, {
         provider,
         promptLength: request.prompt.length,
         filesCount: result.object.files.length,
       })
 
+      // ENFORCE MINIMUM FILE COUNT - Regenerate if AI ignored requirements
+      if (result.object.files.length < 8) {
+        console.warn(`AI generated only ${result.object.files.length} files, regenerating with stronger prompt...`)
+
+        // Add EXTREMELY forceful requirements
+        const forcefulPrompt = `${enhancedPrompt}
+
+⚠️ CRITICAL REQUIREMENTS - DO NOT IGNORE:
+You MUST generate AT LEAST 10 FILES. This is NON-NEGOTIABLE.
+
+Required files (generate ALL of these):
+1. src/App.tsx - Main application component (100+ lines)
+2. src/components/Dashboard.tsx - Dashboard with metrics and charts (150+ lines)
+3. src/components/Navigation.tsx - Animated navigation bar (80+ lines)
+4. src/components/Sidebar.tsx - Collapsible sidebar (60+ lines)
+5. src/components/MetricCard.tsx - Reusable metric card with animations (50+ lines)
+6. src/components/DataTable.tsx - Sortable data table (100+ lines)
+7. src/components/Chart.tsx - Chart components with Recharts (80+ lines)
+8. src/components/Card.tsx - Reusable card component (40+ lines)
+9. src/utils/mockData.ts - Mock data with 30-50 items (200+ lines)
+10. src/utils/animations.ts - Framer Motion animation variants (40+ lines)
+11. package.json - Complete dependencies
+12. README.md - Setup and usage instructions
+
+Generate PRODUCTION-QUALITY code with Framer Motion animations, Recharts charts, and beautiful Tailwind styling.
+DO NOT generate placeholder or minimal code. Every file must be complete and functional.`
+
+        const retryResult = await generateObject({
+          model,
+          system: this.buildSystemPrompt(request.context),
+          prompt: forcefulPrompt,
+          schema: z.object({
+            code: z.string(),
+            explanation: z.string(),
+            files: z.array(z.object({
+              path: z.string(),
+              content: z.string(),
+              type: z.enum(['create', 'modify', 'delete']),
+            })).min(8, 'Must generate at least 8 files'),
+            dependencies: z.array(z.string()).optional(),
+            instructions: z.string().optional(),
+          }),
+        })
+
+        console.log(`Regenerated with ${retryResult.object.files.length} files`)
+        return retryResult.object
+      }
+
       return result.object
     } catch (error) {
-      logger.error('Error generating code:', error)
+      console.error('Error generating code:', error)
       throw new Error('Failed to generate code. Please try again.')
     }
   }
@@ -209,12 +473,12 @@ Key principles:
       const model = this.getModelInstance(provider)
 
       // Track usage
-      await usageService.trackUsage({
-        userId: request.userId,
-        type: 'chat',
-        provider,
-        promptTokens: request.messages.reduce((acc, msg) => acc + msg.content.length, 0),
-      })
+      // await usageService.trackUsage({
+      //   userId: request.userId,
+      //   type: 'chat',
+      //   provider,
+      //   promptTokens: request.messages.reduce((acc, msg) => acc + msg.content.length, 0),
+      // })
 
       // Add system message if not present
       const messages = request.messages
@@ -230,7 +494,7 @@ Key principles:
         messages,
       })
 
-      logger.info(`AI chat for user ${request.userId}`, {
+      console.log(`AI chat for user ${request.userId}`, {
         provider,
         messagesCount: request.messages.length,
       })
@@ -240,7 +504,7 @@ Key principles:
         usage: result.usage,
       }
     } catch (error) {
-      logger.error('Error in AI chat:', error)
+      console.error('Error in AI chat:', error)
       throw new Error('Failed to process chat message. Please try again.')
     }
   }
@@ -251,12 +515,12 @@ Key principles:
       const model = this.getModelInstance(provider)
 
       // Track usage
-      await usageService.trackUsage({
-        userId: request.userId,
-        type: 'code_analysis',
-        provider,
-        promptTokens: request.code.length,
-      })
+      // await usageService.trackUsage({
+      //   userId: request.userId,
+      //   type: 'code_analysis',
+      //   provider,
+      //   promptTokens: request.code.length,
+      // })
 
       const result = await generateObject({
         model,
@@ -290,7 +554,7 @@ Key principles:
         }),
       })
 
-      logger.info(`Analyzed code for user ${request.userId}`, {
+      console.log(`Analyzed code for user ${request.userId}`, {
         language: request.language,
         codeLength: request.code.length,
         score: result.object.score,
@@ -298,7 +562,7 @@ Key principles:
 
       return result.object
     } catch (error) {
-      logger.error('Error analyzing code:', error)
+      console.error('Error analyzing code:', error)
       throw new Error('Failed to analyze code. Please try again.')
     }
   }
@@ -316,7 +580,7 @@ Key principles:
 
       return result
     } catch (error) {
-      logger.error('Error streaming generation:', error)
+      console.error('Error streaming generation:', error)
       throw new Error('Failed to stream generation. Please try again.')
     }
   }
