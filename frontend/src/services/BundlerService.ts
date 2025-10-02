@@ -216,14 +216,31 @@ if (root) {
                 }
                 if (args.path === 'recharts') {
                   return {
-                    contents: `module.exports = window.Recharts || {}`,
+                    contents: `module.exports = window.Recharts || {
+                      BarChart: function(props) { return null; },
+                      LineChart: function(props) { return null; },
+                      PieChart: function(props) { return null; },
+                      AreaChart: function(props) { return null; },
+                      XAxis: function(props) { return null; },
+                      YAxis: function(props) { return null; },
+                      CartesianGrid: function(props) { return null; },
+                      Tooltip: function(props) { return null; },
+                      Legend: function(props) { return null; },
+                      Bar: function(props) { return null; },
+                      Line: function(props) { return null; },
+                      Pie: function(props) { return null; },
+                      Area: function(props) { return null; },
+                      Cell: function(props) { return null; },
+                      ResponsiveContainer: function(props) { return props.children; }
+                    }`,
                     loader: 'js',
                   };
                 }
                 if (args.path.startsWith('recharts/')) {
                   // Handle recharts sub-imports like 'recharts/BarChart'
+                  const componentName = args.path.split('/').pop();
                   return {
-                    contents: `module.exports = window.Recharts || {}`,
+                    contents: `module.exports = window.Recharts && window.Recharts.${componentName} || function(props) { return null; }`,
                     loader: 'js',
                   };
                 }

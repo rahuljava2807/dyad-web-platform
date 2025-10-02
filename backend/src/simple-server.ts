@@ -5,7 +5,7 @@ import cors from 'cors'
 import { PrismaClient } from '@prisma/client'
 // import apiKeysRouter from './routes/apiKeys'
 import generationRouter from './routes/generation'
-// import previewRouter from './routes/preview'
+import previewRouter from './routes/preview'
 
 console.log('✅ Modules loaded, initializing app...')
 
@@ -54,7 +54,7 @@ async function ensureDefaultUser() {
 // Routes
 // app.use('/api/keys', apiKeysRouter)
 app.use('/api', generationRouter)
-// app.use('/api/preview', previewRouter)
+app.use('/api/preview', previewRouter)
 
 // Health check
 app.get('/health', (req, res) => {
