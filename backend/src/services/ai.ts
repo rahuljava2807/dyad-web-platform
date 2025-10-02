@@ -139,19 +139,22 @@ MANDATORY REQUIREMENTS FOR EVERY APPLICATION:
    - Add depth with layered shadows and subtle borders
 
 2. COMPONENT STRUCTURE (Generate 8-12 files):
+   CRITICAL: Main component MUST be named App.tsx
    Required files:
-   - src/App.tsx - Main application with beautiful layout
-   - src/components/Dashboard.tsx - Main dashboard with metrics and visualizations
-   - src/components/Navigation.tsx - Animated navbar with glassmorphism
-   - src/components/Sidebar.tsx - Collapsible sidebar with smooth transitions
-   - src/components/MetricCard.tsx - Animated metric cards with icons
-   - src/components/DataTable.tsx - Sortable table with hover effects
-   - src/components/Chart.tsx - Beautiful data visualizations with Recharts
-   - src/components/Card.tsx - Reusable card component with animations
-   - src/utils/mockData.ts - Realistic industry-specific sample data (20-50 items)
-   - src/utils/animations.ts - Reusable Framer Motion animation variants
+   - App.tsx - Main application component (the entry point, MUST export default)
+   - components/Dashboard.tsx - Main dashboard with metrics and visualizations
+   - components/Navigation.tsx - Animated navbar with glassmorphism
+   - components/Sidebar.tsx - Collapsible sidebar with smooth transitions
+   - components/MetricCard.tsx - Animated metric cards with icons
+   - components/DataTable.tsx - Sortable table with hover effects
+   - components/Chart.tsx - Beautiful data visualizations with Recharts
+   - components/Card.tsx - Reusable card component with animations
+   - utils/mockData.ts - Realistic industry-specific sample data (20-50 items)
+   - utils/animations.ts - Reusable Framer Motion animation variants
    - package.json - Complete dependencies list
    - README.md - Setup and usage instructions
+
+   NOTE: File paths can be with or without "src/" prefix (e.g., "App.tsx" or "src/App.tsx")
 
 3. STYLING REQUIREMENTS (Tailwind CSS):
    - Gradients: bg-gradient-to-r from-blue-500 to-purple-600
@@ -394,15 +397,15 @@ Make every component beautiful, interactive, and polished!`
         system: this.buildSystemPrompt(request.context),
         prompt: enhancedPrompt,
         schema: z.object({
-          code: z.string().describe('The complete, production-ready application code with beautiful UI'),
-          explanation: z.string().describe('Detailed explanation of the application architecture, components, and key features'),
+          code: z.string().describe('DEPRECATED: Leave empty, use files array instead'),
+          explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
           files: z.array(z.object({
-            path: z.string().describe('File path relative to project root (e.g., src/components/Dashboard.tsx)'),
-            content: z.string().describe('Complete, production-ready file content with beautiful components, animations, and polish'),
+            path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
+            content: z.string().describe('CRITICAL: ONLY the raw source code. NO explanations, NO placeholders, NO comments about what the code should do. Generate COMPLETE, WORKING, EXECUTABLE code with imports, exports, and full implementation. For React components, include proper JSX/TSX syntax, useState/useEffect hooks, event handlers, and styled with Tailwind classes. For data files, include realistic data arrays (20-50 items). DO NOT write "This is a placeholder" or "Implementation here" - write the ACTUAL CODE.'),
             type: z.enum(['create', 'modify', 'delete']),
-          })).describe('Minimum 8-10 files: components (Dashboard, Navigation, Sidebar, MetricCard, DataTable, Chart, Card), utils (mockData, animations), config (package.json), docs (README.md)'),
-          dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, tailwindcss, typescript, @types/react, @types/react-dom'),
-          instructions: z.string().optional().describe('Complete setup instructions including npm install, dependencies, and how to run the application'),
+          })).min(8).describe('MUST generate minimum 8-10 complete files with REAL code'),
+          dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
+          instructions: z.string().optional().describe('Setup instructions'),
         }),
       })
 
@@ -422,35 +425,39 @@ Make every component beautiful, interactive, and polished!`
 ⚠️ CRITICAL REQUIREMENTS - DO NOT IGNORE:
 You MUST generate AT LEAST 10 FILES. This is NON-NEGOTIABLE.
 
-Required files (generate ALL of these):
-1. src/App.tsx - Main application component (100+ lines)
-2. src/components/Dashboard.tsx - Dashboard with metrics and charts (150+ lines)
-3. src/components/Navigation.tsx - Animated navigation bar (80+ lines)
-4. src/components/Sidebar.tsx - Collapsible sidebar (60+ lines)
-5. src/components/MetricCard.tsx - Reusable metric card with animations (50+ lines)
-6. src/components/DataTable.tsx - Sortable data table (100+ lines)
-7. src/components/Chart.tsx - Chart components with Recharts (80+ lines)
-8. src/components/Card.tsx - Reusable card component (40+ lines)
-9. src/utils/mockData.ts - Mock data with 30-50 items (200+ lines)
-10. src/utils/animations.ts - Framer Motion animation variants (40+ lines)
+Required files (generate ALL of these with REAL, EXECUTABLE CODE):
+1. App.tsx - Main application component (MUST export default, 100+ lines)
+2. components/Dashboard.tsx - Dashboard with metrics and charts (150+ lines)
+3. components/Navigation.tsx - Animated navigation bar (80+ lines)
+4. components/Sidebar.tsx - Collapsible sidebar (60+ lines)
+5. components/MetricCard.tsx - Reusable metric card with animations (50+ lines)
+6. components/DataTable.tsx - Sortable data table (100+ lines)
+7. components/Chart.tsx - Chart components with Recharts (80+ lines)
+8. components/Card.tsx - Reusable card component (40+ lines)
+9. utils/mockData.ts - Mock data with 30-50 items (200+ lines)
+10. utils/animations.ts - Framer Motion animation variants (40+ lines)
 11. package.json - Complete dependencies
 12. README.md - Setup and usage instructions
 
-Generate PRODUCTION-QUALITY code with Framer Motion animations, Recharts charts, and beautiful Tailwind styling.
-DO NOT generate placeholder or minimal code. Every file must be complete and functional.`
+CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
+- Framer Motion animations (import { motion } from 'framer-motion')
+- Recharts charts (import { BarChart, LineChart } from 'recharts')
+- Beautiful Tailwind styling (className="...")
+- NO placeholders, NO "Implementation here", NO explanatory text
+- ONLY raw, working TypeScript/React code that can be executed immediately`
 
         const retryResult = await generateObject({
           model,
           system: this.buildSystemPrompt(request.context),
           prompt: forcefulPrompt,
           schema: z.object({
-            code: z.string(),
-            explanation: z.string(),
+            code: z.string().describe('DEPRECATED: Leave empty'),
+            explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             files: z.array(z.object({
-              path: z.string(),
-              content: z.string(),
+              path: z.string().describe('File path (e.g., src/App.tsx)'),
+              content: z.string().describe('CRITICAL: ONLY raw executable code. NO explanations, NO placeholders like "This is" or "Implementation goes here". Write COMPLETE working code with all imports, exports, logic, and styling. For React: full components with JSX, hooks, handlers. For data: full arrays with 20-50 items. EXECUTABLE CODE ONLY.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(8, 'Must generate at least 8 files'),
+            })).min(8, 'MUST generate at least 8 complete files'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
