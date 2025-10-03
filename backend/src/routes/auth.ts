@@ -1,209 +1,115 @@
 import { Router } from 'express'
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
-import { z } from 'zod'
-import { db } from '../utils/database'
-import { logger } from '../utils/logger'
+import { authService } from '../services/auth-service'
+import { Request, Response, NextFunction } from 'express'
 
 const router = Router()
 
-// Validation schemas
-const signupSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1),
-  password: z.string().min(6)
-})
-
-const signinSchema = z.object({
-  email: z.string().email(),
-  password: z.string()
-})
-
-// Generate JWT token
-function generateToken(userId: string): string {
-  return jwt.sign(
-    { userId },
-    process.env.JWT_SECRET || 'your_jwt_secret_here',
-    { expiresIn: '7d' }
-  )
-}
-
-// Hash password
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10)
-}
-
-// Verify password
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash)
+interface AuthRequest extends Request {
+  user?: {
+    id: string
+    email: string
+  }
 }
 
 /**
- * @route   POST /api/auth/signup
- * @desc    Create a new user account
+ * @route   POST /api/auth/register
+ * @desc    Register a new user
  * @access  Public
  */
-router.post('/signup', async (req, res) => {
+router.post('/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, name, password } = signupSchema.parse(req.body)
+    const { email, password, name } = req.body
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email }
-    })
-
-    if (existingUser) {
+    if (!email || !password || !name) {
       return res.status(400).json({
         success: false,
-        error: 'User already exists with this email'
+        error: 'Email, password, and name are required'
       })
     }
 
-    // Hash password
-    const hashedPassword = await hashPassword(password)
+    // Validate email
+    if (!authService.validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      })
+    }
 
-    // Create user
-    const user = await db.user.create({
-      data: {
-        email,
-        name,
-        provider: 'local'
-      }
-    })
+    // Validate password
+    const passwordValidation = authService.validatePassword(password)
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password does not meet requirements',
+        details: passwordValidation.errors
+      })
+    }
 
-    // For local development, we'll store the password hash in a separate table
-    // In production, you might use a different approach
-    await db.$executeRaw`
-      CREATE TABLE IF NOT EXISTS user_passwords (
-        user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        password_hash TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `
-
-    await db.$executeRaw`
-      INSERT INTO user_passwords (user_id, password_hash)
-      VALUES (${user.id}, ${hashedPassword})
-      ON CONFLICT (user_id) DO UPDATE SET
-        password_hash = EXCLUDED.password_hash
-    `
-
-    // Generate token
-    const token = generateToken(user.id)
-
-    logger.info('User signed up successfully', {
-      userId: user.id,
-      email: user.email
-    })
+    const result = await authService.register({ email, password, name })
 
     res.status(201).json({
       success: true,
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatarUrl: user.avatarUrl,
-          createdAt: user.createdAt
-        },
-        token
-      }
+      data: result
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation error',
-        details: error.errors
-      })
-    }
-
-    logger.error('Signup error:', error)
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
-    })
+    console.error('Registration error:', error)
+    next(error)
   }
 })
 
 /**
- * @route   POST /api/auth/signin
- * @desc    Sign in user
+ * @route   POST /api/auth/login
+ * @desc    Login user
  * @access  Public
  */
-router.post('/signin', async (req, res) => {
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = signinSchema.parse(req.body)
+    const { email, password } = req.body
 
-    // Find user
-    const user = await db.user.findUnique({
-      where: { email }
-    })
-
-    if (!user) {
-      return res.status(401).json({
+    if (!email || !password) {
+      return res.status(400).json({
         success: false,
-        error: 'Invalid email or password'
+        error: 'Email and password are required'
       })
     }
 
-    // Get password hash
-    const passwordRecord = await db.$queryRaw<Array<{password_hash: string}>>`
-      SELECT password_hash FROM user_passwords WHERE user_id = ${user.id}
-    `
-
-    if (passwordRecord.length === 0) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid email or password'
-      })
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, passwordRecord[0].password_hash)
-
-    if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid email or password'
-      })
-    }
-
-    // Generate token
-    const token = generateToken(user.id)
-
-    logger.info('User signed in successfully', {
-      userId: user.id,
-      email: user.email
-    })
+    const result = await authService.login({ email, password })
 
     res.json({
       success: true,
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          avatarUrl: user.avatarUrl,
-          createdAt: user.createdAt
-        },
-        token
-      }
+      data: result
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    console.error('Login error:', error)
+    next(error)
+  }
+})
+
+/**
+ * @route   POST /api/auth/refresh
+ * @desc    Refresh access token
+ * @access  Public
+ */
+router.post('/refresh', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { refreshToken } = req.body
+
+    if (!refreshToken) {
       return res.status(400).json({
         success: false,
-        error: 'Validation error',
-        details: error.errors
+        error: 'Refresh token is required'
       })
     }
 
-    logger.error('Signin error:', error)
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
+    const result = await authService.refreshToken(refreshToken)
+
+    res.json({
+      success: true,
+      data: result
     })
+  } catch (error) {
+    console.error('Token refresh error:', error)
+    next(error)
   }
 })
 
@@ -212,84 +118,145 @@ router.post('/signin', async (req, res) => {
  * @desc    Get current user
  * @access  Private
  */
-router.get('/me', async (req, res) => {
+router.get('/me', async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const authHeader = req.headers.authorization
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const userId = req.user?.id
+
+    if (!userId) {
       return res.status(401).json({
         success: false,
-        error: 'No token provided'
+        error: 'Unauthorized'
       })
     }
 
-    const token = authHeader.substring(7)
+    const user = await authService.getUserById(userId)
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_here') as { userId: string }
-
-      const user = await db.user.findUnique({
-        where: { id: decoded.userId },
-        include: {
-          ownedOrganizations: {
-            include: {
-              organization: true
-            }
-          },
-          projects: {
-            take: 5,
-            orderBy: { updatedAt: 'desc' }
-          }
-        }
-      })
-
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          error: 'User not found'
-        })
-      }
-
-      res.json({
-        success: true,
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            avatarUrl: user.avatarUrl,
-            createdAt: user.createdAt,
-            organizations: user.ownedOrganizations.map(om => om.organization),
-            recentProjects: user.projects
-          }
-        }
-      })
-    } catch (jwtError) {
-      return res.status(401).json({
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        error: 'Invalid token'
+        error: 'User not found'
       })
     }
-  } catch (error) {
-    logger.error('Get user error:', error)
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
+
+    res.json({
+      success: true,
+      data: user
     })
+  } catch (error) {
+    console.error('Get user error:', error)
+    next(error)
   }
 })
 
 /**
- * @route   POST /api/auth/signout
- * @desc    Sign out user (client-side token removal)
+ * @route   PUT /api/auth/profile
+ * @desc    Update user profile
  * @access  Private
  */
-router.post('/signout', (req, res) => {
-  // In a JWT setup, signout is typically handled client-side
-  // You could implement token blacklisting here if needed
-  res.json({
-    success: true,
-    message: 'Signed out successfully'
-  })
+router.put('/profile', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id
+    const { name, email } = req.body
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      })
+    }
+
+    if (email && !authService.validateEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid email format'
+      })
+    }
+
+    const user = await authService.updateUser(userId, { name, email })
+
+    res.json({
+      success: true,
+      data: user
+    })
+  } catch (error) {
+    console.error('Update profile error:', error)
+    next(error)
+  }
 })
 
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change user password
+ * @access  Private
+ */
+router.post('/change-password', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id
+    const { currentPassword, newPassword } = req.body
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      })
+    }
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Current password and new password are required'
+      })
+    }
+
+    // Validate new password
+    const passwordValidation = authService.validatePassword(newPassword)
+    if (!passwordValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: 'New password does not meet requirements',
+        details: passwordValidation.errors
+      })
+    }
+
+    await authService.changePassword(userId, currentPassword, newPassword)
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    })
+  } catch (error) {
+    console.error('Change password error:', error)
+    next(error)
+  }
+})
+
+/**
+ * @route   DELETE /api/auth/account
+ * @desc    Delete user account
+ * @access  Private
+ */
+router.delete('/account', async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user?.id
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
+      })
+    }
+
+    await authService.deleteUser(userId)
+
+    res.json({
+      success: true,
+      message: 'Account deleted successfully'
+    })
+  } catch (error) {
+    console.error('Delete account error:', error)
+    next(error)
+  }
+})
+
+export default router
 export default router

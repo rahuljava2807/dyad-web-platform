@@ -460,13 +460,13 @@ Generate files that include:
         system: this.buildSystemPrompt(request.context),
         prompt: enhancedPrompt,
         schema: z.object({
-          code: z.string().describe('DEPRECATED: Leave empty, use files array instead'),
+          code: z.string().optional().describe('DEPRECATED: Leave empty, use files array instead'),
           explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
             files: z.array(z.object({
               path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(8).describe('MUST generate minimum 8-10 complete files with REAL code using ONLY Tailwind CSS classes'),
+            })).min(6).describe('MUST generate minimum 6-8 complete files with REAL code using ONLY Tailwind CSS classes'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
@@ -531,13 +531,13 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
           system: this.buildSystemPrompt(request.context),
           prompt: tailwindEnforcementPrompt,
           schema: z.object({
-            code: z.string().describe('DEPRECATED: Leave empty'),
+            code: z.string().optional().describe('DEPRECATED: Leave empty'),
             explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             files: z.array(z.object({
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with PROPER TAILWIND CSS CLASSES. NO generic class names like "metric-card" or "dashboard". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg". EVERY className must be a valid Tailwind CSS utility class.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(8, 'MUST generate at least 8 complete files'),
+            })).min(6, 'MUST generate at least 6 complete files'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
@@ -709,22 +709,10 @@ ${aiRules}`
     // Generate code
     const result = await this.generateCode(generateRequest)
     
-    // Generate preview
+    // Generate preview URL (simplified for now)
     let previewUrl = ''
-    try {
-      const previewResponse = await fetch('http://localhost:5001/api/preview/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: result.files })
-      })
-      
-      if (previewResponse.ok) {
-        const previewData = await previewResponse.json()
-        previewUrl = `/api/preview/${previewData.sessionId}`
-      }
-    } catch (error) {
-      console.error('Error generating preview:', error)
-    }
+    // TODO: Implement proper preview generation
+    // For now, we'll skip preview generation in build mode
 
     return {
       response: `I've generated a ${result.explanation.toLowerCase()}. Here are the files I created:

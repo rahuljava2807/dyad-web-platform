@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
-import { db } from '../utils/database'
+import { authService } from '../services/auth-service'
 import { logger } from '../utils/logger'
 
 export interface AuthRequest extends Request {
@@ -32,14 +31,8 @@ export async function authMiddleware(
     const token = authHeader.substring(7)
 
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || 'your_jwt_secret_here'
-      ) as { userId: string }
-
-      const user = await db.user.findUnique({
-        where: { id: decoded.userId }
-      })
+      const payload = await authService.verifyToken(token)
+      const user = await authService.getUserById(payload.userId)
 
       if (!user) {
         res.status(401).json({
@@ -53,7 +46,6 @@ export async function authMiddleware(
         id: user.id,
         email: user.email,
         name: user.name,
-        avatarUrl: user.avatarUrl || undefined,
         createdAt: user.createdAt
       }
 
@@ -98,21 +90,14 @@ export async function optionalAuthMiddleware(
     const token = authHeader.substring(7)
 
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || 'your_jwt_secret_here'
-      ) as { userId: string }
-
-      const user = await db.user.findUnique({
-        where: { id: decoded.userId }
-      })
+      const payload = await authService.verifyToken(token)
+      const user = await authService.getUserById(payload.userId)
 
       if (user) {
         req.user = {
           id: user.id,
           email: user.email,
           name: user.name,
-          avatarUrl: user.avatarUrl || undefined,
           createdAt: user.createdAt
         }
       }

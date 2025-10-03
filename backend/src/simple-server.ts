@@ -8,6 +8,8 @@ import generationRouter from './routes/generation'
 import previewRouter from './routes/preview'
 import aiRouter from './routes/ai'
 import aiRulesRouter from './routes/ai-rules'
+import exportRouter from './routes/export'
+import authRouter from './routes/auth'
 
 console.log('✅ Modules loaded, initializing app...')
 
@@ -59,6 +61,8 @@ app.use('/api', generationRouter)
 app.use('/api/preview', previewRouter)
 app.use('/api/ai', aiRouter)
 app.use('/api/ai-rules', aiRulesRouter)
+app.use('/api/export', exportRouter)
+app.use('/api/auth', authRouter)
 
 // Health check
 app.get('/health', (req, res) => {
