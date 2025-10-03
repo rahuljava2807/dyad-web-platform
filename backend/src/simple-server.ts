@@ -6,6 +6,8 @@ import { PrismaClient } from '@prisma/client'
 // import apiKeysRouter from './routes/apiKeys'
 import generationRouter from './routes/generation'
 import previewRouter from './routes/preview'
+import aiRouter from './routes/ai'
+import aiRulesRouter from './routes/ai-rules'
 
 console.log('✅ Modules loaded, initializing app...')
 
@@ -55,6 +57,8 @@ async function ensureDefaultUser() {
 // app.use('/api/keys', apiKeysRouter)
 app.use('/api', generationRouter)
 app.use('/api/preview', previewRouter)
+app.use('/api/ai', aiRouter)
+app.use('/api/ai-rules', aiRulesRouter)
 
 // Health check
 app.get('/health', (req, res) => {

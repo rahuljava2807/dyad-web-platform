@@ -89,7 +89,13 @@ router.get('/:sessionId/files', async (req: Request, res: Response) => {
  */
 function buildPreviewHTML(files: any[]): string {
   // Find the main entry point
-  const entryFile = files.find(f => f.path === '/src/app/page.tsx' || f.path === '/src/app/page.jsx');
+  const entryFile = files.find(f => 
+    f.path === '/src/app/page.tsx' || 
+    f.path === '/src/app/page.jsx' ||
+    f.path === 'src/App.tsx' ||
+    f.path === 'App.tsx' ||
+    f.path === '/src/App.tsx'
+  );
 
   if (!entryFile) {
     return buildErrorHTML('No entry point found. Expected /src/app/page.tsx');

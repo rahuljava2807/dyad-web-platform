@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { aiService } from '../services/ai'
-import { projectService } from '../services/projects'
+// import { projectService } from '../services/projects'
 import { logger } from '../utils/logger'
 import { AuthRequest } from '../types/auth'
 
@@ -26,19 +26,20 @@ export async function getAIProviders(req: AuthRequest, res: Response, next: Next
 export async function generateCode(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const { prompt, context, provider, projectId } = req.body
-    const userId = req.user!.id
+    const userId = req.user?.id || 'anonymous'
 
     // Get project context if projectId is provided
     let projectContext = null
     if (projectId) {
-      const project = await projectService.getProject(projectId, userId)
-      if (!project) {
-        return res.status(404).json({
-          success: false,
-          error: 'Project not found',
-        })
-      }
-      projectContext = await projectService.getProjectContext(projectId)
+      // TODO: Implement project service
+      // const project = await projectService.getProject(projectId, userId)
+      // if (!project) {
+      //   return res.status(404).json({
+      //     success: false,
+      //     error: 'Project not found',
+      //   })
+      // }
+      // projectContext = await projectService.getProjectContext(projectId)
     }
 
     const result = await aiService.generateCode({
@@ -67,19 +68,20 @@ export async function generateCode(req: AuthRequest, res: Response, next: NextFu
 export async function chatWithAI(req: AuthRequest, res: Response, next: NextFunction) {
   try {
     const { messages, projectId, provider, mode } = req.body
-    const userId = req.user!.id
+    const userId = req.user?.id || 'anonymous'
 
     // Get project context if projectId is provided
     let projectContext = null
     if (projectId) {
-      const project = await projectService.getProject(projectId, userId)
-      if (!project) {
-        return res.status(404).json({
-          success: false,
-          error: 'Project not found',
-        })
-      }
-      projectContext = await projectService.getProjectContext(projectId)
+      // TODO: Implement project service
+      // const project = await projectService.getProject(projectId, userId)
+      // if (!project) {
+      //   return res.status(404).json({
+      //     success: false,
+      //     error: 'Project not found',
+      //   })
+      // }
+      // projectContext = await projectService.getProjectContext(projectId)
     }
 
     const result = await aiService.chat({
