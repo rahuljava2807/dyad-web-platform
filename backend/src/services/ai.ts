@@ -4,6 +4,7 @@ import { google } from '@ai-sdk/google'
 import { azure } from '@ai-sdk/azure'
 import { generateObject, generateText, streamText } from 'ai'
 import { z } from 'zod'
+import { aiRulesService } from './ai-rules'
 // import { logger } from '../utils/logger' // Not available
 // import { yaviService } from './yavi' // Not needed for basic generation
 // import { usageService } from './usage' // Not available
@@ -22,6 +23,15 @@ interface GenerationContext {
   framework?: string
   language?: string
   dependencies?: string[]
+  chatHistory?: ChatMessage[]
+  aiRules?: string
+  mode?: 'build' | 'ask'
+}
+
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp?: Date
 }
 
 interface GenerateCodeRequest {
@@ -32,10 +42,18 @@ interface GenerateCodeRequest {
 }
 
 interface ChatRequest {
-  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>
+  messages: ChatMessage[]
   context?: GenerationContext
   provider?: string
   userId: string
+  mode?: 'build' | 'ask'
+}
+
+interface ChatResponse {
+  response: string
+  isCode?: boolean
+  files?: GeneratedFile[]
+  previewUrl?: string
 }
 
 interface AnalyzeCodeRequest {
@@ -588,45 +606,160 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
     }
   }
 
-  async chat(request: ChatRequest) {
+  async chat(request: ChatRequest): Promise<ChatResponse> {
     try {
       const provider = request.provider || this.defaultProvider
       const model = this.getModelInstance(provider)
+      const mode = request.mode || 'ask'
 
-      // Track usage
-      // await usageService.trackUsage({
-      //   userId: request.userId,
-      //   type: 'chat',
-      //   provider,
-      //   promptTokens: request.messages.reduce((acc, msg) => acc + msg.content.length, 0),
-      // })
+      // Build context-aware system prompt
+      const systemPrompt = await this.buildChatSystemPrompt(request.context, mode)
 
       // Add system message if not present
       const messages = request.messages
       if (messages[0]?.role !== 'system') {
         messages.unshift({
           role: 'system',
-          content: this.buildSystemPrompt(request.context),
+          content: systemPrompt,
         })
       }
 
-      const result = await generateText({
-        model,
-        messages,
-      })
+      // Determine if this is a build request or ask request
+      const lastMessage = messages[messages.length - 1]
+      const isBuildRequest = mode === 'build' || this.isBuildRequest(lastMessage.content)
 
-      console.log(`AI chat for user ${request.userId}`, {
-        provider,
-        messagesCount: request.messages.length,
-      })
-
-      return {
-        message: result.text,
-        usage: result.usage,
+      if (isBuildRequest) {
+        // Handle build mode - generate code
+        return await this.handleBuildMode(request, messages, model)
+      } else {
+        // Handle ask mode - provide conversational response
+        return await this.handleAskMode(request, messages, model)
       }
+
     } catch (error) {
       console.error('Error in AI chat:', error)
       throw new Error('Failed to process chat message. Please try again.')
+    }
+  }
+
+  private async buildChatSystemPrompt(context?: GenerationContext, mode: 'build' | 'ask' = 'ask'): Promise<string> {
+    const basePrompt = mode === 'build' 
+      ? this.buildSystemPrompt(context)
+      : `You are a helpful AI assistant for Yavi Studio, an AI-powered web application builder.
+
+You help users:
+- Answer questions about web development, React, Next.js, and modern frameworks
+- Explain code concepts and best practices
+- Provide guidance on UI/UX design
+- Help debug issues and provide solutions
+- Suggest improvements for applications
+
+When users ask you to build something, you should:
+- Ask clarifying questions about requirements
+- Suggest the best approach and technologies
+- Provide step-by-step guidance
+- Offer to generate code when appropriate
+
+Be helpful, clear, and encouraging. Always consider the user's skill level and provide appropriate explanations.`
+
+    // Load AI rules from project if available
+    let aiRules = context?.aiRules
+    if (!aiRules && context?.project?.id) {
+      try {
+        const rules = await aiRulesService.getAIRules(context.project.id)
+        aiRules = rules?.content
+      } catch (error) {
+        console.error('Error loading AI rules:', error)
+      }
+    }
+
+    // Add AI rules if available
+    if (aiRules) {
+      return `${basePrompt}
+
+PROJECT-SPECIFIC RULES:
+${aiRules}`
+    }
+
+    return basePrompt
+  }
+
+  private isBuildRequest(message: string): boolean {
+    const buildKeywords = [
+      'build', 'create', 'generate', 'make', 'develop', 'construct',
+      'app', 'application', 'website', 'dashboard', 'component',
+      'todo', 'blog', 'ecommerce', 'portfolio', 'landing page'
+    ]
+    
+    const lowerMessage = message.toLowerCase()
+    return buildKeywords.some(keyword => lowerMessage.includes(keyword))
+  }
+
+  private async handleBuildMode(request: ChatRequest, messages: any[], model: any): Promise<ChatResponse> {
+    const lastMessage = messages[messages.length - 1]
+    
+    // Convert chat request to code generation request
+    const generateRequest: GenerateCodeRequest = {
+      prompt: lastMessage.content,
+      context: request.context,
+      provider: request.provider,
+      userId: request.userId
+    }
+
+    // Generate code
+    const result = await this.generateCode(generateRequest)
+    
+    // Generate preview
+    let previewUrl = ''
+    try {
+      const previewResponse = await fetch('http://localhost:5001/api/preview/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: result.files })
+      })
+      
+      if (previewResponse.ok) {
+        const previewData = await previewResponse.json()
+        previewUrl = `/api/preview/${previewData.sessionId}`
+      }
+    } catch (error) {
+      console.error('Error generating preview:', error)
+    }
+
+    return {
+      response: `I've generated a ${result.explanation.toLowerCase()}. Here are the files I created:
+
+${result.files.map(file => `- ${file.path}`).join('\n')}
+
+The application includes:
+- Modern React components with TypeScript
+- Beautiful Tailwind CSS styling
+- Interactive animations with Framer Motion
+- Data visualizations with Recharts
+- Responsive design for all devices
+
+You can review each file and approve or reject changes. The preview is available in the preview panel.`,
+      isCode: true,
+      files: result.files,
+      previewUrl
+    }
+  }
+
+  private async handleAskMode(request: ChatRequest, messages: any[], model: any): Promise<ChatResponse> {
+    const result = await generateText({
+      model,
+      messages,
+    })
+
+    console.log(`AI chat response for user ${request.userId}`, {
+      provider: request.provider,
+      mode: 'ask',
+      messagesCount: request.messages.length,
+    })
+
+    return {
+      response: result.text,
+      isCode: false
     }
   }
 

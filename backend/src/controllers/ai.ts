@@ -66,7 +66,7 @@ export async function generateCode(req: AuthRequest, res: Response, next: NextFu
  */
 export async function chatWithAI(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    const { messages, projectId, provider } = req.body
+    const { messages, projectId, provider, mode } = req.body
     const userId = req.user!.id
 
     // Get project context if projectId is provided
@@ -86,9 +86,11 @@ export async function chatWithAI(req: AuthRequest, res: Response, next: NextFunc
       messages,
       context: {
         project: projectContext,
+        mode,
       },
       provider,
       userId,
+      mode,
     })
 
     res.json({

@@ -2,6 +2,7 @@ import { Express, Router } from 'express'
 import authRoutes from './auth'
 import projectRoutes from './projects'
 import aiRoutes from './ai'
+import aiRulesRoutes from './ai-rules'
 // import userRoutes from './users'
 // import yaviRoutes from './yavi'
 // import adminRoutes from './admin'
@@ -23,7 +24,8 @@ export function setupRoutes(app: Express) {
   apiRouter.use('/auth', authRoutes)
   // apiRouter.use('/users', userRoutes)
   apiRouter.use('/projects', projectRoutes)
-  // apiRouter.use('/ai', aiRoutes)
+  apiRouter.use('/ai', aiRoutes)
+  apiRouter.use('/ai-rules', aiRulesRoutes)
   // apiRouter.use('/yavi', yaviRoutes)
   // apiRouter.use('/admin', adminRoutes)
 
