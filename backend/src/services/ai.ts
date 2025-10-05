@@ -4,6 +4,8 @@ import { google } from '@ai-sdk/google'
 import { azure } from '@ai-sdk/azure'
 import { generateObject, generateText, streamText } from 'ai'
 import { z } from 'zod'
+import { getComponentInstructions } from '../lib/componentSelector'
+import { comprehensiveValidation, generateValidationReport } from '../lib/fileValidator'
 // import { logger } from '../utils/logger' // Not available
 // import { yaviService } from './yavi' // Not needed for basic generation
 // import { usageService } from './usage' // Not available
@@ -403,6 +405,10 @@ Use strict TypeScript with proper type definitions and interfaces.`
       //   }
       // }
 
+      // 🚀 PHASE 1: Add component-specific shadcn-ui instructions
+      const componentConfig = getComponentInstructions(request.prompt)
+      enhancedPrompt += `\n\n${componentConfig.instructions}\n`
+
       // Add production-quality requirements to the prompt
       enhancedPrompt += `
 
@@ -579,6 +585,27 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
         console.log(`Regenerated with ${retryResult.object.files.length} files`)
         return retryResult.object
+      }
+
+      // 🚀 PHASE 1: Validate files with comprehensive validation
+      const validationResult = comprehensiveValidation(
+        result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                   f.path.endsWith('.json') ? 'json' : 'text'
+        })),
+        'default' // Could be enhanced to detect type from prompt
+      )
+
+      const report = generateValidationReport(validationResult)
+      console.log(report)
+
+      // Log shadcn-ui component usage
+      if (validationResult.shadcnCheck.usesShadcn) {
+        console.log(`✅ shadcn-ui components found: ${validationResult.shadcnCheck.componentsFound.join(', ')}`)
+      } else {
+        console.log(`⚠️  No shadcn-ui components detected`)
       }
 
       return result.object
