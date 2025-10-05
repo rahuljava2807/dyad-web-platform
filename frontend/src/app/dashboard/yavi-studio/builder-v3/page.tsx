@@ -6,6 +6,7 @@ import { PromptInterface } from '@/components/Builder/PromptInterface';
 import { FileTreeVisualizer } from '@/components/Builder/FileTreeVisualizer';
 import { LivePreviewPanel } from '@/components/Builder/LivePreviewPanel_v2';
 import { ApprovalModal } from '@/components/Builder/ApprovalModal';
+import { ThinkingPanel, ThinkingStep } from '@/components/Builder/ThinkingPanel';
 import { useProjectStore, ProjectFile } from '@/store/projectStore';
 import { generationService } from '@/services/GenerationService';
 import { BundlerService } from '@/services/BundlerService';
@@ -21,6 +22,10 @@ export default function AppBuilderV3Page() {
   const [currentStreamingFile, setCurrentStreamingFile] = useState<ProjectFile | null>(null);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
 
+  // Thinking panel state
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([]);
+  const [thinkingSummary, setThinkingSummary] = useState('');
+
   // Initialize esbuild on component mount
   useEffect(() => {
     BundlerService.initialize().catch((error) => {
@@ -32,6 +37,26 @@ export default function AppBuilderV3Page() {
     setGenerationStatus('generating');
     setGeneratedFiles([]);
     setProgress({ current: 0, total: 0 });
+
+    // Initialize thinking steps
+    setThinkingSummary(`Creating ${settings.selectedIndustry || 'your'} application based on: "${prompt}"`);
+    setThinkingSteps([
+      {
+        title: 'Analyzing Request',
+        description: 'Understanding your requirements and project goals...',
+        status: 'in_progress'
+      },
+      {
+        title: 'Selecting Approach',
+        description: 'Checking template library and planning architecture...',
+        status: 'pending'
+      },
+      {
+        title: 'Generating Files',
+        description: 'Creating components and application structure...',
+        status: 'pending'
+      }
+    ]);
 
     // Create project if not exists
     let project = currentProject;
@@ -48,8 +73,57 @@ export default function AppBuilderV3Page() {
       prompt,
       settings,
       {
+        onThinkingStep: (step) => {
+          setThinkingSteps((prev) => {
+            const newSteps = [...prev];
+            const existingIndex = newSteps.findIndex(s => s.title === step.title);
+
+            if (existingIndex >= 0) {
+              // Update existing step
+              newSteps[existingIndex] = {
+                ...newSteps[existingIndex],
+                description: step.description,
+                status: 'completed'
+              };
+            } else {
+              // Add new step
+              newSteps.push({
+                title: step.title,
+                description: step.description,
+                status: 'in_progress'
+              });
+            }
+
+            return newSteps;
+          });
+        },
+
+        onThinkingSummary: (summary) => {
+          setThinkingSummary(summary);
+        },
+
         onFileStart: (file) => {
           console.log('Starting file:', file.path);
+
+          // Update thinking steps to show generation in progress
+          setThinkingSteps([
+            {
+              title: 'Analyzing Request',
+              description: 'Understanding your requirements and project goals...',
+              status: 'completed'
+            },
+            {
+              title: 'Selecting Approach',
+              description: 'Checking template library and planning architecture...',
+              status: 'completed'
+            },
+            {
+              title: 'Generating Files',
+              description: `Creating ${file.path}...`,
+              status: 'in_progress'
+            }
+          ]);
+
           setCurrentStreamingFile({
             path: file.path,
             content: '',
@@ -136,6 +210,13 @@ export default function AppBuilderV3Page() {
   return (
     <YaviStudioLayout>
       <div className="h-[calc(100vh-64px)] flex flex-col">
+        {/* Thinking Panel */}
+        <ThinkingPanel
+          isVisible={generationStatus === 'generating'}
+          steps={thinkingSteps}
+          summary={thinkingSummary}
+        />
+
         {/* Progress Bar */}
         {generationStatus === 'generating' && progress.total > 0 && (
           <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">

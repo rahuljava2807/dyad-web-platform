@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
       files: data.files || [],
       explanation: data.explanation || '',
       dependencies: data.dependencies || [],
+      thinking: data.thinking || null, // Include thinking steps
+      source: data.source || 'ai',
+      templateId: data.templateId || null,
+      templateName: data.templateName || null,
     });
   } catch (error) {
     console.error('Generation API error:', error);

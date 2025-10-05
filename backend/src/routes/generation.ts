@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { aiService } from '../services/ai';
+import { TemplateMatcher } from '../services/templateMatcher';
 
 const router = express.Router();
 
@@ -39,7 +40,54 @@ router.post('/generate', async (req: Request, res: Response) => {
   }
 
   try {
-    console.log('🚀 Generating with enhanced AI prompts...');
+    // Step 1: Check for template match
+    console.log('🔍 Checking for template match...');
+    const template = TemplateMatcher.selectTemplate(prompt);
+
+    if (template) {
+      console.log(`✨ Template matched: ${template.metadata.name} (${template.metadata.id})`);
+      console.log(`📦 Returning ${template.files.length} pre-built files`);
+
+      // Add file summaries to template files
+      const filesWithSummaries = template.files.map(file => ({
+        ...file,
+        summary: generateFileSummary(file.path, template.metadata.name)
+      }));
+
+      // Return template files with thinking steps and summaries
+      return res.json({
+        files: filesWithSummaries,
+        source: 'template',
+        templateId: template.metadata.id,
+        templateName: template.metadata.name,
+        explanation: `Using pre-built template: ${template.metadata.description}`,
+        dependencies: {}, // Templates include package.json with dependencies
+        instructions: 'Template loaded successfully',
+        thinking: {
+          steps: [
+            {
+              title: 'Analyzing the Request',
+              description: `Understanding your ${template.metadata.category} requirements...`,
+              timestamp: Date.now() - 2000
+            },
+            {
+              title: 'Selecting Template',
+              description: `Matched to ${template.metadata.name} template for instant generation.`,
+              timestamp: Date.now() - 1000
+            },
+            {
+              title: 'Loading Components',
+              description: `Preparing ${template.files.length} production-ready files.`,
+              timestamp: Date.now()
+            }
+          ],
+          summary: `Using the ${template.metadata.name} template to instantly generate a production-ready ${template.metadata.category} application.`
+        }
+      });
+    }
+
+    // Step 2: No template match - use AI generation
+    console.log('🚀 No template match, generating with enhanced AI prompts...');
 
     // Use the REAL AI service with enhanced prompts
     const result = await aiService.generateCode({
@@ -52,7 +100,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       provider: provider || 'openai',
     });
 
-    console.log(`✅ Generated ${result.files.length} files`);
+    console.log(`✅ Generated ${result.files.length} files with AI`);
 
     // Return the generated code
     res.json({
@@ -61,6 +109,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       files: result.files,
       dependencies: result.dependencies,
       instructions: result.instructions,
+      source: 'ai',
     });
   } catch (error) {
     console.error('❌ Generation error:', error);
@@ -103,6 +152,42 @@ router.get('/yavi/test', async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * Helper function to generate file summaries
+ */
+function generateFileSummary(filePath: string, templateName: string): string {
+  const fileName = filePath.split('/').pop() || filePath;
+
+  // Generate contextual summaries based on file type and path
+  if (fileName === 'package.json') {
+    return 'Defining project dependencies and scripts for the application.';
+  }
+
+  if (fileName === 'README.md') {
+    return 'Providing documentation and setup instructions for the project.';
+  }
+
+  if (fileName.includes('tailwind.config')) {
+    return 'Configuring Tailwind CSS with custom theme settings.';
+  }
+
+  if (filePath.includes('/components/')) {
+    const componentName = fileName.replace(/\.(tsx|jsx|ts|js)$/, '');
+    return `Creating ${componentName} component with modern UI patterns.`;
+  }
+
+  if (filePath.includes('/pages/') || filePath.includes('/app/')) {
+    return `Implementing main page component for the ${templateName}.`;
+  }
+
+  if (fileName === 'App.tsx' || fileName === 'App.jsx') {
+    return `Setting up the main application component with routing and layout.`;
+  }
+
+  // Default summary
+  return `Implementing ${fileName} for the ${templateName}.`;
+}
 
 /**
  * Helper function to validate provider API keys

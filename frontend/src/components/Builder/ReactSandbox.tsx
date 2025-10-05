@@ -211,7 +211,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
     editorWidthPercentage: 0,
     autorun: true,
     autoReload: true,
-    recompileMode: 'immediate',
+    recompileMode: 'immediate' as const,
     recompileDelay: 500
   };
 
@@ -228,14 +228,7 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Robo
           dependencies: customDependencies,
           environment: 'create-react-app'
         }}
-        options={{
-          ...sandpackOptions,
-          showConsoleButton: true,
-          showInlineErrors: true,
-          editorHeight: '100%',
-          editorWidthPercentage: 0,
-          bundlerURL: 'https://sandpack-bundler.codesandbox.io'
-        }}
+        options={sandpackOptions}
       >
         <SandpackPreview
           showNavigator={showNavigator}

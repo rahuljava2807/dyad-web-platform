@@ -52,6 +52,18 @@ const config: Config = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        yavi: {
+          blue: '#1E3A8A',
+          purple: '#7C3AED',
+          'blue-50': '#EFF6FF',
+          'blue-100': '#DBEAFE',
+          'blue-600': '#2563EB',
+          'blue-700': '#1D4ED8',
+          'purple-50': '#FAF5FF',
+          'purple-100': '#F3E8FF',
+          'purple-600': '#9333EA',
+          'purple-700': '#7E22CE',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -96,20 +108,6 @@ const config: Config = {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-      },
-      colors: {
-        yavi: {
-          blue: '#1E3A8A',
-          purple: '#7C3AED',
-          'blue-50': '#EFF6FF',
-          'blue-100': '#DBEAFE',
-          'blue-600': '#2563EB',
-          'blue-700': '#1D4ED8',
-          'purple-50': '#FAF5FF',
-          'purple-100': '#F3E8FF',
-          'purple-600': '#9333EA',
-          'purple-700': '#7E22CE',
-        },
       },
       typography: {
         DEFAULT: {

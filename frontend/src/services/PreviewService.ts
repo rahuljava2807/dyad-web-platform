@@ -124,7 +124,7 @@ export class PreviewService {
 
     // Remove TypeScript-specific syntax
     // Remove interface declarations
-    content = content.replace(/interface\s+\w+\s*\{[^}]*\}/gs, '');
+    content = content.replace(/interface\s+\w+\s*\{[^}]*\}/g, '');
 
     // Remove type aliases
     content = content.replace(/type\s+\w+\s*=\s*[^;]+;/g, '');

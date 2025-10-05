@@ -7,11 +7,64 @@ import {
   Smartphone,
   Loader2,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Maximize2
 } from 'lucide-react';
 import { ProjectFile } from '@/store/projectStore';
 import { BundlerService } from '@/services/BundlerService';
 import { generatePreviewHTML } from '@/lib/preview-runtime';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+
+// Preview Skeleton Component
+function PreviewSkeleton() {
+  return (
+    <div
+      className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200"
+      style={{
+        width: '100%',
+        height: '600px',
+        maxWidth: '100%',
+      }}
+    >
+      {/* Browser Chrome Skeleton */}
+      <div className="bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+        <div className="flex gap-2">
+          <Skeleton className="w-3 h-3 rounded-full" />
+          <Skeleton className="w-3 h-3 rounded-full" />
+          <Skeleton className="w-3 h-3 rounded-full" />
+        </div>
+        <Skeleton className="flex-1 h-6 rounded-lg mx-4" />
+        <Skeleton className="w-6 h-6 rounded" />
+      </div>
+
+      {/* Content Skeleton */}
+      <div className="p-8 space-y-6">
+        <div className="text-center space-y-4">
+          <Skeleton className="h-8 w-48 mx-auto" />
+          <Skeleton className="h-4 w-64 mx-auto" />
+        </div>
+        
+        <div className="max-w-md mx-auto space-y-4">
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+          <Skeleton className="h-10 w-full" />
+        </div>
+        
+        <div className="flex justify-center gap-4">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface LivePreviewPanelProps {
   files: ProjectFile[];
@@ -152,11 +205,43 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({ files, statu
 
       {/* Preview Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-auto bg-gray-100">
-        {/* Building State */}
+        {/* Building State with Skeleton */}
         {isBuilding && (
-          <div className="flex items-center gap-2 text-gray-600">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Building preview...</span>
+          <div className="w-full max-w-6xl space-y-4">
+            {/* Header Skeleton */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 space-y-4">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-96" />
+                </div>
+              </div>
+
+              {/* Content Skeleton */}
+              <div className="space-y-3 pt-4">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-5/6" />
+                <Skeleton className="h-8 w-4/6" />
+              </div>
+
+              {/* Card Grid Skeleton */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-6 border border-gray-200 rounded-lg space-y-3">
+                    <Skeleton className="h-10 w-10 rounded-lg" />
+                    <Skeleton className="h-5 w-32" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-blue-600 mt-6">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span className="font-medium">Building your preview...</span>
+            </div>
           </div>
         )}
 
@@ -182,10 +267,10 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({ files, statu
           </div>
         )}
 
-        {/* Preview Iframe */}
+        {/* Preview Iframe with Browser Chrome */}
         {showPreview && !isBuilding && (
           <div
-            className="bg-white rounded-lg shadow-2xl overflow-hidden transition-all duration-300"
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden transition-all duration-500 ease-out border border-gray-200"
             style={{
               width: currentSize.width,
               height: currentSize.height,
@@ -193,13 +278,42 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({ files, statu
               maxHeight: '100%'
             }}
           >
-            <iframe
-              key={previewUrl}
-              src={previewUrl}
-              className="w-full h-full border-0"
-              sandbox="allow-scripts allow-same-origin"
-              title="Live Preview"
-            />
+            {/* Mock Browser Chrome */}
+            <div className="bg-gray-100 border-b border-gray-200 px-4 py-2 flex items-center gap-2">
+              {/* Traffic Lights (macOS style) */}
+              <div className="flex gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+              </div>
+
+              {/* Address Bar */}
+              <div className="flex-1 bg-white rounded-lg px-3 py-1.5 flex items-center gap-2 border border-gray-200 mx-4">
+                <span className="text-gray-400 text-xs">🔒</span>
+                <span className="text-gray-600 text-xs font-mono truncate">
+                  localhost:3000
+                </span>
+              </div>
+
+              {/* Fullscreen Button */}
+              <button
+                className="p-1 rounded hover:bg-gray-200 transition-colors text-gray-500"
+                title="Fullscreen"
+              >
+                <Maximize2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Iframe */}
+            <div className="w-full" style={{ height: 'calc(100% - 40px)' }}>
+              <iframe
+                key={previewUrl}
+                src={previewUrl}
+                className="w-full h-full border-0"
+                sandbox="allow-scripts allow-same-origin"
+                title="Live Preview"
+              />
+            </div>
           </div>
         )}
 
@@ -220,11 +334,25 @@ export const LivePreviewPanel: React.FC<LivePreviewPanelProps> = ({ files, statu
           </div>
         )}
 
-        {/* Generating State */}
+        {/* Generating State with Skeleton */}
         {status === 'generating' && (
-          <div className="flex items-center gap-2 text-gray-600">
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Generating application...</span>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-gray-600 mb-4">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Generating application...</span>
+            </div>
+            <PreviewSkeleton />
+          </div>
+        )}
+
+        {/* Building State with Skeleton */}
+        {isBuilding && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-gray-600 mb-4">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Building preview...</span>
+            </div>
+            <PreviewSkeleton />
           </div>
         )}
       </div>

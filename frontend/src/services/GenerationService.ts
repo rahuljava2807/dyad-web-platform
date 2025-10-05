@@ -1,10 +1,14 @@
 export interface GenerationCallbacks {
   onFileStart: (file: { path: string; name: string; language: string }) => void;
   onContentChunk: (chunk: string) => void;
-  onFileComplete: (file: { path: string; content: string; language: string }) => void;
+  onFileComplete: (file: { path: string; content: string; language: string; summary?: string }) => void;
   onComplete: (files: any[]) => void;
   onError: (error: any) => void;
   onProgress?: (progress: { current: number; total: number }) => void;
+
+  // NEW: Thinking callbacks
+  onThinkingStep?: (step: { title: string; description: string }) => void;
+  onThinkingSummary?: (summary: string) => void;
 }
 
 export interface GenerationSettings {
@@ -40,7 +44,25 @@ export class GenerationService {
       }
 
       const data = await response.json();
-      const { files, sessionId } = data;
+      const { files, sessionId, thinking } = data;
+
+      // Handle thinking data if provided
+      if (thinking) {
+        // Send thinking summary
+        if (thinking.summary) {
+          callbacks.onThinkingSummary?.(thinking.summary);
+        }
+
+        // Send thinking steps
+        if (thinking.steps && Array.isArray(thinking.steps)) {
+          for (const step of thinking.steps) {
+            callbacks.onThinkingStep?.({
+              title: step.title,
+              description: step.description
+            });
+          }
+        }
+      }
 
       // Handle non-streaming response (files returned immediately)
       if (files && Array.isArray(files)) {
@@ -61,7 +83,8 @@ export class GenerationService {
             content: file.content,
             language: file.path.endsWith('.tsx') || file.path.endsWith('.ts') ? 'typescript' :
                      file.path.endsWith('.json') ? 'json' :
-                     file.path.endsWith('.md') ? 'markdown' : 'text'
+                     file.path.endsWith('.md') ? 'markdown' : 'text',
+            summary: file.summary // Include summary if provided
           });
 
           callbacks.onProgress?.({
