@@ -54,8 +54,24 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
       'react-dom': '^18.2.0'
     }
 
+    // Unsupported dependencies that Sandpack doesn't support
+    const unsupportedDeps = [
+      'react-hook-form',
+      '@hookform/resolvers',
+      'zod',
+      'yup',
+      'formik',
+      'axios',
+      'swr',
+      'react-query',
+      '@tanstack/react-query'
+    ]
+
+    // PASS 1: Identify files to skip
+    const skippedFiles = new Set<string>()
+
     files.forEach(file => {
-      // Extract dependencies from package.json
+      // Skip package.json
       if (file.path.includes('package.json')) {
         try {
           const packageJson = JSON.parse(file.content)
@@ -68,22 +84,10 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
         } catch (e) {
           console.error('Failed to parse package.json:', e)
         }
-        return // Don't add package.json to Sandpack files
+        return
       }
 
-      // Check for unsupported dependencies in file content
-      const unsupportedDeps = [
-        'react-hook-form',
-        '@hookform/resolvers',
-        'zod',
-        'yup',
-        'formik',
-        'axios',
-        'swr',
-        'react-query',
-        '@tanstack/react-query'
-      ]
-
+      // Check for unsupported dependencies
       const hasUnsupportedDep = unsupportedDeps.some(dep =>
         file.content.includes(`from '${dep}'`) ||
         file.content.includes(`from "${dep}"`) ||
@@ -98,19 +102,59 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
         file.path.includes('package.json') ||
         file.path.includes('tsconfig') ||
         file.path.includes('.config') ||
-        file.path.toLowerCase().includes('validation') ||   // Skip validation files
-        file.path.toLowerCase().includes('schema.') ||      // Skip schema files (loginSchema.ts)
-        /schema\.(ts|js|tsx|jsx)$/i.test(file.path) ||    // Skip files ending with schema.*
-        file.path.includes('/api/') ||        // Skip API routes
-        file.path.includes('/server/') ||     // Skip server code
-        file.path.includes('.test.') ||       // Skip tests
-        file.path.includes('.spec.') ||       // Skip specs
-        hasUnsupportedDep                     // Skip files with unsupported dependencies
+        file.path.toLowerCase().includes('validation') ||
+        file.path.toLowerCase().includes('schema.') ||
+        /schema\.(ts|js|tsx|jsx)$/i.test(file.path) ||
+        file.path.includes('/api/') ||
+        file.path.includes('/server/') ||
+        file.path.includes('.test.') ||
+        file.path.includes('.spec.') ||
+        hasUnsupportedDep
 
       if (shouldSkip) {
+        // Get filename without extension for import matching
+        const fileName = file.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || ''
+        skippedFiles.add(fileName)
         console.log(`[Sandpack] Skipping file: ${file.path}${hasUnsupportedDep ? ' (unsupported dependencies)' : ''}`)
+      }
+    })
+
+    // PASS 2: Process files, also skipping those that import skipped files
+    files.forEach(file => {
+      if (file.path.includes('package.json')) return
+
+      const fileName = file.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || ''
+
+      // Already marked as skipped
+      if (skippedFiles.has(fileName)) return
+
+      // Check if this file imports any skipped files
+      const importsSkippedFile = Array.from(skippedFiles).some(skippedFile => {
+        return file.content.includes(`from './${skippedFile}'`) ||
+               file.content.includes(`from "./${skippedFile}"`) ||
+               file.content.includes(`from '../${skippedFile}'`) ||
+               file.content.includes(`from "../${skippedFile}"`) ||
+               file.content.includes(`import ${skippedFile} from`) ||
+               file.content.includes(`import { `) && file.content.includes(`} from './${skippedFile}'`)
+      })
+
+      if (importsSkippedFile) {
+        console.log(`[Sandpack] Skipping file: ${file.path} (imports skipped files)`)
         return
       }
+
+      // Skip basic non-source files
+      const shouldSkip =
+        file.path.includes('README') ||
+        file.path.includes('.md') ||
+        file.path.includes('tsconfig') ||
+        file.path.includes('.config') ||
+        file.path.includes('/api/') ||
+        file.path.includes('/server/') ||
+        file.path.includes('.test.') ||
+        file.path.includes('.spec.')
+
+      if (shouldSkip) return
 
       // Normalize file paths for Sandpack (must start with /)
       let normalizedPath = file.path.startsWith('/') ? file.path : `/${file.path}`
