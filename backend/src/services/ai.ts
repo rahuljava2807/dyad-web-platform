@@ -6,6 +6,7 @@ import { generateObject, generateText, streamText } from 'ai'
 import { z } from 'zod'
 import { getComponentInstructions } from '../lib/componentSelector'
 import { comprehensiveValidation, generateValidationReport } from '../lib/fileValidator'
+import { getTemplate, getTemplatePromptEnhancement, type IndustryTemplate } from '../lib/industryTemplates'
 // import { logger } from '../utils/logger' // Not available
 // import { yaviService } from './yavi' // Not needed for basic generation
 // import { usageService } from './usage' // Not available
@@ -24,6 +25,8 @@ interface GenerationContext {
   framework?: string
   language?: string
   dependencies?: string[]
+  industry?: 'healthcare' | 'fintech' | 'legal' | 'ecommerce' | 'saas'
+  templateId?: string
 }
 
 interface GenerateCodeRequest {
@@ -198,6 +201,92 @@ Example files for a dashboard:
 - Include proper TypeScript types
 - Generate beautiful UIs with Tailwind gradients, shadows, and hover effects
 
+## INTERACTIVE FORM GENERATION (PHASE 2)
+
+When generating forms, you MUST include:
+
+### FUNCTIONAL REQUIREMENTS:
+- All fields must be fully interactive with real onChange handlers
+- Include comprehensive validation (required, format, range, custom rules)
+- Implement proper TypeScript interfaces for form data
+- Add loading states for async operations (submit, API calls)
+- Include error handling with user-friendly messages
+- Implement success/error feedback (not just console.log)
+
+### VALIDATION RULES:
+- Email: Use RFC 5322 compliant regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+- Phone: Support international format with country code
+- Password: Min 8 chars, uppercase, lowercase, number, special char
+- Date: Validate against min/max dates, no weekends for business forms
+- File Upload: Check size limits (5MB default), allowed types, show file preview
+- Credit Card: Luhn algorithm validation (if applicable)
+- Custom Rules: Implement business logic (age > 18, quantity > 0, etc.)
+
+### STATE MANAGEMENT:
+typescript
+const [formData, setFormData] = useState<FormType>({...})
+const [errors, setErrors] = useState<Partial<FormType>>({})
+const [isSubmitting, setIsSubmitting] = useState(false)
+const [submitSuccess, setSubmitSuccess] = useState(false)
+
+
+### EVENT HANDLERS:
+- onChange: Update form data, clear field error
+- onBlur: Validate individual field, show error if invalid
+- onSubmit: Prevent default, validate all, submit if valid, show loading
+- onFocus: Clear error for that field (better UX)
+
+### ERROR DISPLAY:
+- Show errors below the input field
+- Red border on invalid inputs
+- Clear, actionable error messages ("Email is required" not "Invalid input")
+- Error summary at top of form if multiple errors
+
+### ACCESSIBILITY (WCAG 2.1 AA):
+- Proper label association: <label htmlFor="email">Email</label> <input id="email" />
+- ARIA attributes: aria-required="true", aria-invalid="true", aria-describedby="email-error"
+- Keyboard navigation: Tab order logical, Enter to submit, Esc to cancel
+- Focus indicators: Visible focus ring on all interactive elements
+- Error announcements: aria-live="polite" for screen readers
+- Color contrast: 4.5:1 minimum for text, 3:1 for UI components
+
+### UX ENHANCEMENTS:
+- Auto-focus first field on component mount
+- Show password toggle button (eye icon)
+- Character counter for textareas (e.g., "250/500 characters")
+- Password strength indicator (Weak/Medium/Strong)
+- Helpful placeholder text with examples
+- Disable submit button during submission
+- Loading spinner in submit button
+- Success message after submission (not just alert)
+
+### TAILWIND STYLING FOR FORMS:
+Input Default State:
+className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+
+Input Error State:
+className="w-full px-4 py-3 border border-red-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+
+Input Success State (optional):
+className="w-full px-4 py-3 border border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+
+Label:
+className="block text-sm font-medium text-gray-700 mb-2"
+
+Error Message:
+className="mt-1 text-sm text-red-600"
+
+Submit Button:
+className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+
+### CODE QUALITY FOR FORMS:
+- NO placeholder code or TODO comments
+- Extract validation to separate utils file (src/utils/validation.ts)
+- Reusable components for common patterns (FormInput, FormSelect, etc.)
+- Clear function names: handleEmailChange, validateEmail, submitForm
+- TypeScript strict mode compliant
+- Error boundaries around form components
+
 ## REMEMBER
 
 Make every application beautiful, complete, and production-ready. Code should be something developers want to show off.`
@@ -276,6 +365,20 @@ Use strict TypeScript with proper type definitions and interfaces.`
       // 🚀 PHASE 1: Add component-specific shadcn-ui instructions
       const componentConfig = getComponentInstructions(request.prompt)
       enhancedPrompt += `\n\n${componentConfig.instructions}\n`
+
+      // 🚀 PHASE 2: Industry Template Integration
+      let templateEnhancement = ''
+      if (request.context?.industry && request.context?.templateId) {
+        const template = getTemplate(request.context.industry, request.context.templateId)
+        if (template) {
+          templateEnhancement = getTemplatePromptEnhancement(template)
+          enhancedPrompt += `\n\n${templateEnhancement}\n`
+          console.log(`🏥 Using industry template: ${template.name} (${template.industry.toUpperCase()})`)
+          console.log(`📋 Compliance requirements: ${template.compliance.join(', ')}`)
+        } else {
+          console.warn(`⚠️  Template not found: ${request.context.templateId} in ${request.context.industry}`)
+        }
+      }
 
       // Add production-quality requirements to the prompt
       enhancedPrompt += `
