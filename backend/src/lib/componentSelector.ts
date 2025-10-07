@@ -304,11 +304,18 @@ export function generateImportInstructions(config: ComponentLibraryConfig): stri
 The following components are PRE-BUILT and will be automatically included in your project.
 Import them using @/components/ui/* paths:
 
-REQUIRED IMPORTS (use exactly these import statements):
+⚠️ CRITICAL: Import each component from its INDIVIDUAL file path, NOT from a barrel export!
+
+✅ CORRECT IMPORTS (use exactly these):
 ${config.imports.filter(imp => !imp.includes('react-hook-form') && !imp.includes('zod') && !imp.includes('@hookform/resolvers')).join('\n')}
 
 // Also import the utility function:
 import { cn } from "@/lib/utils"
+
+❌ WRONG: import { Button, Input } from '@/components/ui'
+❌ WRONG: import { Button } from '@/components/ui'
+✅ RIGHT: import { Button } from "@/components/ui/button"
+✅ RIGHT: import { Input } from "@/components/ui/input"
 
 COMPONENT EXAMPLES (these are already built, just import and use them):
 
