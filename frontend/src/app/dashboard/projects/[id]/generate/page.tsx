@@ -254,14 +254,14 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
               {/* Capabilities Being Added */}
               {capabilities.length > 0 && (
                 <div className="mt-6 space-y-2">
-                  {capabilities.map((capability, index) => (
+                  {[...new Set(capabilities)].map((capability, index) => (
                     <div
-                      key={index}
-                      className="text-white/90 text-sm flex items-center justify-center gap-2 animate-fade-in"
+                      key={`${capability}-${index}`}
+                      className="text-white/90 text-sm flex items-center justify-start gap-2 animate-fade-in"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
-                      <CheckCircle className="h-4 w-4 text-green-400" />
-                      {capability}
+                      <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                      <span>{capability}</span>
                     </div>
                   ))}
                 </div>
