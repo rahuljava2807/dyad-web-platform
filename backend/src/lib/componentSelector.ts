@@ -27,8 +27,13 @@ export const COMPONENT_LIBRARY: Record<string, ComponentLibraryConfig> = {
     validationSchema: true,
     fileStructure: [
       'components/AuthForm.tsx',
+      'components/LoginForm.tsx',
       'components/AuthPage.tsx',
-      'app/page.tsx'
+      'lib/validation.ts',
+      'types/auth.ts',
+      'hooks/useAuth.ts',
+      'app/page.tsx',
+      'package.json'
     ]
   },
 
@@ -45,7 +50,12 @@ export const COMPONENT_LIBRARY: Record<string, ComponentLibraryConfig> = {
     fileStructure: [
       'components/LoginForm.tsx',
       'components/AuthPage.tsx',
-      'app/page.tsx'
+      'lib/validation.ts',
+      'types/auth.ts',
+      'hooks/useAuth.ts',
+      'utils/constants.ts',
+      'app/page.tsx',
+      'package.json'
     ]
   },
 
@@ -63,7 +73,12 @@ export const COMPONENT_LIBRARY: Record<string, ComponentLibraryConfig> = {
     fileStructure: [
       'components/SignupForm.tsx',
       'components/AuthPage.tsx',
-      'app/page.tsx'
+      'lib/validation.ts',
+      'lib/passwordStrength.ts',
+      'types/auth.ts',
+      'hooks/useAuth.ts',
+      'app/page.tsx',
+      'package.json'
     ]
   },
 
