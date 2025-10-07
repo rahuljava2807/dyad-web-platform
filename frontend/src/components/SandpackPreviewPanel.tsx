@@ -71,6 +71,26 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
         return // Don't add package.json to Sandpack files
       }
 
+      // Check for unsupported dependencies in file content
+      const unsupportedDeps = [
+        'react-hook-form',
+        '@hookform/resolvers',
+        'zod',
+        'yup',
+        'formik',
+        'axios',
+        'swr',
+        'react-query',
+        '@tanstack/react-query'
+      ]
+
+      const hasUnsupportedDep = unsupportedDeps.some(dep =>
+        file.content.includes(`from '${dep}'`) ||
+        file.content.includes(`from "${dep}"`) ||
+        file.content.includes(`require('${dep}')`) ||
+        file.content.includes(`require("${dep}")`)
+      )
+
       // Skip non-source files and files that won't work in browser
       const shouldSkip =
         file.path.includes('README') ||
@@ -84,10 +104,11 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
         file.path.includes('/api/') ||        // Skip API routes
         file.path.includes('/server/') ||     // Skip server code
         file.path.includes('.test.') ||       // Skip tests
-        file.path.includes('.spec.')          // Skip specs
+        file.path.includes('.spec.') ||       // Skip specs
+        hasUnsupportedDep                     // Skip files with unsupported dependencies
 
       if (shouldSkip) {
-        console.log(`[Sandpack] Skipping file: ${file.path}`)
+        console.log(`[Sandpack] Skipping file: ${file.path}${hasUnsupportedDep ? ' (unsupported dependencies)' : ''}`)
         return
       }
 

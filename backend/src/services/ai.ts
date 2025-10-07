@@ -222,6 +222,17 @@ When generating forms, you MUST include:
 - Credit Card: Luhn algorithm validation (if applicable)
 - Custom Rules: Implement business logic (age > 18, quantity > 0, etc.)
 
+🚨 CRITICAL: DO NOT USE THESE LIBRARIES (Sandpack doesn't support them):
+❌ react-hook-form
+❌ @hookform/resolvers
+❌ zod (for validation schemas)
+❌ yup
+❌ formik
+❌ axios
+❌ @tanstack/react-query
+
+✅ INSTEAD: Use native React useState for forms and manual validation functions
+
 ### STATE MANAGEMENT:
 typescript
 const [formData, setFormData] = useState<FormType>({...})
