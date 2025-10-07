@@ -829,7 +829,125 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
         console.log(`⚠️  No inline components detected`)
       }
 
-      // 🚀 PHASE 3: SCAFFOLD INTEGRATION - Bundle shadcn/ui components
+      // 🚀 PHASE 3A: CONVERT PATH ALIASES TO RELATIVE PATHS (Sandpack compatibility)
+      console.log('🔧 [Path Conversion] Converting @/ aliases to relative paths for Sandpack...')
+
+      for (const file of result.object.files) {
+        // Only convert code files
+        if (!file.path.match(/\.(tsx?|jsx?)$/)) continue
+
+        let convertedContent = file.content
+
+        // Convert @/components/ui/* imports to relative paths
+        // Example: import { Button } from '@/components/ui/button'
+        convertedContent = convertedContent.replace(
+          /from\s+["']@\/components\/ui\/([^"']+)["']/g,
+          (match, componentPath) => {
+            // Determine relative path based on file location
+            if (file.path.startsWith('src/components/ui/')) {
+              return `from "./${componentPath}"`  // same directory
+            } else if (file.path.startsWith('src/components/')) {
+              return `from "./ui/${componentPath}"`  // ui subdirectory
+            } else if (file.path.startsWith('components/ui/')) {
+              return `from "./${componentPath}"`  // same directory
+            } else if (file.path.startsWith('components/')) {
+              return `from "./ui/${componentPath}"`  // ui subdirectory
+            } else {
+              return `from "./components/ui/${componentPath}"`  // from src root
+            }
+          }
+        )
+
+        // Convert @/lib/* imports
+        convertedContent = convertedContent.replace(
+          /from\s+["']@\/lib\/([^"']+)["']/g,
+          (match, libPath) => {
+            if (file.path.startsWith('src/lib/')) {
+              return `from "./${libPath}"`
+            } else if (file.path.startsWith('src/components/')) {
+              return `from "../lib/${libPath}"`
+            } else if (file.path.startsWith('components/')) {
+              return `from "../lib/${libPath}"`
+            } else {
+              return `from "./lib/${libPath}"`
+            }
+          }
+        )
+
+        // Convert @/hooks/* imports
+        convertedContent = convertedContent.replace(
+          /from\s+["']@\/hooks\/([^"']+)["']/g,
+          (match, hookPath) => {
+            if (file.path.startsWith('src/hooks/')) {
+              return `from "./${hookPath}"`
+            } else if (file.path.startsWith('src/components/')) {
+              return `from "../hooks/${hookPath}"`
+            } else if (file.path.startsWith('components/')) {
+              return `from "../hooks/${hookPath}"`
+            } else {
+              return `from "./hooks/${hookPath}"`
+            }
+          }
+        )
+
+        // Convert @/types/* imports
+        convertedContent = convertedContent.replace(
+          /from\s+["']@\/types\/([^"']+)["']/g,
+          (match, typePath) => {
+            if (file.path.startsWith('src/types/')) {
+              return `from "./${typePath}"`
+            } else if (file.path.startsWith('src/components/')) {
+              return `from "../types/${typePath}"`
+            } else if (file.path.startsWith('components/')) {
+              return `from "../types/${typePath}"`
+            } else {
+              return `from "./types/${typePath}"`
+            }
+          }
+        )
+
+        // Convert @/utils/* imports
+        convertedContent = convertedContent.replace(
+          /from\s+["']@\/utils\/([^"']+)["']/g,
+          (match, utilPath) => {
+            if (file.path.startsWith('src/utils/')) {
+              return `from "./${utilPath}"`
+            } else if (file.path.startsWith('src/components/')) {
+              return `from "../utils/${utilPath}"`
+            } else if (file.path.startsWith('components/')) {
+              return `from "../utils/${utilPath}"`
+            } else {
+              return `from "./utils/${utilPath}"`
+            }
+          }
+        )
+
+        // Convert @/components/* (non-ui) imports
+        convertedContent = convertedContent.replace(
+          /from\s+["']@\/components\/([^"']+)["']/g,
+          (match, componentPath) => {
+            // Skip if already converted (ui imports)
+            if (componentPath.startsWith('ui/')) return match
+
+            if (file.path.startsWith('src/components/')) {
+              return `from "./${componentPath}"`
+            } else if (file.path.startsWith('components/')) {
+              return `from "./${componentPath}"`
+            } else {
+              return `from "./components/${componentPath}"`
+            }
+          }
+        )
+
+        if (convertedContent !== file.content) {
+          file.content = convertedContent
+          console.log(`🔧 [Path Conversion] Converted imports in ${file.path}`)
+        }
+      }
+
+      console.log('✅ [Path Conversion] All @/ aliases converted to relative paths')
+
+      // 🚀 PHASE 3B: SCAFFOLD INTEGRATION - Bundle shadcn/ui components
       console.log('🎨 [Scaffold Integration] Analyzing generated code for component usage...')
 
       // Convert result files to GeneratedFile format for detection
