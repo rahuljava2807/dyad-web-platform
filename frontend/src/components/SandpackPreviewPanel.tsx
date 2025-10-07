@@ -164,9 +164,34 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
         normalizedPath = normalizedPath.replace('/src/', '/')
       }
 
+      // Clean up imports to skipped files
+      let cleanedContent = file.content
+      Array.from(skippedFiles).forEach(skippedFile => {
+        // Remove import statements for skipped files
+        const importPatterns = [
+          new RegExp(`import\\s+${skippedFile}\\s+from\\s+['"]\\.\\/.*?['"];?\\s*`, 'g'),
+          new RegExp(`import\\s+\\{[^}]*\\}\\s+from\\s+['"]\\.\\/.*?${skippedFile}['"];?\\s*`, 'g'),
+          new RegExp(`import\\s+.*?\\s+from\\s+['"]\\.\\/.*?${skippedFile}['"];?\\s*`, 'g'),
+        ]
+
+        importPatterns.forEach(pattern => {
+          cleanedContent = cleanedContent.replace(pattern, '')
+        })
+
+        // Remove usage of skipped components in JSX
+        cleanedContent = cleanedContent.replace(
+          new RegExp(`<${skippedFile}[^>]*>.*?<\\/${skippedFile}>`, 'gs'),
+          `{/* ${skippedFile} component removed (unsupported dependencies) */}`
+        )
+        cleanedContent = cleanedContent.replace(
+          new RegExp(`<${skippedFile}[^/]*/>`, 'g'),
+          `{/* ${skippedFile} component removed (unsupported dependencies) */}`
+        )
+      })
+
       // Keep TypeScript files as-is since we're using react-ts template
       sandpackFiles[normalizedPath] = {
-        code: file.content
+        code: cleanedContent
       }
     })
 
