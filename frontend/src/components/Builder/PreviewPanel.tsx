@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Eye, Code, Download, Check, X, ExternalLink } from 'lucide-react';
+import { Eye, Code, Download, Check, X, ExternalLink, Play } from 'lucide-react';
 import { ProjectFile } from '@/store/projectStore';
+import { SandpackPreviewPanel } from '@/components/SandpackPreviewPanel';
 
 interface PreviewPanelProps {
   files: ProjectFile[];
@@ -19,7 +20,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   onApprove,
   onReject
 }) => {
-  const [previewMode, setPreviewMode] = useState<'code' | 'rendered'>('code');
+  const [previewMode, setPreviewMode] = useState<'code' | 'rendered' | 'live'>('live');
 
   const renderCodePreview = () => {
     if (!selectedFile) {
@@ -119,32 +120,47 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           )}
         </div>
 
-        {selectedFile && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          {files.length > 0 && (
             <button
-              onClick={() => setPreviewMode('code')}
+              onClick={() => setPreviewMode('live')}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                previewMode === 'code'
+                previewMode === 'live'
                   ? 'bg-blue-100 text-blue-700'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
-              <Code className="w-4 h-4 inline mr-1" />
-              Code
+              <Play className="w-4 h-4 inline mr-1" />
+              Live Preview
             </button>
-            <button
-              onClick={() => setPreviewMode('rendered')}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                previewMode === 'rendered'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <Eye className="w-4 h-4 inline mr-1" />
-              Preview
-            </button>
-          </div>
-        )}
+          )}
+          {selectedFile && (
+            <>
+              <button
+                onClick={() => setPreviewMode('code')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  previewMode === 'code'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Code className="w-4 h-4 inline mr-1" />
+                Code
+              </button>
+              <button
+                onClick={() => setPreviewMode('rendered')}
+                className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                  previewMode === 'rendered'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Eye className="w-4 h-4 inline mr-1" />
+                File Preview
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* File Info */}
@@ -162,7 +178,13 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
       {/* Preview Content */}
       <div className="flex-1 overflow-hidden">
-        {previewMode === 'code' ? renderCodePreview() : renderRenderedPreview()}
+        {previewMode === 'live' ? (
+          <SandpackPreviewPanel files={files} />
+        ) : previewMode === 'code' ? (
+          renderCodePreview()
+        ) : (
+          renderRenderedPreview()
+        )}
       </div>
 
       {/* Action Buttons */}

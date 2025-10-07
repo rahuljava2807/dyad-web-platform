@@ -412,15 +412,21 @@ Use strict TypeScript with proper type definitions and interfaces.`
       // Add production-quality requirements to the prompt
       enhancedPrompt += `
 
+🚨🚨🚨 ABSOLUTELY CRITICAL: DO NOT JUST ECHO THE USER'S PROMPT AS TEXT! 🚨🚨🚨
+❌ FORBIDDEN: Creating a component that just displays the user's request like <div>Login Application</div>
+✅ REQUIRED: Build a COMPLETE, WORKING, FUNCTIONAL application based on the request
+
 🚨🚨🚨 CRITICAL GENERATION REQUIREMENTS 🚨🚨🚨
-1. Generate a COMPLETE, BEAUTIFUL application with at least 8-10 files
-2. Include rich UI components with Framer Motion animations
-3. Add data visualizations using Recharts
-4. 🚨 MANDATORY: Use ONLY Tailwind CSS utility classes for ALL styling 🚨
-5. Include realistic mock data (20-50 items)
-6. Add proper TypeScript types and interfaces
-7. Implement smooth hover effects and transitions
-8. Make it production-ready and portfolio-worthy
+1. Generate a COMPLETE, BEAUTIFUL application with at least 6-10 files minimum
+2. For LOGIN/AUTH apps: Include LoginForm, SignupForm, AuthPage/Layout, validation schemas, types, mock auth logic
+3. For DASHBOARDS: Include Dashboard, Sidebar, Metrics, Charts, DataTable components with mock data
+4. Include rich UI components with Framer Motion animations when appropriate
+5. 🚨 MANDATORY: Use ONLY Tailwind CSS utility classes for ALL styling 🚨
+6. Include realistic mock data (20-50 items for lists/tables)
+7. Add proper TypeScript types and interfaces
+8. Implement smooth hover effects and transitions with Tailwind (hover:bg-blue-700, etc.)
+9. Make it production-ready and portfolio-worthy with complete, working functionality
+10. 🚨 DO NOT create placeholder components with just text - BUILD THE ACTUAL APPLICATION! 🚨
 
 🚨 TAILWIND CSS REQUIREMENTS (NON-NEGOTIABLE):
 - EVERY className must use Tailwind utilities (bg-white, text-xl, flex, grid, etc.)
@@ -430,12 +436,16 @@ Use strict TypeScript with proper type definitions and interfaces.`
 - Add hover effects: hover:shadow-xl, hover:bg-blue-700
 - Use proper spacing: p-6, m-4, gap-4, space-y-6
 
-Generate files that include (MINIMUM 4 FILES REQUIRED):
-- Main App component (App.tsx)
-- At least 2-3 feature components (e.g., MainComponent.tsx, DetailComponent.tsx)
-- Complete package.json with all dependencies
-- Comprehensive README.md
-- Optional: Mock data utilities, animation configuration, additional components
+Generate files that include (MINIMUM 6 FILES REQUIRED):
+- Main App component (App.tsx) with routing/layout
+- At least 3-5 feature components based on the request:
+  * For LOGIN: LoginForm, SignupForm, Auth Layout, validation schema, types
+  * For DASHBOARD: Dashboard, Sidebar, MetricCards, Chart components, DataTable
+  * For E-COMMERCE: ProductList, ProductCard, Cart, Checkout components
+- Complete package.json with ALL dependencies (react, react-dom, framer-motion, lucide-react, etc.)
+- Types/interfaces file (types.ts) with proper TypeScript definitions
+- Mock data utilities (mockData.ts) with 20+ realistic items
+- Comprehensive README.md with setup instructions
 
 🚨 REMEMBER: Generic class names = ZERO styling in preview!
 🚨 ONLY Tailwind CSS utility classes will work!
@@ -452,7 +462,7 @@ Generate files that include (MINIMUM 4 FILES REQUIRED):
               path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(3).describe('MUST generate minimum 3 complete files with REAL code using ONLY Tailwind CSS classes'),
+            })).min(6).describe('MUST generate minimum 6-10 complete files with REAL code using ONLY Tailwind CSS classes'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
@@ -523,7 +533,7 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with PROPER TAILWIND CSS CLASSES. NO generic class names like "metric-card" or "dashboard". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg". EVERY className must be a valid Tailwind CSS utility class.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(8, 'MUST generate at least 8 complete files'),
+            })).min(6, 'MUST generate at least 6 complete files'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
@@ -533,8 +543,125 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
         return retryResult.object
       }
 
+      // CHECK IF AI IS JUST ECHOING THE PROMPT - Detect placeholder/text-only responses
+      const allFiles = result.object.files
+      let isEchoingPrompt = false
+
+      // Check ALL files for echo patterns
+      for (const file of allFiles) {
+        const codeContent = file.content.toLowerCase()
+        const promptLower = request.prompt.toLowerCase()
+
+        // Multiple echo detection strategies
+        const directEcho = codeContent.includes(promptLower)
+        const hasPromptInHeading = codeContent.includes(`<h1>${promptLower}`) ||
+                                    codeContent.includes(`<h2>${promptLower}`) ||
+                                    codeContent.includes(`<h1 `) && codeContent.includes(`>${promptLower}<`)
+        const hasPromptInDiv = codeContent.includes(`<div>${promptLower}`) ||
+                               codeContent.includes(`<div `) && codeContent.includes(`>${promptLower}<`)
+        const hasPromptInPara = codeContent.includes(`<p>${promptLower}`) ||
+                                codeContent.includes(`<p `) && codeContent.includes(`>${promptLower}<`)
+
+        // Check if multiple prompt words appear in JSX content (not as attributes)
+        const promptWords = promptLower.split(' ').filter(w => w.length > 4)
+        let wordsFoundInJSX = 0
+        for (const word of promptWords) {
+          if (codeContent.includes(`>${word}<`) || codeContent.includes(`> ${word} <`)) {
+            wordsFoundInJSX++
+          }
+        }
+
+        if (directEcho || hasPromptInHeading || hasPromptInDiv || hasPromptInPara || wordsFoundInJSX >= 3) {
+          console.warn(`🚨 ECHO DETECTED in ${file.path}:`, {
+            directEcho,
+            hasPromptInHeading,
+            hasPromptInDiv,
+            hasPromptInPara,
+            wordsFoundInJSX
+          })
+          isEchoingPrompt = true
+          break
+        }
+      }
+
+      if (isEchoingPrompt) {
+        console.warn(`AI is echoing the prompt instead of building an application! Regenerating...`)
+
+          const antiEchoPrompt = `${enhancedPrompt}
+
+🚨🚨🚨 CRITICAL ERROR DETECTED: YOU ARE ECHOING THE USER'S PROMPT! 🚨🚨🚨
+❌ You created: <div>${request.prompt}</div> or <h1>${request.prompt}</h1>
+❌ This is COMPLETELY WRONG! You are NOT building an application!
+
+✅ CORRECT APPROACH FOR "${request.prompt}":
+You MUST BUILD a complete, FUNCTIONAL application with REAL features:
+
+${request.prompt.toLowerCase().includes('financial statement') ? `
+FOR FINANCIAL STATEMENT ANALYZER:
+1. FinancialDashboard.tsx - Main dashboard with P&L, Balance Sheet, Cash Flow tabs
+2. StatementUploader.tsx - File upload component with drag-drop (PDF/Excel)
+3. BalanceSheetAnalyzer.tsx - Displays Assets, Liabilities, Equity with interactive charts
+4. IncomeStatementView.tsx - Revenue, Expenses, Net Income with trend analysis
+5. CashFlowAnalysis.tsx - Operating, Investing, Financing activities visualization
+6. RatioCalculator.tsx - Financial ratios (ROE, ROA, Current Ratio, Quick Ratio, Debt-to-Equity)
+7. TrendChart.tsx - Multi-year comparison charts using recharts
+8. AlertSystem.tsx - Anomaly detection and financial warnings
+9. ReportGenerator.tsx - Export to PDF/Excel functionality UI
+10. MockFinancialData.ts - Complete mock data for 3 years of statements
+` : request.prompt.toLowerCase().includes('login') || request.prompt.toLowerCase().includes('auth') ? `
+FOR LOGIN/AUTH APPLICATION:
+1. LoginPage.tsx - Full login form with email/password validation
+2. SignupPage.tsx - Registration form with password strength
+3. ForgotPassword.tsx - Password reset flow
+4. AuthLayout.tsx - Authentication pages wrapper
+5. useAuth.ts - Custom authentication hook
+6. authService.ts - Mock authentication service
+7. ProtectedRoute.tsx - Route guard component
+` : `
+FOR DASHBOARD APPLICATION:
+1. Dashboard.tsx - Main metrics overview with KPIs
+2. Sidebar.tsx - Collapsible navigation
+3. MetricsCards.tsx - Key metrics with animations
+4. DataTable.tsx - Sortable/filterable data grid
+5. Charts.tsx - Multiple chart types (bar, line, pie)
+6. mockData.ts - Rich mock data (50+ items)
+`}
+
+🚨 RULES:
+- Each file MUST be 80-200 lines of REAL, EXECUTABLE code
+- Use ONLY Tailwind CSS classes for styling (NO CSS-in-JS)
+- Include useState, useEffect, real event handlers
+- Add mock data that looks production-ready
+- Include animations and transitions
+- Make it interactive (buttons work, forms validate, data filters)
+
+DO NOT just display "${request.prompt}" as text!
+BUILD THE ACTUAL WORKING APPLICATION NOW!
+Generate 8-12 complete files!`
+
+          const antiEchoResult = await generateObject({
+            model,
+            system: this.buildSystemPrompt(request.context),
+            prompt: antiEchoPrompt,
+            schema: z.object({
+              code: z.string().optional(),
+              explanation: z.string(),
+              files: z.array(z.object({
+                path: z.string(),
+                content: z.string(),
+                type: z.enum(['create', 'modify', 'delete']),
+              })).min(6, 'MUST generate at least 6 complete files'),
+              dependencies: z.array(z.string()).optional(),
+              instructions: z.string().optional(),
+            }),
+          })
+
+          console.log(`Regenerated after detecting echo: ${antiEchoResult.object.files.length} files`)
+          return antiEchoResult.object
+      }
+
       // ENFORCE MINIMUM FILE COUNT - Regenerate if AI ignored requirements
-      if (result.object.files.length < 8) {
+      if (result.object.files.length < 6) {
         console.warn(`AI generated only ${result.object.files.length} files, regenerating with stronger prompt...`)
 
         // Add EXTREMELY forceful requirements
@@ -575,7 +702,7 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code. NO explanations, NO placeholders like "This is" or "Implementation goes here". Write COMPLETE working code with all imports, exports, logic, and styling. For React: full components with JSX, hooks, handlers. For data: full arrays with 20-50 items. EXECUTABLE CODE ONLY.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(8, 'MUST generate at least 8 complete files'),
+            })).min(6, 'MUST generate at least 6 complete files'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),

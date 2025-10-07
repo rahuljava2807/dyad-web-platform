@@ -107,49 +107,123 @@
   }
 }
 
-/* FORCE ALL TEXT TO BE VISIBLE */
-.sidebar-label,
-.file-tree-item,
-.template-label,
-.quick-template-label,
-button span,
-a span,
-label,
-p,
-h1, h2, h3, h4, h5, h6,
-span,
-div {
-  opacity: 1 !important;
-}
+/* UNIVERSAL TEXT VISIBILITY FIX - PRODUCTION GRADE */
+/* Force ALL text to be visible with proper contrast */
 
-/* Force text colors to be visible */
-h1, h2, h3 {
-  color: #111827 !important;
-}
-
-button span,
-a span,
-label span,
-nav span,
-aside span {
-  color: inherit !important;
-  opacity: 1 !important;
-}
-
-/* Prevent text from being transparent or hidden */
 * {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Force visibility on common elements */
-button, a, span, p, div, h1, h2, h3, h4, h5, h6, label {
+/* Ensure all text elements are visible */
+h1, h2, h3, h4, h5, h6,
+p, span, a, button, label, li, td, th, div, section, article, aside, nav,
+input::placeholder, textarea::placeholder {
+  opacity: 1 !important;
   visibility: visible !important;
 }
 
-/* Ensure proper text rendering */
+/* Smart contrast - only apply to direct children to avoid cascade issues */
+.bg-white > h1, .bg-white > h2, .bg-white > h3, .bg-white > h4, .bg-white > h5, .bg-white > h6,
+.bg-white > p, .bg-white > span, .bg-white > label,
+.bg-slate-50 > h1, .bg-slate-50 > h2, .bg-slate-50 > h3, .bg-slate-50 > h4, .bg-slate-50 > h5, .bg-slate-50 > h6,
+.bg-slate-50 > p, .bg-slate-50 > span, .bg-slate-50 > label {
+  color: #111827;
+}
+
+/* Dark backgrounds - only for the new project page */
+.bg-gradient-to-br.from-slate-900 h1,
+.bg-gradient-to-br.from-slate-900 h2,
+.bg-gradient-to-br.from-slate-900 h3,
+.bg-gradient-to-br.from-slate-900 p,
+.bg-gradient-to-br.from-slate-900 span,
+.bg-gradient-to-br.from-slate-900 label,
+.bg-gradient-to-br.from-slate-900 input,
+.bg-gradient-to-br.from-slate-900 textarea {
+  color: #ffffff;
+}
+
+/* Ensure proper text rendering globally */
 body, html {
   color: #1f2937;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Fix any remaining visibility issues */
+button span,
+a span,
+label span,
+nav span,
+aside span,
+div span,
+p span {
+  color: inherit !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* FIX SHADCN COMPONENT VISIBILITY */
+/* Fix select dropdown items - ensure visible text */
+[role="option"],
+[data-radix-collection-item] {
+  color: #111827 !important;
+  background-color: white !important;
+}
+
+[role="option"]:hover,
+[data-radix-collection-item]:hover,
+[data-highlighted] {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+/* Fix tab triggers - ensure visible text */
+[role="tab"],
+button[data-state] {
+  color: #4b5563 !important;
+}
+
+[role="tab"][data-state="active"],
+button[data-state="active"] {
+  color: #111827 !important;
+  background-color: white !important;
+}
+
+/* Fix muted foreground colors */
+.text-muted-foreground {
+  color: #6b7280 !important;
+}
+
+/* Fix quick templates visibility - PromptInterface component */
+.bg-blue-50 label,
+.bg-blue-50 .font-medium {
+  color: #111827 !important;
+}
+
+.bg-blue-50 button span {
+  color: #111827 !important;
+}
+
+/* Fix popover content */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+[role="listbox"],
+[data-radix-select-content] {
+  background-color: white !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure all select items are visible */
+[data-radix-select-item] {
+  color: #111827 !important;
+  padding: 0.5rem 1rem !important;
+  cursor: pointer !important;
+}
+
+[data-radix-select-item]:hover {
+  background-color: #f3f4f6 !important;
 }
