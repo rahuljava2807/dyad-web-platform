@@ -26,13 +26,15 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
   const [isPreviewVisible, setIsPreviewVisible] = useState(true)
   const [showCode, setShowCode] = useState(false)
   const [key, setKey] = useState(0)
+  const [previewError, setPreviewError] = useState<string | null>(null)
 
-  // Convert files to Sandpack format
-  const sandpackFiles = useMemo<SandpackFiles>(() => {
+  // Convert files to Sandpack format and extract dependencies
+  const { sandpackFiles, dependencies } = useMemo(() => {
     if (!files || files.length === 0) {
       return {
-        '/App.js': {
-          code: `export default function App() {
+        sandpackFiles: {
+          '/App.js': {
+            code: `export default function App() {
   return (
     <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ color: '#333' }}>No Files to Preview</h1>
@@ -40,60 +42,179 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
     </div>
   )
 }`
-        }
+          }
+        },
+        dependencies: {}
       }
     }
 
     const sandpackFiles: SandpackFiles = {}
+    let dependencies: Record<string, string> = {
+      'react': '^18.2.0',
+      'react-dom': '^18.2.0'
+    }
 
     files.forEach(file => {
+      // Extract dependencies from package.json
+      if (file.path.includes('package.json')) {
+        try {
+          const packageJson = JSON.parse(file.content)
+          if (packageJson.dependencies) {
+            dependencies = { ...dependencies, ...packageJson.dependencies }
+          }
+          if (packageJson.devDependencies) {
+            dependencies = { ...dependencies, ...packageJson.devDependencies }
+          }
+        } catch (e) {
+          console.error('Failed to parse package.json:', e)
+        }
+        return // Don't add package.json to Sandpack files
+      }
+
+      // Skip non-source files and files that won't work in browser
+      const shouldSkip =
+        file.path.includes('README') ||
+        file.path.includes('.md') ||
+        file.path.includes('package.json') ||
+        file.path.includes('tsconfig') ||
+        file.path.includes('.config') ||
+        file.path.toLowerCase().includes('validation') ||   // Skip validation files
+        file.path.toLowerCase().includes('schema.') ||      // Skip schema files (loginSchema.ts)
+        /schema\.(ts|js|tsx|jsx)$/i.test(file.path) ||    // Skip files ending with schema.*
+        file.path.includes('/api/') ||        // Skip API routes
+        file.path.includes('/server/') ||     // Skip server code
+        file.path.includes('.test.') ||       // Skip tests
+        file.path.includes('.spec.')          // Skip specs
+
+      if (shouldSkip) {
+        console.log(`[Sandpack] Skipping file: ${file.path}`)
+        return
+      }
+
       // Normalize file paths for Sandpack (must start with /)
       let normalizedPath = file.path.startsWith('/') ? file.path : `/${file.path}`
 
-      // Map common file names to Sandpack conventions
-      if (normalizedPath === '/App.tsx' || normalizedPath === '/App.jsx') {
-        normalizedPath = '/App.js'
-      } else if (normalizedPath === '/index.tsx' || normalizedPath === '/index.jsx') {
-        normalizedPath = '/index.js'
+      // Map src/ paths
+      if (normalizedPath.startsWith('/src/')) {
+        normalizedPath = normalizedPath.replace('/src/', '/')
       }
 
+      // Keep TypeScript files as-is since we're using react-ts template
       sandpackFiles[normalizedPath] = {
         code: file.content
       }
     })
 
-    // Ensure we have an App.js or index.js
-    if (!sandpackFiles['/App.js'] && !sandpackFiles['/index.js']) {
+    // Ensure we have an App.tsx entry point
+    if (!sandpackFiles['/App.tsx'] && !sandpackFiles['/App.ts']) {
       // Find the first React component
       const componentFile = files.find(f =>
-        f.content.includes('export default') &&
+        (f.path.includes('App.tsx') || f.path.includes('App.jsx') ||
+         f.path.includes('Dashboard') || f.content.includes('export default')) &&
         (f.content.includes('function') || f.content.includes('const') || f.content.includes('class'))
       )
 
       if (componentFile) {
-        sandpackFiles['/App.js'] = {
+        sandpackFiles['/App.tsx'] = {
           code: componentFile.content
+        }
+      } else {
+        // Create a default App component
+        sandpackFiles['/App.tsx'] = {
+          code: `import React from 'react';
+
+export default function App() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Welcome!</h1>
+        <p className="text-gray-600">Your application is ready to preview.</p>
+      </div>
+    </div>
+  );
+}`
         }
       }
     }
 
-    return sandpackFiles
-  }, [files])
+    // Ensure we have an index.tsx
+    if (!sandpackFiles['/index.tsx'] && !sandpackFiles['/index.ts']) {
+      sandpackFiles['/index.tsx'] = {
+        code: `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './styles.css';
 
-  // Determine the template based on file content
-  const template = useMemo<SandpackPredefinedTemplate>(() => {
-    const hasTypeScript = files.some(f => f.path.endsWith('.ts') || f.path.endsWith('.tsx'))
-    const hasReact = files.some(f => f.content.includes('React') || f.content.includes('jsx'))
-
-    if (hasTypeScript && hasReact) {
-      return 'react-ts'
-    } else if (hasReact) {
-      return 'react'
-    } else if (hasTypeScript) {
-      return 'vanilla-ts'
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`
+      }
     }
 
-    return 'vanilla'
+    // Add Tailwind CSS via styles.css
+    if (!sandpackFiles['/styles.css']) {
+      sandpackFiles['/styles.css'] = {
+        code: `@import url('https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}`
+      }
+    }
+
+    // Add public/index.html with Tailwind CDN
+    if (!sandpackFiles['/public/index.html']) {
+      sandpackFiles['/public/index.html'] = {
+        code: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`
+      }
+    }
+
+    return { sandpackFiles, dependencies }
+  }, [files])
+
+  // Determine the template - always use react-ts since we generate TypeScript
+  const template = useMemo<SandpackPredefinedTemplate>(() => {
+    return 'react-ts'
   }, [files])
 
   // Notify parent when preview is ready
@@ -104,6 +225,7 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
   }, [files, onPreviewUpdate])
 
   const refreshPreview = () => {
+    setPreviewError(null)
     setKey(prev => prev + 1)
   }
 
@@ -168,40 +290,53 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
             </div>
           </div>
         ) : (
-          <Sandpack
-            key={key}
-            template={template}
-            files={sandpackFiles}
-            theme="light"
-            options={{
-              showNavigator: false,
-              showTabs: showCode,
-              showLineNumbers: true,
-              showInlineErrors: true,
-              wrapContent: true,
-              editorHeight: '100%',
-              editorWidthPercentage: showCode ? 50 : 0,
-              classes: {
-                'sp-wrapper': 'h-full',
-                'sp-layout': 'h-full',
-                'sp-stack': 'h-full'
-              }
-            }}
-            customSetup={{
-              dependencies: {
-                'react': '^18.0.0',
-                'react-dom': '^18.0.0',
-                'lucide-react': 'latest',
-                '@radix-ui/react-slot': 'latest',
-                '@radix-ui/react-label': 'latest',
-                '@radix-ui/react-select': 'latest',
-                '@radix-ui/react-tabs': 'latest',
-                'class-variance-authority': 'latest',
-                'clsx': 'latest',
-                'tailwind-merge': 'latest'
-              }
-            }}
-          />
+          <div className="h-full relative">
+            <Sandpack
+              key={key}
+              template={template}
+              files={sandpackFiles}
+              theme="light"
+              customSetup={{
+                dependencies: {
+                  ...dependencies,
+                  'react': '^18.2.0',
+                  'react-dom': '^18.2.0'
+                }
+              }}
+              options={{
+                showNavigator: false,
+                showTabs: showCode,
+                showLineNumbers: true,
+                showInlineErrors: true,
+                wrapContent: true,
+                editorHeight: '100%',
+                editorWidthPercentage: showCode ? 50 : 0,
+                externalResources: [
+                  'https://cdn.tailwindcss.com'
+                ],
+                classes: {
+                  'sp-wrapper': 'h-full',
+                  'sp-layout': 'h-full',
+                  'sp-stack': 'h-full'
+                }
+              }}
+            />
+
+            {/* Interactive Tips */}
+            {!showCode && (
+              <div className="absolute bottom-4 right-4 max-w-sm">
+                <div className="bg-blue-600 text-white rounded-lg p-3 shadow-xl text-xs">
+                  <div className="font-semibold mb-2 flex items-center gap-2">
+                    <Code className="h-4 w-4" />
+                    💡 Toggle Code Editor
+                  </div>
+                  <div className="space-y-1 text-blue-100">
+                    <div>Click the <strong>code icon</strong> above to view and edit source files</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

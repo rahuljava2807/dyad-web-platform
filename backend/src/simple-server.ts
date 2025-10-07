@@ -1,5 +1,6 @@
 console.log('🔄 Loading server modules...')
 
+import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import { PrismaClient } from '@prisma/client'

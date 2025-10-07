@@ -92,7 +92,11 @@ export default function NewProjectPage() {
 
       if (response.ok) {
         const data = await response.json()
-        router.push(`/dashboard/projects/${data.data.project.id}`)
+        const projectId = data.data.project.id
+        const promptText = customPrompt || selectedTemplateData?.description || ''
+
+        // Redirect to generation page with Dyad-like flow
+        router.push(`/dashboard/projects/${projectId}/generate?prompt=${encodeURIComponent(promptText)}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to create project')

@@ -105,6 +105,22 @@
     position: relative;
     z-index: 10;
   }
+
+  /* Fade-in animation for capabilities */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out forwards;
+  }
 }
 
 /* UNIVERSAL TEXT VISIBILITY FIX - PRODUCTION GRADE */
@@ -226,4 +242,45 @@ button[data-state="active"] {
 
 [data-radix-select-item]:hover {
   background-color: #f3f4f6 !important;
+}
+
+/* Sandpack Error Overlay Visibility Fixes */
+.sp-error-message,
+.sp-error-overlay,
+[class*="sp-error"],
+[class*="error-message"] {
+  background-color: #fef2f2 !important;
+  color: #991b1b !important;
+  border: 2px solid #fca5a5 !important;
+  padding: 12px !important;
+  font-family: 'Fira Code', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+/* Sandpack console error messages */
+.sp-console-item[data-level="error"],
+.sp-console-item[data-level="warn"] {
+  background-color: #fef2f2 !important;
+  border-left: 4px solid #dc2626 !important;
+  color: #991b1b !important;
+}
+
+/* Sandpack error text */
+.sp-error-message * {
+  color: #991b1b !important;
+}
+
+/* Preview error overlay */
+[data-sandpack-error] {
+  background-color: rgba(254, 242, 242, 0.98) !important;
+  color: #991b1b !important;
+  border: 2px solid #dc2626 !important;
+}
+
+/* Ensure Sandpack iframe errors are visible */
+iframe[title*="Sandpack"] ~ div,
+iframe[title*="Preview"] ~ div {
+  background-color: #fef2f2 !important;
+  color: #991b1b !important;
 }

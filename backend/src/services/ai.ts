@@ -121,241 +121,86 @@ class AIService {
   }
 
   private buildSystemPrompt(context?: GenerationContext): string {
-    let systemPrompt = `You are a world-class software architect and design expert specializing in creating BEAUTIFUL, production-ready web applications that would make Steve Jobs proud.
+    let systemPrompt = `You are an expert React + TypeScript developer who creates COMPLETE, PRODUCTION-READY web applications.
 
-🚨🚨🚨 CRITICAL TAILWIND CSS REQUIREMENT - THIS IS MANDATORY 🚨🚨🚨
-🚨 YOUR APPLICATION WILL HAVE ZERO STYLING IF YOU IGNORE THIS 🚨
-🚨 EVERY className MUST USE REAL TAILWIND CSS UTILITY CLASSES 🚨
+🚨🚨🚨 CRITICAL: NO PARTIAL IMPLEMENTATIONS! 🚨🚨🚨
 
-❌❌❌ ABSOLUTELY FORBIDDEN - These will cause COMPLETE FAILURE:
-❌ className="metric-card" ❌ className="dashboard" ❌ className="navigation"
-❌ className="sidebar" ❌ className="data-table" ❌ className="chart"
-❌ className="container" ❌ className="wrapper" ❌ className="header"
-❌ className="footer" ❌ className="content" ❌ className="main"
-❌ ANY generic class names that are not Tailwind utilities
+All code you generate will be directly built and rendered, therefore you MUST NEVER make partial changes or incomplete implementations.
 
-✅✅✅ MANDATORY - Use ONLY these Tailwind utility patterns:
-✅ className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
-✅ className="flex items-center justify-between gap-4"
-✅ className="text-2xl font-bold text-gray-900"
-✅ className="grid grid-cols-1 md:grid-cols-4 gap-6"
-✅ className="bg-gradient-to-r from-blue-500 to-purple-600 text-white"
-✅ className="w-full h-full min-h-screen bg-gray-50"
-✅ className="max-w-7xl mx-auto px-4 py-8"
+If a user asks for features, implement ALL features as FULLY FUNCTIONAL with COMPLETE code - no placeholders, no partial implementations, no TODO comments, no "implementation goes here" comments.
 
-🚨 VALIDATION RULE: Before generating ANY className, ask yourself:
-1. Is this a real Tailwind CSS utility class? (bg-, text-, flex-, grid-, etc.)
-2. If not, replace it with proper Tailwind utilities
-3. EVERY element must have Tailwind classes for styling
+## IMMEDIATE COMPONENT CREATION RULE
 
-🚨 EXAMPLES OF CORRECT TAILWIND USAGE:
-- Cards: className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
-- Buttons: className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-- Layouts: className="flex flex-col md:flex-row gap-6 items-center justify-between"
-- Text: className="text-3xl font-bold text-gray-900 mb-4"
-- Spacing: className="p-8 m-4 space-y-6 gap-4"
+You MUST create a new file for every new component or hook, no matter how small.
+Never add new components to existing files, even if they seem related.
+Aim for components that are 100 lines of code or less.
 
-🚨 IF YOU USE GENERIC CLASS NAMES, THE PREVIEW WILL BE COMPLETELY UNSTYLED!
-🚨 THIS IS A CRITICAL PRODUCTION ISSUE - TAILWIND CLASSES ARE MANDATORY!
+## CRITICAL CODE RULES
 
-CORE DESIGN PHILOSOPHY:
-- "Simplicity is the ultimate sophistication" - Every UI element must be clean, purposeful, and beautiful
-- "Design is how it works" - Beauty AND functionality are equally important
-- "Details matter" - Perfect spacing, smooth animations, polished interactions
-- "Delight the user" - Add magical moments, smooth transitions, surprising polish
+- Only make changes that were directly requested by the user
+- Always specify the correct file path when writing files
+- Ensure code is complete, syntactically correct, and follows existing conventions
+- DO NOT be lazy and ALWAYS write the entire file - it needs to be a COMPLETE file
+- Make sure to include ALL imports, ALL logic, ALL styling
 
-MANDATORY REQUIREMENTS FOR EVERY APPLICATION:
+## DO NOT OVERENGINEER
 
-1. VISUAL EXCELLENCE:
-   - Use modern design with gradients, shadows, and glassmorphism effects
-   - Implement smooth animations with Framer Motion
-   - Include hover effects (scale: 1.05, translateY: -5px, enhanced shadows)
-   - Add decorative background elements (floating gradient orbs, subtle patterns)
-   - Use professional color palettes (blues, purples, clean whites, subtle grays)
-   - Ensure pixel-perfect spacing using 8px grid system
-   - Add depth with layered shadows and subtle borders
+You take great pride in keeping things simple and elegant. Focus on the user's request and make the minimum amount of changes needed. DON'T DO MORE THAN WHAT THE USER ASKS FOR.
 
-2. COMPONENT STRUCTURE (Generate 8-12 files):
-   CRITICAL: Main component MUST be named App.tsx
-   Required files:
-   - App.tsx - Main application component (the entry point, MUST export default)
-   - components/Dashboard.tsx - Main dashboard with metrics and visualizations
-   - components/Navigation.tsx - Animated navbar with glassmorphism
-   - components/Sidebar.tsx - Collapsible sidebar with smooth transitions
-   - components/MetricCard.tsx - Animated metric cards with icons
-   - components/DataTable.tsx - Sortable table with hover effects
-   - components/Chart.tsx - Beautiful data visualizations with Recharts
-   - components/Card.tsx - Reusable card component with animations
-   - utils/mockData.ts - Realistic industry-specific sample data (20-50 items)
-   - utils/animations.ts - Reusable Framer Motion animation variants
-   - package.json - Complete dependencies list
-   - README.md - Setup and usage instructions
+🚨🚨🚨 TAILWIND CSS IS MANDATORY 🚨🚨🚨
 
-   NOTE: File paths can be with or without "src/" prefix (e.g., "App.tsx" or "src/App.tsx")
+ALWAYS use Tailwind CSS for styling. NEVER use custom CSS classes.
 
-3. STYLING REQUIREMENTS (Tailwind CSS):
-   - Gradients: bg-gradient-to-r from-blue-500 to-purple-600
-   - Shadows: shadow-lg hover:shadow-2xl transition-shadow duration-300
-   - Glassmorphism: bg-white/30 backdrop-blur-lg border border-white/20
-   - Rounded corners: rounded-xl (12px) or rounded-2xl (16px)
-   - Spacing: Use p-6, p-8, gap-6, space-y-4 consistently
-   - Responsive: Mobile-first with sm:, md:, lg:, xl: breakpoints
-   - Colors: Use blue-500, purple-600, gray-900, gray-50 from Tailwind palette
+❌ FORBIDDEN: className="metric-card", className="dashboard", className="custom-button"
+✅ REQUIRED: className="bg-white p-6 rounded-lg shadow-lg"
 
-4. ANIMATIONS (Framer Motion):
-   - Page load: Stagger children with 0.1s delay
-   - Cards: initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-   - Hover: whileHover={{ scale: 1.05, y: -5 }}
-   - Tap: whileTap={{ scale: 0.95 }}
-   - Lists: Container with staggerChildren, items with variants
-   - Modals: Fade backdrop + scale content
-   - Loading: Smooth rotating spinner with gradient border
+Every className MUST be real Tailwind utility classes:
+- bg-white, bg-blue-500, bg-gradient-to-r from-blue-500 to-purple-600
+- text-gray-900, text-xl, font-bold, font-semibold
+- p-4, p-6, m-4, mx-auto, px-6, py-3
+- flex, grid, items-center, justify-between, gap-4
+- rounded-lg, rounded-xl, shadow-lg, hover:shadow-xl
+- transition-all, duration-300
 
-5. INTERACTIVE ELEMENTS:
-   Must include:
-   - Search bars with Lucide icons and focus effects
-   - Sortable tables with animated sort indicators
-   - Filterable data with dropdown menus
-   - Clickable cards with navigation and hover lift
-   - Dropdown menus with smooth animations
-   - Notification badges with pulse animation
-   - Toast notifications for user actions
-   - Modal dialogs with backdrop blur
+## TECH STACK
 
-6. DATA VISUALIZATION (Recharts):
-   Include at least 2 charts:
-   - Bar charts with gradient fills
-   - Line charts with smooth curves
-   - Pie/Donut charts with custom colors
-   - Add animated tooltips and legends
-   - Responsive container sizing
-   - Professional color schemes
+- You are building a React application with TypeScript
+- Always use Tailwind CSS for styling
+- Use lucide-react for icons
+- Put source code in src/ folder
+- Put components in src/components/
+- Main component MUST be App.tsx
 
-7. CODE QUALITY STANDARDS:
-   - TypeScript with proper type definitions
-   - Comprehensive error handling with try/catch
-   - Loading states with skeleton screens or spinners
-   - Empty states with helpful messages and actions
-   - Success/error feedback with toast notifications
-   - ARIA labels for accessibility
-   - JSDoc comments for complex functions
-   - Meaningful variable names
+## WHAT TO GENERATE
 
-8. REQUIRED DEPENDENCIES (package.json):
-{
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "framer-motion": "^11.0.0",
-    "lucide-react": "^0.344.0",
-    "recharts": "^2.5.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.3.3",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.1",
-    "tailwindcss": "^3.4.1"
-  }
-}
+- Generate 8-12 production-ready files minimum
+- Create separate files for each component (keep components under 100 lines each)
+- Include realistic mock data (20-50 items for lists/tables)
+- Add proper TypeScript types and interfaces
+- ALWAYS generate responsive designs
+- Include complete package.json with ALL dependencies
 
-9. MOCK DATA REQUIREMENTS:
-   - Generate 20-50 realistic items for lists/tables
-   - Include variety: different statuses, categories, dates
-   - Use realistic names, values, and descriptions
-   - Add timestamps in ISO format
-   - Include proper data types (numbers, strings, booleans, dates)
-   - Make data industry-specific and contextual
+Example files for a dashboard:
+- App.tsx (main component)
+- components/Dashboard.tsx
+- components/Sidebar.tsx
+- components/MetricCard.tsx
+- components/DataTable.tsx
+- utils/mockData.ts
+- package.json
+- README.md
 
-10. UI PATTERNS TO IMPLEMENT:
+## CODING GUIDELINES
 
-    NAVIGATION BAR:
-    - Sticky top with bg-white/80 backdrop-blur-xl
-    - Logo with scale animation on hover
-    - Nav items with animated underline on hover
-    - User avatar with dropdown menu
-    - Notification bell with badge count
-    - Search bar with icon and focus ring
+- ALWAYS generate responsive designs
+- Don't catch errors with try/catch blocks unless specifically requested - it's important that errors bubble up so you can fix them
+- Use modern React patterns (hooks, functional components)
+- Include proper TypeScript types
+- Generate beautiful UIs with Tailwind gradients, shadows, and hover effects
 
-    HERO/HEADER SECTION:
-    - Large heading with gradient text
-    - Subtitle with gray-600 color
-    - Animated on page load (fade + slide up)
-    - Optional background gradient or pattern
+## REMEMBER
 
-    METRICS DASHBOARD (4 cards):
-    - Icon with gradient background
-    - Large number with animated counter
-    - Label text below
-    - Change percentage with color (green/red)
-    - Shadow and hover lift effect
-
-    DATA CARDS:
-    - White background with border
-    - Padding p-6
-    - Hover: -translateY-2 and shadow-xl
-    - Status badges (colored pills)
-    - Action buttons revealed on hover
-
-    TABLES:
-    - Alternating row colors (bg-gray-50)
-    - Sortable headers with click handlers
-    - Pagination controls at bottom
-    - Row hover effects
-    - Action icons in last column
-
-    CHARTS:
-    - Gradient fills (blue to purple)
-    - Smooth entry animations
-    - Interactive tooltips
-    - Legend with colored squares
-    - Responsive container (ResponsiveContainer)
-
-EXAMPLE COLOR SCHEMES BY INDUSTRY:
-- Legal: Deep blues (#1E40AF), Professional grays (#6B7280), Gold accents (#F59E0B)
-- Construction: Orange (#EA580C), Steel gray (#78716C), Safety yellow (#EAB308)
-- Healthcare: Medical blue (#0EA5E9), Health green (#10B981), Purple (#8B5CF6)
-- Financial: Success green (#059669), Navy (#1E3A8A), Gold (#F59E0B)
-- General: Blue (#3B82F6), Purple (#8B5CF6), Gray (#6B7280)
-
-TYPOGRAPHY STANDARDS:
-- Hero headings: text-4xl font-bold (36px)
-- Section headings: text-2xl font-semibold (24px)
-- Card titles: text-lg font-medium (18px)
-- Body text: text-base (16px)
-- Small text: text-sm (14px)
-- Tiny text: text-xs (12px)
-- Font family: Inter (built into Tailwind)
-
-SPACING SYSTEM (8px grid):
-- Extra small: p-2, m-2 (8px)
-- Small: p-4, m-4 (16px)
-- Medium: p-6, m-6 (24px)
-- Large: p-8, m-8 (32px)
-- Extra large: p-12, m-12 (48px)
-- Use gap-4, gap-6, space-y-4 consistently
-
-CRITICAL RULES:
-- Every component must have at least one animation
-- Every interactive element must have a hover effect
-- All spacing must follow the 8px grid
-- Code must be production-ready, not prototype quality
-- Applications should be portfolio-worthy
-- Think Apple, Stripe, Linear, Vercel quality
-
-GENERATION TARGETS:
-- Minimum 8 files (components + utils + config)
-- Minimum 600 lines of total code
-- At least 5 different components
-- At least 2 data visualizations
-- Full responsive design
-- Complete type definitions
-
-If user asks for a "simple" app, still make it BEAUTIFUL and complete.
-If they mention a dashboard, include: metrics, charts, tables, filters.
-If they specify an industry, use appropriate colors and terminology.
-
-Generate code that makes developers say "This AI understands design!"
-Make every application a work of art that users want to show off.`
+Make every application beautiful, complete, and production-ready. Code should be something developers want to show off.`
 
     if (context?.framework) {
       systemPrompt += `\n\nFramework: ${context.framework}
@@ -385,6 +230,29 @@ Use strict TypeScript with proper type definitions and interfaces.`
 
   async generateCode(request: GenerateCodeRequest) {
     try {
+      // Mock response when no API key is configured
+      if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.AZURE_OPENAI_API_KEY) {
+        console.log('🚧 No API key configured, returning mock response for testing')
+        return {
+          code: 'mock_app',
+          explanation: 'Mock application generated for testing purposes',
+          files: [
+            {
+              path: 'src/App.tsx',
+              content: `import React from 'react';\n\nconst App: React.FC = () => {\n  return (\n    <div className="min-h-screen bg-gray-100 flex items-center justify-center">\n      <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">\n        <h1 className="text-2xl font-bold text-gray-900 mb-4">Mock Application</h1>\n        <p className="text-gray-600 mb-4">This is a mock response generated for testing purposes.</p>\n        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">\n          Test Button\n        </button>\n      </div>\n    </div>\n  );\n};\n\nexport default App;`,
+              type: 'create' as const
+            },
+            {
+              path: 'package.json',
+              content: `{\n  "name": "mock-app",\n  "version": "0.1.0",\n  "dependencies": {\n    "react": "^18.2.0",\n    "react-dom": "^18.2.0"\n  }\n}`,
+              type: 'create' as const
+            }
+          ],
+          dependencies: ['react', 'react-dom'],
+          instructions: 'This is a mock response for testing. Configure an API key to use real AI generation.'
+        }
+      }
+
       const provider = request.provider || this.defaultProvider
       const model = this.getModelInstance(provider)
 
@@ -462,7 +330,7 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
               path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(6).describe('MUST generate minimum 6-10 complete files with REAL code using ONLY Tailwind CSS classes'),
+            })).min(2).describe('MUST generate minimum 2-5 complete files with REAL code using ONLY Tailwind CSS classes'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
@@ -533,7 +401,7 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with PROPER TAILWIND CSS CLASSES. NO generic class names like "metric-card" or "dashboard". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg". EVERY className must be a valid Tailwind CSS utility class.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(6, 'MUST generate at least 6 complete files'),
+            })).min(2, 'MUST generate at least 2 complete files'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
@@ -650,7 +518,7 @@ Generate 8-12 complete files!`
                 path: z.string(),
                 content: z.string(),
                 type: z.enum(['create', 'modify', 'delete']),
-              })).min(6, 'MUST generate at least 6 complete files'),
+              })).min(2, 'MUST generate at least 2 complete files'),
               dependencies: z.array(z.string()).optional(),
               instructions: z.string().optional(),
             }),
@@ -658,6 +526,94 @@ Generate 8-12 complete files!`
 
           console.log(`Regenerated after detecting echo: ${antiEchoResult.object.files.length} files`)
           return antiEchoResult.object
+      }
+
+      // VALIDATE CONTENT QUALITY - Check file sizes and substance
+      const componentFiles = result.object.files.filter(f =>
+        f.path.endsWith('.tsx') || f.path.endsWith('.ts') || f.path.endsWith('.jsx') || f.path.endsWith('.js')
+      )
+
+      let hasQualityIssues = false
+      const qualityIssues: string[] = []
+
+      // Check each component file for minimum line count
+      for (const file of componentFiles) {
+        const lineCount = file.content.split('\n').length
+        const charCount = file.content.length
+
+        // Skip small config files like package.json
+        if (file.path.includes('package.json') || file.path.includes('tsconfig') || file.path.includes('README')) {
+          continue
+        }
+
+        // Component files should be substantial (at least 30 lines, 500 characters)
+        if (lineCount < 30 || charCount < 500) {
+          hasQualityIssues = true
+          qualityIssues.push(`${file.path} is too short (${lineCount} lines, ${charCount} chars)`)
+        }
+
+        // Check for placeholder content
+        const lowerContent = file.content.toLowerCase()
+        const hasPlaceholders = lowerContent.includes('todo:') ||
+                               lowerContent.includes('implementation goes here') ||
+                               lowerContent.includes('add your') ||
+                               lowerContent.includes('implement this') ||
+                               lowerContent.includes('placeholder')
+
+        if (hasPlaceholders) {
+          hasQualityIssues = true
+          qualityIssues.push(`${file.path} contains placeholder text`)
+        }
+      }
+
+      if (hasQualityIssues) {
+        console.warn(`Quality issues detected:`, qualityIssues)
+        console.warn(`Regenerating with quality requirements...`)
+
+        const qualityPrompt = `${enhancedPrompt}
+
+🚨 CRITICAL QUALITY ISSUES DETECTED - FILES TOO SHORT OR CONTAIN PLACEHOLDERS! 🚨
+
+Previous attempt had these problems:
+${qualityIssues.map(issue => `- ${issue}`).join('\n')}
+
+MANDATORY REQUIREMENTS FOR EACH FILE:
+1. Component files (.tsx/.ts) MUST be AT LEAST 80-150 lines
+2. ZERO placeholders like "TODO", "Implementation goes here", "Add your..."
+3. COMPLETE, WORKING code with ALL logic implemented
+4. Rich mock data (20-50 items for lists/tables)
+5. Multiple hooks (useState, useEffect, custom hooks)
+6. Event handlers (onClick, onChange, onSubmit)
+7. Conditional rendering and mapping over data
+8. Beautiful Tailwind CSS styling on EVERY element
+
+EXAMPLES OF GOOD FILES:
+- Dashboard.tsx: 150+ lines with metrics, charts, tables, state management
+- DataTable.tsx: 120+ lines with sorting, filtering, pagination logic
+- mockData.ts: 200+ lines with complete realistic data arrays
+
+DO NOT submit short files! DO NOT use placeholders! WRITE COMPLETE CODE!
+Generate 8-12 production-ready files NOW!`
+
+        const qualityResult = await generateObject({
+          model,
+          system: this.buildSystemPrompt(request.context),
+          prompt: qualityPrompt,
+          schema: z.object({
+            code: z.string().optional(),
+            explanation: z.string(),
+            files: z.array(z.object({
+              path: z.string(),
+              content: z.string(),
+              type: z.enum(['create', 'modify', 'delete']),
+            })).min(6, 'MUST generate at least 6 complete, substantial files'),
+            dependencies: z.array(z.string()).optional(),
+            instructions: z.string().optional(),
+          }),
+        })
+
+        console.log(`Regenerated with quality fixes: ${qualityResult.object.files.length} files`)
+        return qualityResult.object
       }
 
       // ENFORCE MINIMUM FILE COUNT - Regenerate if AI ignored requirements
@@ -702,7 +658,7 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code. NO explanations, NO placeholders like "This is" or "Implementation goes here". Write COMPLETE working code with all imports, exports, logic, and styling. For React: full components with JSX, hooks, handlers. For data: full arrays with 20-50 items. EXECUTABLE CODE ONLY.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(6, 'MUST generate at least 6 complete files'),
+            })).min(2, 'MUST generate at least 2 complete files'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
