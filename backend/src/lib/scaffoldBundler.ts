@@ -173,26 +173,10 @@ export function bundleScaffoldComponents(componentNames: string[]): GeneratedFil
       continue
     }
 
-    // Convert @/ path aliases to relative paths for Sandpack compatibility
-    // Sandpack doesn't support tsconfig path aliases
-    let sandpackContent = componentContent
-
-    // Replace @/lib/utils with relative path from components/ui/ to lib/
-    sandpackContent = sandpackContent.replace(
-      /from\s+["']@\/lib\/utils["']/g,
-      'from "../../lib/utils"'
-    )
-
-    // Replace @/components/ui/* with relative path (same directory)
-    sandpackContent = sandpackContent.replace(
-      /from\s+["']@\/components\/ui\/([^"']+)["']/g,
-      'from "./$1"'
-    )
-
-    // Add to bundle
+    // Add to bundle (path conversion will happen centrally in ai.ts)
     files.push({
       path: `components/ui/${fileName}`,
-      content: sandpackContent,
+      content: componentContent,
       language: 'typescript'
     })
 

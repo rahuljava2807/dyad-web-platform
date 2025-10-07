@@ -949,22 +949,18 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
         console.log(`⚠️  No inline components detected`)
       }
 
-      // 🚀 PHASE 3A: CONVERT PATH ALIASES TO RELATIVE PATHS (Sandpack compatibility)
-      this.convertPathAliases(result.object.files)
-
-      // 🚀 PHASE 3B: SCAFFOLD INTEGRATION - Bundle shadcn/ui components
+      // 🚀 PHASE 3A: SCAFFOLD INTEGRATION - Bundle shadcn/ui components BEFORE path conversion
       console.log('🎨 [Scaffold Integration] Analyzing generated code for component usage...')
 
-      // Convert result files to GeneratedFile format for detection
-      const generatedFiles = result.object.files.map(f => ({
+      // Detect components BEFORE path conversion (while @/ imports still exist)
+      const generatedFilesForDetection = result.object.files.map(f => ({
         path: f.path,
         content: f.content,
         language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
                  f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
       }))
 
-      // Detect which scaffold components are being used
-      const usedComponents = detectUsedComponents(generatedFiles)
+      const usedComponents = detectUsedComponents(generatedFilesForDetection)
 
       if (usedComponents.length > 0) {
         console.log(`🎨 [Scaffold Integration] Detected ${usedComponents.length} components:`, usedComponents)
@@ -1003,6 +999,9 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
           console.log(`✅ [Scaffold Integration] Total files with fallback scaffold: ${result.object.files.length}`)
         }
       }
+
+      // 🚀 PHASE 3B: CONVERT PATH ALIASES - Now convert ALL files (AI + scaffold)
+      this.convertPathAliases(result.object.files)
 
       return result.object
     } catch (error: any) {
