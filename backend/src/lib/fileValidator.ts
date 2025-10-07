@@ -126,28 +126,28 @@ export function validateFormFiles(files: GeneratedFile[]): ValidationResult {
 }
 
 /**
- * Checks if files use shadcn-ui components
+ * Checks if files use inline Tailwind components (preview-compatible)
  */
 export function checkShadcnUsage(files: GeneratedFile[]): {
   usesShadcn: boolean;
   componentsFound: string[];
   suggestions: string[];
 } {
-  const shadcnImportPattern = /from\s+["']@\/components\/ui\/([\w-]+)["']/g;
+  const inlineComponentPattern = /const\s+(Button|Input|Label|Card|CardHeader|CardTitle|CardDescription|CardContent|Select|Checkbox|Form)\s*=/g;
   const componentsFound = new Set<string>();
   const suggestions: string[] = [];
 
   for (const file of files) {
-    const matches = file.content.matchAll(shadcnImportPattern);
+    const matches = file.content.matchAll(inlineComponentPattern);
     for (const match of matches) {
       componentsFound.add(match[1]);
     }
   }
 
-  const usesShadcn = componentsFound.size > 0;
+  const usesInlineComponents = componentsFound.size > 0;
 
-  if (!usesShadcn) {
-    suggestions.push('No shadcn-ui components detected. Consider using components from @/components/ui/*');
+  if (!usesInlineComponents) {
+    suggestions.push('No inline Tailwind components detected. Use inline component definitions with Tailwind CSS for preview compatibility.');
   }
 
   // Check for validation imports
@@ -162,7 +162,7 @@ export function checkShadcnUsage(files: GeneratedFile[]): {
   }
 
   return {
-    usesShadcn,
+    usesShadcn: usesInlineComponents,
     componentsFound: Array.from(componentsFound),
     suggestions
   };

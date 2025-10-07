@@ -46,6 +46,11 @@ export class TemplateMatcher {
       return ALL_TEMPLATES.find(t => t.metadata.id === 'form-survey') || null;
     }
 
+    // Legal patterns
+    if (this.matchesPattern(promptLower, ['contract analyzer', 'contract analysis', 'legal contract', 'extract terms', 'obligations'])) {
+      return ALL_TEMPLATES.find(t => t.metadata.id === 'legal-contract-analyzer') || null;
+    }
+
     // No template match - will use AI generation
     return null;
   }

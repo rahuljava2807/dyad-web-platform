@@ -294,20 +294,66 @@ export function selectComponentLibrary(prompt: string): ComponentLibraryConfig {
 }
 
 /**
- * Generates component import statements for AI prompt
+ * Generates inline component patterns for AI prompt (preview-compatible)
  */
 export function generateImportInstructions(config: ComponentLibraryConfig): string {
   return `
-🎨 REQUIRED SHADCN-UI COMPONENTS:
+🎨 COMPONENT STYLING - PREVIEW COMPATIBLE:
 
-You MUST use these exact imports in your code:
+⚠️ CRITICAL: DO NOT use external library imports like shadcn-ui.
+Instead, CREATE INLINE COMPONENTS using Tailwind CSS:
 
-${config.imports.join('\n')}
+// Basic Button Component
+const Button = ({ children, onClick, type = "button", variant = "default", className = "" }: any) => {
+  const baseStyles = "px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+    outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
+    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
+  };
+  return <button type={type} onClick={onClick} className={\`\${baseStyles} \${variants[variant]} \${className}\`}>{children}</button>;
+};
+
+// Input Component
+const Input = ({ type = "text", placeholder, className = "", ...props }: any) => (
+  <input type={type} placeholder={placeholder} {...props}
+    className={\`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 \${className}\`} />
+);
+
+// Label Component
+const Label = ({ children, htmlFor, className = "" }: any) => (
+  <label htmlFor={htmlFor} className={\`block text-sm font-medium text-gray-700 mb-1 \${className}\`}>{children}</label>
+);
+
+// Card Components
+const Card = ({ children, className = "" }: any) => (
+  <div className={\`bg-white rounded-lg border border-gray-200 shadow-sm \${className}\`}>{children}</div>
+);
+
+const CardHeader = ({ children, className = "" }: any) => (
+  <div className={\`p-6 \${className}\`}>{children}</div>
+);
+
+const CardTitle = ({ children, className = "" }: any) => (
+  <h3 className={\`text-2xl font-semibold tracking-tight \${className}\`}>{children}</h3>
+);
+
+const CardDescription = ({ children, className = "" }: any) => (
+  <p className={\`text-sm text-gray-500 mt-1.5 \${className}\`}>{children}</p>
+);
+
+const CardContent = ({ children, className = "" }: any) => (
+  <div className={\`p-6 pt-0 \${className}\`}>{children}</div>
+);
 
 ${config.validationSchema ? `
 🔒 VALIDATION REQUIRED:
 
-You MUST include a zod validation schema. Example:
+You MUST include these imports and setup:
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 const formSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -315,6 +361,11 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const form = useForm<FormValues>({
+  resolver: zodResolver(formSchema),
+  defaultValues: { email: '', password: '' }
+});
 ` : ''}
 
 📁 FILE STRUCTURE:

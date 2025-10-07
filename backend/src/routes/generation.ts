@@ -40,11 +40,11 @@ router.post('/generate', async (req: Request, res: Response) => {
   }
 
   try {
-    // Step 1: Check for template match
-    console.log('🔍 Checking for template match...');
-    const template = TemplateMatcher.selectTemplate(prompt);
+    // Step 1: Check for template match (DISABLED FOR PHASE 1 TESTING)
+    console.log('🔍 Skipping template match - testing AI generation with inline components...');
+    const template = null; // Temporarily disabled: TemplateMatcher.selectTemplate(prompt);
 
-    if (template) {
+    if (false && template) { // Template matching disabled
       console.log(`✨ Template matched: ${template.metadata.name} (${template.metadata.id})`);
       console.log(`📦 Returning ${template.files.length} pre-built files`);
 
