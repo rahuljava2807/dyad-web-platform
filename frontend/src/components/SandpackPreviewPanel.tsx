@@ -167,11 +167,18 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
       // Clean up imports to skipped files
       let cleanedContent = file.content
       Array.from(skippedFiles).forEach(skippedFile => {
-        // Remove import statements for skipped files
+        // Remove import statements for skipped files - more robust patterns
+        // Match: import AuthPage from './components/AuthPage'
+        // Match: import { AuthPage } from './components/AuthPage'
+        // Match: import AuthPage from './AuthPage'
         const importPatterns = [
-          new RegExp(`import\\s+${skippedFile}\\s+from\\s+['"]\\.\\/.*?['"];?\\s*`, 'g'),
-          new RegExp(`import\\s+\\{[^}]*\\}\\s+from\\s+['"]\\.\\/.*?${skippedFile}['"];?\\s*`, 'g'),
-          new RegExp(`import\\s+.*?\\s+from\\s+['"]\\.\\/.*?${skippedFile}['"];?\\s*`, 'g'),
+          // Default import: import AuthPage from './any/path/AuthPage'
+          new RegExp(`import\\s+${skippedFile}\\s+from\\s+['"][^'"]*\\/${skippedFile}['"];?\\s*\n?`, 'g'),
+          new RegExp(`import\\s+${skippedFile}\\s+from\\s+['"]\\.\\.?\\/[^'"]*${skippedFile}['"];?\\s*\n?`, 'g'),
+          // Named import: import { Form } from './components/Form'
+          new RegExp(`import\\s+\\{[^}]*${skippedFile}[^}]*\\}\\s+from\\s+['"][^'"]*['"];?\\s*\n?`, 'g'),
+          // Catch-all for any import with the component name
+          new RegExp(`import\\s+[^;]*${skippedFile}[^;]*;?\\s*\n?`, 'g'),
         ]
 
         importPatterns.forEach(pattern => {
@@ -181,7 +188,7 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
         // Remove usage of skipped components in JSX
         cleanedContent = cleanedContent.replace(
           new RegExp(`<${skippedFile}[^>]*>.*?<\\/${skippedFile}>`, 'gs'),
-          `{/* ${skippedFile} component removed (unsupported dependencies) */}`
+          `{/* ${skippedFile} component removed (unsupported dependencies) */}\n`
         )
         cleanedContent = cleanedContent.replace(
           new RegExp(`<${skippedFile}[^/]*/>`, 'g'),
