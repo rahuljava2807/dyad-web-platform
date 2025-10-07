@@ -16,69 +16,53 @@ export interface ComponentLibraryConfig {
 export const COMPONENT_LIBRARY: Record<string, ComponentLibraryConfig> = {
   // Authentication & Forms
   'auth': {
-    components: ['Button', 'Input', 'Form', 'Card', 'Label', 'Toast'],
-    dependencies: ['react-hook-form', 'zod', '@hookform/resolvers'],
+    components: ['Button', 'Input', 'Card', 'Label'],
+    dependencies: [],
     imports: [
       'import { Button } from "@/components/ui/button"',
       'import { Input } from "@/components/ui/input"',
-      'import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"',
       'import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"',
       'import { Label } from "@/components/ui/label"',
-      'import { useToast } from "@/hooks/use-toast"',
-      'import { useForm } from "react-hook-form"',
-      'import { zodResolver } from "@hookform/resolvers/zod"',
-      'import * as z from "zod"',
     ],
     validationSchema: true,
     fileStructure: [
-      'components/LoginForm.tsx',
+      'components/AuthForm.tsx',
       'components/AuthPage.tsx',
-      'lib/validations/authSchema.ts',
       'app/page.tsx'
     ]
   },
 
   'login': {
-    components: ['Button', 'Input', 'Form', 'Card', 'Label', 'Toast'],
-    dependencies: ['react-hook-form', 'zod', '@hookform/resolvers'],
+    components: ['Button', 'Input', 'Card', 'Label'],
+    dependencies: [],
     imports: [
       'import { Button } from "@/components/ui/button"',
       'import { Input } from "@/components/ui/input"',
-      'import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"',
       'import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"',
-      'import { useToast } from "@/hooks/use-toast"',
-      'import { useForm } from "react-hook-form"',
-      'import { zodResolver } from "@hookform/resolvers/zod"',
-      'import * as z from "zod"',
+      'import { Label } from "@/components/ui/label"',
     ],
     validationSchema: true,
     fileStructure: [
       'components/LoginForm.tsx',
       'components/AuthPage.tsx',
-      'lib/validations/loginSchema.ts',
       'app/page.tsx'
     ]
   },
 
   'signup': {
-    components: ['Button', 'Input', 'Form', 'Card', 'Label', 'Toast', 'Checkbox'],
-    dependencies: ['react-hook-form', 'zod', '@hookform/resolvers'],
+    components: ['Button', 'Input', 'Card', 'Label', 'Checkbox'],
+    dependencies: [],
     imports: [
       'import { Button } from "@/components/ui/button"',
       'import { Input } from "@/components/ui/input"',
-      'import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"',
       'import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"',
+      'import { Label } from "@/components/ui/label"',
       'import { Checkbox } from "@/components/ui/checkbox"',
-      'import { useToast } from "@/hooks/use-toast"',
-      'import { useForm } from "react-hook-form"',
-      'import { zodResolver } from "@hookform/resolvers/zod"',
-      'import * as z from "zod"',
     ],
     validationSchema: true,
     fileStructure: [
       'components/SignupForm.tsx',
       'components/AuthPage.tsx',
-      'lib/validations/signupSchema.ts',
       'app/page.tsx'
     ]
   },
@@ -294,78 +278,104 @@ export function selectComponentLibrary(prompt: string): ComponentLibraryConfig {
 }
 
 /**
- * Generates inline component patterns for AI prompt (preview-compatible)
+ * Generates scaffold component import instructions for AI prompt
+ * Uses actual shadcn/ui components from scaffold library
  */
 export function generateImportInstructions(config: ComponentLibraryConfig): string {
   return `
-🎨 COMPONENT STYLING - PREVIEW COMPATIBLE:
+🎨 COMPONENT LIBRARY - SCAFFOLD INTEGRATION:
 
-⚠️ CRITICAL: DO NOT use external library imports like shadcn-ui.
-Instead, CREATE INLINE COMPONENTS using Tailwind CSS:
+✅ USE SCAFFOLD COMPONENTS from shadcn/ui library:
+The following components are PRE-BUILT and will be automatically included in your project.
+Import them using @/components/ui/* paths:
 
-// Basic Button Component
-const Button = ({ children, onClick, type = "button", variant = "default", className = "" }: any) => {
-  const baseStyles = "px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    outline: "border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
-    destructive: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
-  };
-  return <button type={type} onClick={onClick} className={\`\${baseStyles} \${variants[variant]} \${className}\`}>{children}</button>;
-};
+REQUIRED IMPORTS (use exactly these import statements):
+${config.imports.filter(imp => !imp.includes('react-hook-form') && !imp.includes('zod') && !imp.includes('@hookform/resolvers')).join('\n')}
 
-// Input Component
-const Input = ({ type = "text", placeholder, className = "", ...props }: any) => (
-  <input type={type} placeholder={placeholder} {...props}
-    className={\`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 \${className}\`} />
-);
+// Also import the utility function:
+import { cn } from "@/lib/utils"
 
-// Label Component
-const Label = ({ children, htmlFor, className = "" }: any) => (
-  <label htmlFor={htmlFor} className={\`block text-sm font-medium text-gray-700 mb-1 \${className}\`}>{children}</label>
-);
+COMPONENT EXAMPLES (these are already built, just import and use them):
 
-// Card Components
-const Card = ({ children, className = "" }: any) => (
-  <div className={\`bg-white rounded-lg border border-gray-200 shadow-sm \${className}\`}>{children}</div>
-);
+// Button usage:
+<Button variant="default">Click me</Button>
+<Button variant="outline">Secondary</Button>
+<Button variant="destructive">Delete</Button>
 
-const CardHeader = ({ children, className = "" }: any) => (
-  <div className={\`p-6 \${className}\`}>{children}</div>
-);
+// Input & Label usage:
+<Label htmlFor="email">Email Address</Label>
+<Input type="email" id="email" placeholder="you@example.com" />
 
-const CardTitle = ({ children, className = "" }: any) => (
-  <h3 className={\`text-2xl font-semibold tracking-tight \${className}\`}>{children}</h3>
-);
+// Card usage:
+<Card>
+  <CardHeader>
+    <CardTitle>Title Here</CardTitle>
+    <CardDescription>Description here</CardDescription>
+  </CardHeader>
+  <CardContent>
+    {/* Content here */}
+  </CardContent>
+</Card>
 
-const CardDescription = ({ children, className = "" }: any) => (
-  <p className={\`text-sm text-gray-500 mt-1.5 \${className}\`}>{children}</p>
-);
-
-const CardContent = ({ children, className = "" }: any) => (
-  <div className={\`p-6 pt-0 \${className}\`}>{children}</div>
-);
+💡 These components have built-in TypeScript types, variants, and accessibility features.
+DO NOT recreate these components - they will be automatically included in the generated project!
 
 ${config.validationSchema ? `
-🔒 VALIDATION REQUIRED:
+🔒 VALIDATION - MANUAL APPROACH (Preview Compatible):
 
-You MUST include these imports and setup:
+⚠️ DO NOT use react-hook-form, zod, or yup (not supported in preview)
 
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+✅ INSTEAD: Use native React state with manual validation:
 
-const formSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
+import { useState } from 'react'
 
-type FormValues = z.infer<typeof formSchema>;
+interface FormData {
+  email: string
+  password: string
+}
 
-const form = useForm<FormValues>({
-  resolver: zodResolver(formSchema),
-  defaultValues: { email: '', password: '' }
-});
+interface FormErrors {
+  email?: string
+  password?: string
+}
+
+const [formData, setFormData] = useState<FormData>({ email: '', password: '' })
+const [errors, setErrors] = useState<FormErrors>({})
+const [isLoading, setIsLoading] = useState(false)
+
+const validateForm = (): boolean => {
+  const newErrors: FormErrors = {}
+
+  if (!formData.email) {
+    newErrors.email = 'Email is required'
+  } else if (!/\\S+@\\S+\\.\\S+/.test(formData.email)) {
+    newErrors.email = 'Invalid email format'
+  }
+
+  if (!formData.password) {
+    newErrors.password = 'Password is required'
+  } else if (formData.password.length < 8) {
+    newErrors.password = 'Password must be at least 8 characters'
+  }
+
+  setErrors(newErrors)
+  return Object.keys(newErrors).length === 0
+}
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  if (!validateForm()) return
+
+  setIsLoading(true)
+  try {
+    // API call here
+    console.log('Form submitted:', formData)
+  } catch (error) {
+    console.error('Error:', error)
+  } finally {
+    setIsLoading(false)
+  }
+}
 ` : ''}
 
 📁 FILE STRUCTURE:

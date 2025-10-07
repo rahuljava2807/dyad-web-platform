@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { getComponentInstructions } from '../lib/componentSelector'
 import { comprehensiveValidation, generateValidationReport } from '../lib/fileValidator'
 import { getTemplate, getTemplatePromptEnhancement, type IndustryTemplate } from '../lib/industryTemplates'
+import { bundleScaffoldComponents, detectUsedComponents } from '../lib/scaffoldBundler'
 // import { logger } from '../utils/logger' // Not available
 // import { yaviService } from './yavi' // Not needed for basic generation
 // import { usageService } from './usage' // Not available
@@ -801,6 +802,58 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
         console.log(`✅ Inline Tailwind components found: ${validationResult.shadcnCheck.componentsFound.join(', ')}`)
       } else {
         console.log(`⚠️  No inline components detected`)
+      }
+
+      // 🚀 PHASE 3: SCAFFOLD INTEGRATION - Bundle shadcn/ui components
+      console.log('🎨 [Scaffold Integration] Analyzing generated code for component usage...')
+
+      // Convert result files to GeneratedFile format for detection
+      const generatedFiles = result.object.files.map(f => ({
+        path: f.path,
+        content: f.content,
+        language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                 f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+      }))
+
+      // Detect which scaffold components are being used
+      const usedComponents = detectUsedComponents(generatedFiles)
+
+      if (usedComponents.length > 0) {
+        console.log(`🎨 [Scaffold Integration] Detected ${usedComponents.length} components:`, usedComponents)
+
+        // Bundle the scaffold components
+        const scaffoldFiles = bundleScaffoldComponents(usedComponents)
+        console.log(`🎨 [Scaffold Integration] Bundled ${scaffoldFiles.length} scaffold files`)
+
+        // Add scaffold files to the result
+        for (const scaffoldFile of scaffoldFiles) {
+          result.object.files.push({
+            path: scaffoldFile.path,
+            content: scaffoldFile.content,
+            type: 'create'
+          })
+        }
+
+        console.log(`✅ [Scaffold Integration] Total files with scaffold: ${result.object.files.length}`)
+      } else {
+        console.log(`⚠️  [Scaffold Integration] No scaffold components detected in generated code`)
+        console.log(`   This might mean AI didn't use @/components/ui/* imports`)
+
+        // Fallback: Bundle components based on the prompt pattern
+        console.log(`   Falling back to component config: ${componentConfig.config.components.join(', ')}`)
+        const fallbackScaffold = bundleScaffoldComponents(componentConfig.config.components)
+
+        if (fallbackScaffold.length > 0) {
+          console.log(`🎨 [Scaffold Integration] Bundled ${fallbackScaffold.length} files as fallback`)
+          for (const scaffoldFile of fallbackScaffold) {
+            result.object.files.push({
+              path: scaffoldFile.path,
+              content: scaffoldFile.content,
+              type: 'create'
+            })
+          }
+          console.log(`✅ [Scaffold Integration] Total files with fallback scaffold: ${result.object.files.length}`)
+        }
       }
 
       return result.object
