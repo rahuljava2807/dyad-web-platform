@@ -299,6 +299,31 @@ className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 r
 - TypeScript strict mode compliant
 - Error boundaries around form components
 
+## JSON OUTPUT SAFETY
+
+🚨 CRITICAL: Your response will be parsed as JSON. Follow these rules strictly:
+
+1. **AVOID APOSTROPHES IN STRINGS:**
+   ❌ WRONG: 'Don\'t have an account?'
+   ✅ RIGHT: "Don't have an account?" (use double quotes)
+   ✅ RIGHT: 'Do not have an account?' (rephrase to avoid apostrophes)
+
+2. **USE TEMPLATE LITERALS FOR COMPLEX TEXT:**
+   ❌ WRONG: 'User\'s profile'
+   ✅ RIGHT: \`User's profile\` (template literal)
+
+3. **ESCAPE SEQUENCES IN REGEX:**
+   When writing regex patterns in strings, use proper JSON escaping:
+   ✅ CORRECT: "!/\\\\S+@\\\\S+\\\\.\\\\S+/.test(email)"
+   (Double backslashes for JSON string escaping)
+
+4. **CONTRACTIONS:**
+   Prefer full words over contractions to avoid apostrophe issues:
+   ✅ Use "cannot" instead of "can't"
+   ✅ Use "do not" instead of "don't"
+   ✅ Use "does not" instead of "doesn't"
+   ✅ Use "will not" instead of "won't"
+
 ## REMEMBER
 
 Make every application beautiful, complete, and production-ready. Code should be something developers want to show off.`
@@ -857,8 +882,102 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
       }
 
       return result.object
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating code:', error)
+
+      // Check if this is a JSON parsing error (apostrophe/escape issue)
+      const isJSONParseError = error?.message?.includes('JSON') ||
+                              error?.message?.includes('parse') ||
+                              error?.message?.includes('escaped character') ||
+                              error?.cause?.message?.includes('JSON')
+
+      if (isJSONParseError && error?.text) {
+        console.error('🚨 JSON Parse Error detected - likely apostrophe/escape issue')
+        console.error('Error details:', {
+          message: error.message,
+          cause: error.cause?.message,
+          textLength: error.text?.length || 0
+        })
+
+        // ONE RETRY with explicit JSON safety instructions
+        try {
+          console.log('🔄 Retrying with JSON-safe prompt...')
+
+          const jsonSafePrompt = `${enhancedPrompt}
+
+🚨🚨🚨 CRITICAL JSON SAFETY ERROR IN PREVIOUS ATTEMPT! 🚨🚨🚨
+
+Your previous response had a JSON parsing error due to improper string escaping.
+
+MANDATORY RULES FOR THIS ATTEMPT:
+
+1. **DO NOT use apostrophes in single-quoted strings**
+   ❌ NEVER: 'Don\\'t have an account?'
+   ✅ ALWAYS: "Don't have an account?" (use double quotes for strings with apostrophes)
+   ✅ OR: 'Do not have an account?' (rephrase without apostrophes)
+
+2. **Avoid ALL contractions with apostrophes:**
+   ❌ don't, can't, won't, shouldn't, wouldn't, it's, that's, user's
+   ✅ do not, cannot, will not, should not, would not, it is, that is, user
+
+3. **For possessives and contractions, use alternatives:**
+   ❌ "User's profile" → ✅ "User profile" or "Profile of user"
+   ❌ "It's loading" → ✅ "Loading" or "It is loading"
+   ❌ "Don't have an account?" → ✅ "Do not have an account?" or "No account yet?"
+
+4. **Use template literals for complex strings:**
+   ✅ \`Welcome to the application\`
+   ✅ \`Click here to continue\`
+
+Generate your JSON response following these rules STRICTLY.
+Generate 8-12 complete, production-ready files NOW!`
+
+          const safeResult = await generateObject({
+            model,
+            system: this.buildSystemPrompt(request.context),
+            prompt: jsonSafePrompt,
+            schema: z.object({
+              code: z.string().optional(),
+              explanation: z.string(),
+              files: z.array(z.object({
+                path: z.string(),
+                content: z.string(),
+                type: z.enum(['create', 'modify', 'delete']),
+              })).min(6, 'MUST generate at least 6 complete, substantial files'),
+              dependencies: z.array(z.string()).optional(),
+              instructions: z.string().optional(),
+            }),
+          })
+
+          console.log('✅ JSON-safe retry successful!')
+
+          // Apply scaffold integration to the retry result
+          const generatedFiles = safeResult.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+          }))
+
+          const usedComponents = detectUsedComponents(generatedFiles)
+          if (usedComponents.length > 0) {
+            const scaffoldFiles = bundleScaffoldComponents(usedComponents)
+            for (const scaffoldFile of scaffoldFiles) {
+              safeResult.object.files.push({
+                path: scaffoldFile.path,
+                content: scaffoldFile.content,
+                type: 'create'
+              })
+            }
+          }
+
+          return safeResult.object
+        } catch (retryError) {
+          console.error('❌ JSON-safe retry also failed:', retryError)
+          throw new Error('Failed to generate code after JSON safety retry. Please try again.')
+        }
+      }
+
       throw new Error('Failed to generate code. Please try again.')
     }
   }
