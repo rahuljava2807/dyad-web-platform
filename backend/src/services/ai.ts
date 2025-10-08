@@ -419,6 +419,81 @@ className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 r
 - TypeScript strict mode compliant
 - Error boundaries around form components
 
+## REACT COMPONENT EXPORTS
+
+🚨 CRITICAL: All React components MUST be properly exported to avoid "Element type is invalid" errors.
+
+### DEFAULT EXPORT (Recommended for page components):
+
+✅ CORRECT:
+\`\`\`typescript
+// App.tsx
+export default function App() {
+  return <div>...</div>
+}
+
+// Import in another file:
+import App from './App'
+\`\`\`
+
+### NAMED EXPORT (For utility components):
+
+✅ CORRECT:
+\`\`\`typescript
+// LoginForm.tsx
+export function LoginForm() {
+  return <form>...</form>
+}
+
+// Import in another file:
+import { LoginForm } from './LoginForm'
+\`\`\`
+
+### MULTIPLE EXPORTS:
+
+✅ CORRECT:
+\`\`\`typescript
+// components/Cards.tsx
+export function MetricCard() { return <div>...</div> }
+export function UserCard() { return <div>...</div> }
+export function ProductCard() { return <div>...</div> }
+
+// Import in another file:
+import { MetricCard, UserCard } from './components/Cards'
+\`\`\`
+
+### COMMON MISTAKES TO AVOID:
+
+❌ WRONG: Missing export statement
+\`\`\`typescript
+function LoginForm() { return <form>...</form> }  // ❌ Not exported!
+\`\`\`
+
+❌ WRONG: Importing named export as default
+\`\`\`typescript
+// LoginForm.tsx
+export function LoginForm() {...}
+
+// Another file
+import LoginForm from './LoginForm'  // ❌ Wrong! Should be: import { LoginForm }
+\`\`\`
+
+❌ WRONG: Importing default export as named
+\`\`\`typescript
+// App.tsx
+export default function App() {...}
+
+// Another file
+import { App } from './App'  // ❌ Wrong! Should be: import App from './App'
+\`\`\`
+
+### RULES:
+1. **ALWAYS export every React component** you create
+2. **Use default export for main components** (App, pages)
+3. **Use named exports for reusable components** (LoginForm, Button, Card)
+4. **Match import style to export style** (default ↔ default, named ↔ named)
+5. **One component per file** for clarity (except for closely related components)
+
 ## JSON OUTPUT SAFETY
 
 🚨 CRITICAL: Your response will be parsed as JSON. Follow these rules strictly:
