@@ -53,7 +53,7 @@ interface AnalyzeCodeRequest {
 
 class AIService {
   private providers: Map<string, AIProvider> = new Map()
-  private defaultProvider = 'gpt-4'
+  private defaultProvider = 'gpt-4-turbo' // gpt-4-turbo supports structured JSON output required by generateObject
 
   constructor() {
     this.initializeProviders()
@@ -112,15 +112,15 @@ class AIService {
   private getModelInstance(provider: string, model?: string) {
     switch (provider) {
       case 'openai':
-        return openai(model || 'gpt-4')
+        return openai(model || 'gpt-4-turbo')
       case 'anthropic':
         return anthropic(model || 'claude-3-sonnet-20240229')
       case 'google':
         return google(model || 'gemini-pro')
       case 'azure':
-        return azure(model || 'gpt-4')
+        return azure(model || 'gpt-4-turbo')
       default:
-        return openai('gpt-4') // fallback
+        return openai('gpt-4-turbo') // fallback - gpt-4-turbo supports structured JSON output
     }
   }
 
@@ -312,6 +312,13 @@ Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
 **Icons**: lucide-react is installed (just import what you need)
 
 **Styling**: Tailwind CSS is fully configured (use utility classes)
+
+🚨 **CRITICAL IMPORT RULE** - Never merge UI component imports:
+❌ WRONG: import { Input, Label } from '@/components/ui/input'
+✅ CORRECT: import { Input } from '@/components/ui/input'
+            import { Label } from '@/components/ui/label'
+
+Each shadcn/ui component MUST be imported from its own file. NEVER combine imports from different components into a single import statement!
 
 ⚠️ **DO NOT ADD** these to dependencies (they're already included or not needed):
 - Any @/components/ui/* paths
@@ -1040,6 +1047,10 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
 🚨 ONLY Tailwind CSS utility classes will work!
 🚨 Make every component beautiful, interactive, and polished with proper Tailwind classes!`
 
+      console.log('🎯 Making initial generateObject call...')
+      console.log(`System prompt size: ${this.buildSystemPrompt(request.context).length} chars`)
+      console.log(`Enhanced prompt size: ${enhancedPrompt.length} chars`)
+
       const result = await generateObject({
         model,
         system: this.buildSystemPrompt(request.context),
@@ -1055,9 +1066,11 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
+        // Note: Using default structured output mode (works with all OpenAI models including base gpt-4)
+        // mode: 'json' requires gpt-4-turbo or later
       })
 
-      console.log(`Generated code for user ${request.userId}`, {
+      console.log(`✅ Generated code for user ${request.userId}`, {
         provider,
         promptLength: request.prompt.length,
         filesCount: result.object.files.length,
@@ -1505,20 +1518,39 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
       return result.object
     } catch (error: any) {
-      console.error('Error generating code:', error)
+      console.error('❌ Error generating code:', error)
+      console.error('Error name:', error?.name)
+      console.error('Error message:', error?.message)
+      console.error('Error cause:', error?.cause)
+      console.error('Error stack:', error?.stack?.substring(0, 500))
+
+      // Log response details if available
+      if (error?.text) {
+        console.error('🔍 AI Response Text Length:', error.text.length)
+        console.error('🔍 AI Response Preview (first 500 chars):', error.text.substring(0, 500))
+        console.error('🔍 AI Response Preview (last 500 chars):', error.text.substring(Math.max(0, error.text.length - 500)))
+      }
+
+      if (error?.response) {
+        console.error('🔍 HTTP Response Status:', error.response.status)
+        console.error('🔍 HTTP Response Data:', JSON.stringify(error.response.data).substring(0, 500))
+      }
 
       // Check if this is a JSON parsing error (apostrophe/escape issue)
       const isJSONParseError = error?.message?.includes('JSON') ||
                               error?.message?.includes('parse') ||
                               error?.message?.includes('escaped character') ||
-                              error?.cause?.message?.includes('JSON')
+                              error?.message?.includes('schema') ||
+                              error?.cause?.message?.includes('JSON') ||
+                              error?.cause?.message?.includes('parse')
 
-      if (isJSONParseError && error?.text) {
-        console.error('🚨 JSON Parse Error detected - likely apostrophe/escape issue')
+      if (isJSONParseError) {
+        console.error('🚨 JSON Parse Error detected - likely apostrophe/escape issue or schema validation failure')
         console.error('Error details:', {
           message: error.message,
           cause: error.cause?.message,
-          textLength: error.text?.length || 0
+          textLength: error.text?.length || 0,
+          hasText: !!error.text
         })
 
         // ONE RETRY with explicit JSON safety instructions

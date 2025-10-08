@@ -84,8 +84,39 @@ export const ImprovedSandpackPreview: React.FC<ImprovedSandpackPreviewProps> = (
       sandpackFiles[normalizedPath] = { code: file.content }
     })
 
-    // Ensure we have required files
-    if (!sandpackFiles['/App.tsx'] && !sandpackFiles['/App.ts']) {
+    // Ensure we have required files - check for both root and src/ paths
+    console.log('[SandpackPreview] Available files:', Object.keys(sandpackFiles))
+
+    // Check for Next.js app/page.tsx and convert it to App.tsx for Sandpack
+    const nextAppFile = sandpackFiles['/src/app/page.tsx'] || sandpackFiles['/app/page.tsx']
+    if (nextAppFile) {
+      console.log('[SandpackPreview] Found Next.js app/page.tsx, converting to App.tsx')
+
+      // Fix import paths when moving from /src/app/page.tsx to /src/App.tsx
+      // Change: import ... from '../components/X' -> './components/X'
+      // Change: import ... from '../lib/X' -> './lib/X'
+      let fixedCode = nextAppFile.code
+        .replace(/from\s+['"]\.\.\/components\//g, "from './components/")
+        .replace(/from\s+['"]\.\.\/lib\//g, "from './lib/")
+        .replace(/from\s+['"]\.\.\/hooks\//g, "from './hooks/")
+        .replace(/from\s+['"]\.\.\/utils\//g, "from './utils/")
+        .replace(/from\s+['"]\.\.\/types\//g, "from './types/")
+
+      sandpackFiles['/src/App.tsx'] = { code: fixedCode }
+      console.log('[SandpackPreview] Fixed import paths for App.tsx')
+    }
+
+    const hasAppFile = sandpackFiles['/App.tsx'] || sandpackFiles['/App.ts'] ||
+                      sandpackFiles['/src/App.tsx'] || sandpackFiles['/src/App.ts']
+    console.log('[SandpackPreview] hasAppFile:', hasAppFile, {
+      '/App.tsx': !!sandpackFiles['/App.tsx'],
+      '/App.ts': !!sandpackFiles['/App.ts'],
+      '/src/App.tsx': !!sandpackFiles['/src/App.tsx'],
+      '/src/App.ts': !!sandpackFiles['/src/App.ts']
+    })
+
+    if (!hasAppFile) {
+      console.log('[SandpackPreview] No App file found, using fallback')
       sandpackFiles['/App.tsx'] = {
         code: `export default function App() {
   return (
@@ -100,11 +131,13 @@ export const ImprovedSandpackPreview: React.FC<ImprovedSandpackPreviewProps> = (
       }
     }
 
+    // Create entry point that works with both /App.tsx and /src/App.tsx
     if (!sandpackFiles['/index.tsx']) {
+      const appImportPath = sandpackFiles['/src/App.tsx'] || sandpackFiles['/src/App.ts'] ? './src/App' : './App'
       sandpackFiles['/index.tsx'] = {
         code: `import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import App from '${appImportPath}';
 
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 root.render(<React.StrictMode><App /></React.StrictMode>);`

@@ -139,14 +139,14 @@ export function bundleScaffoldComponents(componentNames: string[]): GeneratedFil
 
   if (utilsContent) {
     files.push({
-      path: 'lib/utils.ts',
+      path: 'src/lib/utils.ts',
       content: utilsContent,
       language: 'typescript'
     })
     bundled.add('utils')
-    console.log('[ScaffoldBundler] ✓ Added lib/utils.ts')
+    console.log('[ScaffoldBundler] ✓ Added src/lib/utils.ts')
   } else {
-    console.warn('[ScaffoldBundler] ⚠️ Could not load lib/utils.ts - components may not work')
+    console.warn('[ScaffoldBundler] ⚠️ Could not load src/lib/utils.ts - components may not work')
   }
 
   // Bundle each requested component
@@ -175,13 +175,13 @@ export function bundleScaffoldComponents(componentNames: string[]): GeneratedFil
 
     // Add to bundle (path conversion will happen centrally in ai.ts)
     files.push({
-      path: `components/ui/${fileName}`,
+      path: `src/components/ui/${fileName}`,
       content: componentContent,
       language: 'typescript'
     })
 
     bundled.add(componentName.toLowerCase())
-    console.log(`[ScaffoldBundler] ✓ Added components/ui/${fileName}`)
+    console.log(`[ScaffoldBundler] ✓ Added src/components/ui/${fileName}`)
   }
 
   console.log(`[ScaffoldBundler] Successfully bundled ${files.length} files`)
