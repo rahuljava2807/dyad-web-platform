@@ -29,7 +29,120 @@ router.post('/validate-key', async (req: Request, res: Response) => {
 });
 
 /**
- * Generate Application with REAL AI
+ * Generate Application with REAL AI (Streaming SSE)
+ * POST /api/generate/stream
+ */
+router.post('/generate/stream', async (req: Request, res: Response) => {
+  const { prompt, context, userId, provider } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ error: 'Prompt is required' });
+  }
+
+  try {
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Helper function to send SSE events
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\n`);
+      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    };
+
+    // Send initial session event
+    sendEvent('session', { sessionId, timestamp: Date.now() });
+
+    // Send thinking events
+    sendEvent('thinking', {
+      step: 'analyze',
+      title: 'Analyzing Requirements',
+      description: 'Understanding your request and planning the architecture...',
+      timestamp: Date.now()
+    });
+
+    await sleep(500);
+
+    sendEvent('thinking', {
+      step: 'plan',
+      title: 'Planning Architecture',
+      description: 'Selecting optimal components and tech stack...',
+      timestamp: Date.now()
+    });
+
+    await sleep(500);
+
+    sendEvent('thinking', {
+      step: 'generate',
+      title: 'Generating Code',
+      description: 'Creating production-ready files with AI...',
+      timestamp: Date.now()
+    });
+
+    // Generate code with AI
+    const result = await aiService.generateCode({
+      prompt,
+      context: context || {
+        framework: 'react',
+        language: 'typescript',
+      },
+      userId: userId || 'anonymous',
+      provider: provider || 'openai',
+    });
+
+    console.log(`✅ Generated ${result.files.length} files with AI`);
+
+    // Stream files one by one
+    const totalFiles = result.files.length;
+    for (let i = 0; i < result.files.length; i++) {
+      const file = result.files[i];
+
+      sendEvent('file', {
+        path: file.path,
+        content: file.content,
+        language: file.language,
+        summary: generateFileSummary(file.path, 'AI Generated'),
+        index: i,
+        total: totalFiles,
+        timestamp: Date.now()
+      });
+
+      // Small delay between files to show progress
+      await sleep(200);
+    }
+
+    // Send completion event
+    sendEvent('complete', {
+      sessionId,
+      filesCount: result.files.length,
+      explanation: result.explanation,
+      dependencies: result.dependencies,
+      timestamp: Date.now()
+    });
+
+    // Close connection
+    res.end();
+
+  } catch (error) {
+    console.error('❌ Streaming generation error:', error);
+
+    // Send error event
+    res.write(`event: error\n`);
+    res.write(`data: ${JSON.stringify({
+      error: error instanceof Error ? error.message : 'Failed to generate application',
+      timestamp: Date.now()
+    })}\n\n`);
+
+    res.end();
+  }
+});
+
+/**
+ * Generate Application with REAL AI (Legacy non-streaming)
  * POST /api/generate
  */
 router.post('/generate', async (req: Request, res: Response) => {
@@ -396,6 +509,13 @@ const config: Config = {
 }
 
 export default config`;
+}
+
+/**
+ * Helper function for delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default router;

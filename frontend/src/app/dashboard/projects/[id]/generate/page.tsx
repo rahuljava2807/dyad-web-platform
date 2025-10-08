@@ -44,55 +44,13 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
 
   const generateApplication = async () => {
     try {
-      // Step 1: Thinking
       setCurrentStep('thinking')
-      setThinking('Analyzing your requirements and planning the architecture...')
-      setProgress(10)
-      await sleep(800)
+      setProgress(5)
 
-      setThinking('Selecting optimal components and tech stack...')
-      setProgress(15)
-      await sleep(600)
-
-      // Step 2: Generating - Show capabilities being added
-      setCurrentStep('generating')
-      setThinking('Creating component structure...')
-      setProgress(20)
-
-      const capabilitiesList = [
-        '✨ Building responsive UI components',
-        '🎨 Adding beautiful Tailwind styling',
-        '⚡ Implementing state management',
-        '🔒 Setting up authentication flow',
-        '📊 Creating data visualization',
-        '🚀 Optimizing performance',
-        '♿ Ensuring accessibility',
-        '📱 Making it mobile-friendly'
-      ]
-
-      // Add capabilities one by one
-      for (let i = 0; i < 3; i++) {
-        await sleep(400)
-        setCapabilities(prev => [...prev, capabilitiesList[i]])
-      }
-
-      setProgress(30)
-
-      // Step 3: Call AI API
-      setCurrentStep('writing')
-      setThinking('Generating production-ready code...')
-
-      // Add more capabilities
-      for (let i = 3; i < 6; i++) {
-        await sleep(300)
-        setCapabilities(prev => [...prev, capabilitiesList[i]])
-      }
-
-      setProgress(40)
-
-      const response = await fetch('/api/generation/start', {
+      // Use fetch with SSE streaming
+      const response = await fetch('/api/generation/stream', {
         method: 'POST',
-        headers: { 'Content-type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
           settings: {
@@ -103,49 +61,113 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to generate code')
+        throw new Error('Failed to start generation stream')
       }
 
-      const data = await response.json()
-      const generatedFiles = data.files || []
-
-      // Add final capabilities
-      for (let i = 6; i < capabilitiesList.length; i++) {
-        await sleep(200)
-        setCapabilities(prev => [...prev, capabilitiesList[i]])
+      if (!response.body) {
+        throw new Error('No response body')
       }
 
-      setProgress(60)
-      setThinking(`Generated ${generatedFiles.length} files...`)
-      await sleep(500)
+      // Track file accumulation
+      const accumulatedFiles: GeneratedFile[] = []
 
-      // Step 4: Process files
-      setProgress(70)
-      setThinking('Processing components...')
+      // Read SSE stream
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
 
-      const processedFiles: GeneratedFile[] = generatedFiles.map((file: any) => ({
-        path: file.path,
-        content: file.content,
-        language: file.path.endsWith('.tsx') || file.path.endsWith('.ts') ? 'typescript' :
-                 file.path.endsWith('.jsx') || file.path.endsWith('.js') ? 'javascript' :
-                 file.path.endsWith('.css') ? 'css' : 'plaintext'
-      }))
+      while (true) {
+        const { done, value } = await reader.read()
 
-      setFiles(processedFiles)
-      setProgress(85)
-      await sleep(500)
+        if (done) {
+          console.log('Stream complete')
+          break
+        }
 
-      // Step 5: Building preview
-      setCurrentStep('preview')
-      setThinking('Building live preview...')
-      setProgress(95)
-      await sleep(1500)
+        // Decode chunk and add to buffer
+        buffer += decoder.decode(value, { stream: true })
 
-      // Step 6: Complete
-      setCurrentStep('complete')
-      setProgress(100)
-      setThinking('Application ready!')
+        // Process complete SSE messages
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            const eventType = line.slice(7).trim()
+            continue // Skip event line, we'll use the data
+          }
+
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim()
+
+            try {
+              const data = JSON.parse(dataStr)
+
+              // Handle different event types
+              if (data.sessionId) {
+                // Session event
+                console.log('Session started:', data.sessionId)
+              } else if (data.step) {
+                // Thinking event
+                console.log('Thinking:', data.title)
+                setThinking(data.description)
+
+                if (data.step === 'analyze') {
+                  setCurrentStep('thinking')
+                  setProgress(10)
+                } else if (data.step === 'plan') {
+                  setCurrentStep('generating')
+                  setProgress(20)
+                } else if (data.step === 'generate') {
+                  setCurrentStep('writing')
+                  setProgress(30)
+                }
+              } else if (data.path) {
+                // File event
+                console.log(`File: ${data.path} (${data.index + 1}/${data.total})`)
+
+                const newFile: GeneratedFile = {
+                  path: data.path,
+                  content: data.content,
+                  language: data.language
+                }
+
+                accumulatedFiles.push(newFile)
+                setFiles([...accumulatedFiles])
+
+                const fileProgress = 30 + ((data.index + 1) / data.total) * 50
+                setProgress(Math.round(fileProgress))
+                setThinking(`Generated file ${data.index + 1} of ${data.total}: ${data.path}`)
+
+                if (data.summary) {
+                  setCapabilities(prev => [...prev, `✅ ${data.summary}`])
+                }
+              } else if (data.filesCount) {
+                // Complete event
+                console.log('Complete:', data.filesCount, 'files')
+
+                setCurrentStep('preview')
+                setProgress(90)
+                setThinking('Building live preview...')
+
+                setTimeout(() => {
+                  setCurrentStep('complete')
+                  setProgress(100)
+                  setThinking('Application ready!')
+                }, 1000)
+              } else if (data.error) {
+                // Error event
+                console.error('Error:', data.error)
+                setError(data.error)
+                setCurrentStep('thinking')
+                break
+              }
+            } catch (e) {
+              console.warn('Failed to parse SSE data:', dataStr)
+            }
+          }
+        }
+      }
 
     } catch (err: any) {
       console.error('Generation error:', err)
