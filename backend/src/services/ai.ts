@@ -548,6 +548,17 @@ Use strict TypeScript with proper type definitions and interfaces.`
 9. Make it production-ready and portfolio-worthy with complete, working functionality
 10. 🚨 DO NOT create placeholder components with just text - BUILD THE ACTUAL APPLICATION! 🚨
 
+🚨 DEPENDENCIES ARRAY RULES:
+❌ NEVER include "@/components/ui" in dependencies - it is NOT an npm package!
+❌ NEVER include path aliases (@/ or ~/) in dependencies array
+✅ ONLY include real npm packages: react, react-dom, framer-motion, lucide-react, recharts, etc.
+
+Example CORRECT dependencies array:
+["react", "react-dom", "react-router-dom", "framer-motion", "lucide-react"]
+
+Example WRONG dependencies array (DO NOT DO THIS):
+["react", "@/components/ui", "@/lib/utils"] ❌
+
 🚨 TAILWIND CSS REQUIREMENTS (NON-NEGOTIABLE):
 - EVERY className must use Tailwind utilities (bg-white, text-xl, flex, grid, etc.)
 - NO generic class names (metric-card, dashboard, navigation, sidebar, etc.)
@@ -785,6 +796,9 @@ Generate 8-12 complete files!`
         f.path.endsWith('.tsx') || f.path.endsWith('.ts') || f.path.endsWith('.jsx') || f.path.endsWith('.js')
       )
 
+      // 🚨 DISABLED: Quality retry causes AI exhaustion, generating fewer files each time
+      const ENABLE_QUALITY_RETRY = false
+
       let hasQualityIssues = false
       const qualityIssues: string[] = []
 
@@ -818,7 +832,7 @@ Generate 8-12 complete files!`
         }
       }
 
-      if (hasQualityIssues) {
+      if (hasQualityIssues && ENABLE_QUALITY_RETRY) {
         console.warn(`Quality issues detected:`, qualityIssues)
         console.warn(`Regenerating with quality requirements...`)
 
