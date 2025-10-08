@@ -494,6 +494,142 @@ import { App } from './App'  // ❌ Wrong! Should be: import App from './App'
 4. **Match import style to export style** (default ↔ default, named ↔ named)
 5. **One component per file** for clarity (except for closely related components)
 
+## FUNCTION DEFINITIONS AND SCOPE
+
+🚨 CRITICAL: All functions must be defined before they are called to avoid "X is not defined" runtime errors.
+
+### CORRECT PATTERN - Define functions INSIDE component:
+
+✅ CORRECT:
+\`\`\`typescript
+export function LoginForm() {
+  const [formData, setFormData] = useState({email: '', password: ''})
+  const [errors, setErrors] = useState<any>({})
+
+  // ✅ Define validation function INSIDE component
+  const validateForm = (data: typeof formData): boolean => {
+    const newErrors: any = {}
+
+    if (!data.email) {
+      newErrors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      newErrors.email = 'Invalid email format'
+    }
+
+    if (!data.password) {
+      newErrors.password = 'Password is required'
+    } else if (data.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  // ✅ Now validateForm is in scope when handleSubmit calls it
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateForm(formData)) return  // ✅ Works!
+
+    // Submit logic...
+  }
+
+  return <form onSubmit={handleSubmit}>...</form>
+}
+\`\`\`
+
+### ALTERNATIVE - Import from utility file:
+
+✅ ALSO CORRECT:
+\`\`\`typescript
+// lib/validation.ts
+export const validateEmail = (email: string): string | null => {
+  if (!email) return 'Email is required'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email format'
+  return null
+}
+
+export const validatePassword = (password: string): string | null => {
+  if (!password) return 'Password is required'
+  if (password.length < 8) return 'Password must be at least 8 characters'
+  return null
+}
+
+// components/LoginForm.tsx
+import { validateEmail, validatePassword } from '../lib/validation'
+
+export function LoginForm() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    const emailError = validateEmail(formData.email)  // ✅ Works!
+    const passwordError = validatePassword(formData.password)  // ✅ Works!
+
+    if (emailError || passwordError) {
+      setErrors({ email: emailError, password: passwordError })
+      return
+    }
+
+    // Submit logic...
+  }
+
+  return <form onSubmit={handleSubmit}>...</form>
+}
+\`\`\`
+
+### COMMON MISTAKES TO AVOID:
+
+❌ WRONG: Calling function before it is defined
+\`\`\`typescript
+export function LoginForm() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateForm(formData)) return  // ❌ ReferenceError: validateForm is not defined!
+  }
+
+  // ❌ Function defined AFTER it is used
+  const validateForm = (data: any) => { ... }
+}
+\`\`\`
+
+❌ WRONG: Calling imported function without import statement
+\`\`\`typescript
+// components/LoginForm.tsx
+export function LoginForm() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    if (!validateEmail(formData.email)) return  // ❌ validateEmail is not defined!
+  }
+}
+
+// ❌ Missing: import { validateEmail } from '../lib/validation'
+\`\`\`
+
+❌ WRONG: Defining function outside component scope
+\`\`\`typescript
+// ❌ Function defined outside component - not accessible
+const validateForm = (data: any) => { ... }
+
+export function LoginForm() {
+  const handleSubmit = async (e: React.FormEvent) => {
+    if (!validateForm(formData)) return  // ❌ May not have access to component state
+  }
+}
+\`\`\`
+
+### RULES:
+1. **Define helper functions INSIDE the component** if they need access to state/props
+2. **Define validation functions in separate files** (lib/validation.ts) for reusability
+3. **ALWAYS import** functions from other files before using them
+4. **Define functions BEFORE calling them** in the same file (or hoist with function declarations)
+5. **Use descriptive names**: validateForm, handleSubmit, calculateTotal (not validate, submit, calc)
+
+### FUNCTION PLACEMENT ORDER (inside component):
+1. State declarations (useState, useRef, etc.)
+2. Helper/validation functions
+3. Event handlers (handleSubmit, handleChange, etc.)
+4. useEffect hooks
+5. Return JSX
+
 ## JSON OUTPUT SAFETY
 
 🚨 CRITICAL: Your response will be parsed as JSON. Follow these rules strictly:
