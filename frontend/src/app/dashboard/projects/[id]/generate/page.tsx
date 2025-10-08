@@ -7,6 +7,7 @@ import { ImprovedSandpackPreview } from '@/components/ImprovedSandpackPreview'
 import { ThinkingPanel } from '@/components/ThinkingPanel'
 import { FileTreePanel } from '@/components/FileTreePanel'
 import { ApprovalModal } from '@/components/ApprovalModal'
+import { VersionHistoryPanel } from '@/components/VersionHistoryPanel'
 
 interface GeneratedFile {
   path: string
@@ -42,6 +43,10 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   const [capabilities, setCapabilities] = useState<string[]>([])
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([])
   const [totalExpectedFiles, setTotalExpectedFiles] = useState<number>(0)
+  const [generationStartTime, setGenerationStartTime] = useState<number>(0)
+  const [estimatedTimeRemaining, setEstimatedTimeRemaining] = useState<number>(0)
+  const [generations, setGenerations] = useState<Array<{id: string, prompt: string, filesCount: number, timestamp: number, files: GeneratedFile[]}>>([])
+  const [currentGenerationId, setCurrentGenerationId] = useState<string>('')
 
   const steps = [
     { key: 'thinking', icon: Sparkles, label: 'Analyzing Requirements', color: 'text-blue-500' },
@@ -58,6 +63,23 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
 
   const handleReject = () => {
     router.push('/dashboard/projects/new')
+  }
+
+  const handleSelectVersion = (id: string) => {
+    const generation = generations.find(g => g.id === id)
+    if (generation) {
+      setCurrentGenerationId(id)
+      setFiles(generation.files)
+    }
+  }
+
+  const handleRetry = () => {
+    setShowApprovalModal(true)
+    setFiles([])
+    setThinkingSteps([])
+    setCapabilities([])
+    setProgress(0)
+    setCurrentStep('thinking')
   }
 
   useEffect(() => {
@@ -165,9 +187,10 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                 // File event
                 console.log(`File: ${data.path} (${data.index + 1}/${data.total})`)
 
-                // Set total expected files on first file
+                // Set total expected files and start time on first file
                 if (data.total && totalExpectedFiles === 0) {
                   setTotalExpectedFiles(data.total)
+                  setGenerationStartTime(Date.now())
                 }
 
                 const newFile: GeneratedFile = {
@@ -182,6 +205,16 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                 accumulatedFiles.push(newFile)
                 setFiles([...accumulatedFiles])
 
+                // Calculate ETA
+                const filesCompleted = data.index + 1
+                const filesRemaining = data.total - filesCompleted
+                if (filesCompleted > 0 && filesRemaining > 0) {
+                  const elapsedTime = Date.now() - (generationStartTime || Date.now())
+                  const avgTimePerFile = elapsedTime / filesCompleted
+                  const eta = Math.round((avgTimePerFile * filesRemaining) / 1000) // in seconds
+                  setEstimatedTimeRemaining(eta)
+                }
+
                 const fileProgress = 30 + ((data.index + 1) / data.total) * 50
                 setProgress(Math.round(fileProgress))
                 setThinking(`Generated file ${data.index + 1} of ${data.total}: ${data.path}`)
@@ -192,6 +225,22 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
               } else if (data.filesCount) {
                 // Complete event
                 console.log('Complete:', data.filesCount, 'files')
+
+                // Store this generation (keep last 3)
+                const genId = `gen-${Date.now()}`
+                setCurrentGenerationId(genId)
+                setGenerations(prev => {
+                  const newGen = {
+                    id: genId,
+                    prompt,
+                    filesCount: data.filesCount,
+                    timestamp: Date.now(),
+                    files: accumulatedFiles
+                  }
+                  const updated = [...prev, newGen]
+                  // Keep only last 3 generations
+                  return updated.slice(-3)
+                })
 
                 setCurrentStep('preview')
                 setProgress(90)
@@ -278,7 +327,14 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-white/60 font-mono">{progress}%</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/60 font-mono">{progress}%</span>
+                  {estimatedTimeRemaining > 0 && (
+                    <span className="text-xs text-white/40 font-mono">
+                      • ~{estimatedTimeRemaining}s remaining
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -358,6 +414,18 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                       <FileTreePanel
                         files={files}
                         totalExpected={totalExpectedFiles}
+                      />
+                    </div>
+                  )}
+
+                  {/* Version History Panel */}
+                  {generations.length > 0 && currentStep === 'complete' && (
+                    <div className="mt-8">
+                      <VersionHistoryPanel
+                        generations={generations}
+                        currentGenerationId={currentGenerationId}
+                        onSelectVersion={handleSelectVersion}
+                        onRetry={handleRetry}
                       />
                     </div>
                   )}
