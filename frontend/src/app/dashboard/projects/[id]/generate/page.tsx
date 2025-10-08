@@ -6,6 +6,7 @@ import { Sparkles, Code, FileText, Zap, CheckCircle, ArrowRight, Eye } from 'luc
 import { ImprovedSandpackPreview } from '@/components/ImprovedSandpackPreview'
 import { ThinkingPanel } from '@/components/ThinkingPanel'
 import { FileTreePanel } from '@/components/FileTreePanel'
+import { ApprovalModal } from '@/components/ApprovalModal'
 
 interface GeneratedFile {
   path: string
@@ -32,6 +33,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   const searchParams = useSearchParams()
   const prompt = searchParams.get('prompt') || ''
 
+  const [showApprovalModal, setShowApprovalModal] = useState(true)
   const [currentStep, setCurrentStep] = useState<GenerationStep>('thinking')
   const [files, setFiles] = useState<GeneratedFile[]>([])
   const [progress, setProgress] = useState(0)
@@ -49,13 +51,21 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
     { key: 'complete', icon: CheckCircle, label: 'Complete', color: 'text-green-600' }
   ]
 
+  const handleApprove = () => {
+    setShowApprovalModal(false)
+    generateApplication()
+  }
+
+  const handleReject = () => {
+    router.push('/dashboard/projects/new')
+  }
+
   useEffect(() => {
     if (!prompt) {
       setError('No prompt provided')
+      setShowApprovalModal(false)
       return
     }
-
-    generateApplication()
   }, [prompt])
 
   const generateApplication = async () => {
@@ -221,6 +231,17 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+      {/* Approval Modal */}
+      {showApprovalModal && prompt && (
+        <ApprovalModal
+          prompt={prompt}
+          estimatedFiles={10}
+          techStack={['React', 'TypeScript', 'Tailwind CSS', 'shadcn/ui']}
+          onApprove={handleApprove}
+          onReject={handleReject}
+        />
+      )}
+
       {/* Compact Status Banner - Only show during generation */}
       {currentStep !== 'complete' && currentStep !== 'preview' && (
         <div className="border-b border-white/10 bg-black/20 backdrop-blur-xl flex-shrink-0">
