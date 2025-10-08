@@ -324,15 +324,12 @@ Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
 - Default: Build single-page apps with conditional rendering (useState to toggle views)
 - IF routing is absolutely needed: Add "react-router-dom": "^6.20.0" to package.json dependencies
 - Example single-page pattern:
-  ```tsx
   const [view, setView] = useState('home')
   return view === 'home' ? <HomePage /> : <ProfilePage />
-  ```
 
 🔐 **AUTHENTICATION FLOWS** (Login/Signup):
 When user requests login/signup, you MUST implement complete flow with post-auth navigation:
 
-```tsx
 // In App.tsx - handle auth state and navigation
 const [isAuthenticated, setIsAuthenticated] = useState(false)
 const [user, setUser] = useState<{ email: string; name: string } | null>(null)
@@ -353,13 +350,11 @@ return isAuthenticated ? (
 ) : (
   <LoginPage onLogin={handleLogin} />
 )
-```
 
 ⚠️ **VALIDATION - DO NOT create separate helper functions**:
 Keep validation INLINE in the component - DO NOT extract to separate functions like validateEmail(), validatePassword(), etc.
 
 ✅ CORRECT approach:
-```tsx
 const handleSubmit = (e: React.FormEvent) => {
   e.preventDefault()
   const newErrors: FormErrors = {}
@@ -379,21 +374,17 @@ const handleSubmit = (e: React.FormEvent) => {
 
   onLogin(formData.email, formData.password)
 }
-```
 
 ❌ WRONG - DO NOT do this:
-```tsx
 const validateEmail = (email: string) => { ... }  // DON'T create separate functions
 const handleSubmit = () => {
   const emailError = validateEmail(formData.email)  // This causes "validateEmail is not defined" errors
 }
-```
 
 📋 **COMPLETE LOGIN APP EXAMPLE**:
 When user requests "login application" or "auth system", generate these EXACT files:
 
 **1. App.tsx** (Main orchestrator):
-```tsx
 import { useState } from 'react'
 import { LoginForm } from './components/LoginForm'
 import { Dashboard } from './components/Dashboard'
@@ -422,10 +413,8 @@ export default function App() {
     </div>
   )
 }
-```
 
 **2. components/LoginForm.tsx** (The login UI):
-```tsx
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -492,10 +481,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     </div>
   )
 }
-```
 
 **3. components/Dashboard.tsx** (Post-login view):
-```tsx
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
@@ -524,12 +511,19 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
     </div>
   )
 }
-```
 
 🚨 CRITICAL: For auth apps, you MUST generate ALL these files. The App.tsx MUST have the authentication state and conditional rendering logic.
 
 ## WHAT TO GENERATE
 
+🚨 **MANDATORY ROOT FILE** - ALWAYS GENERATE THIS FIRST:
+- **App.tsx** - The main application component that orchestrates everything
+  - For auth flows: MUST contain isAuthenticated state and conditional rendering
+  - For dashboards: MUST contain the main layout and component composition
+  - For forms: MUST render the form component and handle success states
+  - This is THE ENTRY POINT - if you don't generate App.tsx, the preview will show a placeholder!
+
+📋 **FILE REQUIREMENTS**:
 - Generate 8-12 production-ready files minimum
 - Create separate files for each component (keep components under 100 lines each)
 - Include realistic mock data (20-50 items for lists/tables)
@@ -538,7 +532,7 @@ export function Dashboard({ user, onLogout }: DashboardProps) {
 - Include complete package.json with ALL dependencies
 
 Example files for a dashboard:
-- App.tsx (main component)
+- App.tsx (main component - MANDATORY!)
 - components/Dashboard.tsx
 - components/Sidebar.tsx
 - components/MetricCard.tsx
