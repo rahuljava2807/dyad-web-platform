@@ -389,6 +389,145 @@ const handleSubmit = () => {
 }
 ```
 
+📋 **COMPLETE LOGIN APP EXAMPLE**:
+When user requests "login application" or "auth system", generate these EXACT files:
+
+**1. App.tsx** (Main orchestrator):
+```tsx
+import { useState } from 'react'
+import { LoginForm } from './components/LoginForm'
+import { Dashboard } from './components/Dashboard'
+
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [user, setUser] = useState<{ email: string } | null>(null)
+
+  const handleLogin = (email: string, password: string) => {
+    setUser({ email })
+    setIsAuthenticated(true)
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    setIsAuthenticated(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">
+      {isAuthenticated ? (
+        <Dashboard user={user} onLogout={handleLogout} />
+      ) : (
+        <LoginForm onLogin={handleLogin} />
+      )}
+    </div>
+  )
+}
+```
+
+**2. components/LoginForm.tsx** (The login UI):
+```tsx
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+
+interface LoginFormProps {
+  onLogin: (email: string, password: string) => void
+}
+
+export function LoginForm({ onLogin }: LoginFormProps) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const newErrors: { email?: string; password?: string } = {}
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Valid email required'
+    }
+    if (!password || password.length < 6) {
+      newErrors.password = 'Password must be 6+ characters'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    onLogin(email, password)
+  }
+
+  return (
+    <div className="flex items-center justify-center min-h-screen p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            </div>
+            <Button type="submit" className="w-full">Login</Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+```
+
+**3. components/Dashboard.tsx** (Post-login view):
+```tsx
+import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+
+interface DashboardProps {
+  user: { email: string } | null
+  onLogout: () => void
+}
+
+export function Dashboard({ user, onLogout }: DashboardProps) {
+  return (
+    <div className="min-h-screen p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+          <Button onClick={onLogout} variant="outline">Logout</Button>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome, {user?.email}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>You are successfully logged in!</p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+```
+
+🚨 CRITICAL: For auth apps, you MUST generate ALL these files. The App.tsx MUST have the authentication state and conditional rendering logic.
+
 ## WHAT TO GENERATE
 
 - Generate 8-12 production-ready files minimum
