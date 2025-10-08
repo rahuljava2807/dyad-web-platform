@@ -5,11 +5,15 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Sparkles, Code, FileText, Zap, CheckCircle, ArrowRight, Eye } from 'lucide-react'
 import { ImprovedSandpackPreview } from '@/components/ImprovedSandpackPreview'
 import { ThinkingPanel } from '@/components/ThinkingPanel'
+import { FileTreePanel } from '@/components/FileTreePanel'
 
 interface GeneratedFile {
   path: string
   content: string
   language: string
+  summary?: string
+  status?: 'pending' | 'generating' | 'complete'
+  timestamp?: number
 }
 
 interface ThinkingStep {
@@ -35,6 +39,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   const [thinking, setThinking] = useState('')
   const [capabilities, setCapabilities] = useState<string[]>([])
   const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([])
+  const [totalExpectedFiles, setTotalExpectedFiles] = useState<number>(0)
 
   const steps = [
     { key: 'thinking', icon: Sparkles, label: 'Analyzing Requirements', color: 'text-blue-500' },
@@ -150,10 +155,18 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                 // File event
                 console.log(`File: ${data.path} (${data.index + 1}/${data.total})`)
 
+                // Set total expected files on first file
+                if (data.total && totalExpectedFiles === 0) {
+                  setTotalExpectedFiles(data.total)
+                }
+
                 const newFile: GeneratedFile = {
                   path: data.path,
                   content: data.content,
-                  language: data.language
+                  language: data.language,
+                  summary: data.summary,
+                  status: 'complete',
+                  timestamp: data.timestamp
                 }
 
                 accumulatedFiles.push(newFile)
@@ -314,6 +327,16 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                       <ThinkingPanel
                         steps={thinkingSteps}
                         currentStep={thinkingSteps[thinkingSteps.length - 1]?.step}
+                      />
+                    </div>
+                  )}
+
+                  {/* File Tree Panel */}
+                  {files.length > 0 && (
+                    <div className="mt-8">
+                      <FileTreePanel
+                        files={files}
+                        totalExpected={totalExpectedFiles}
                       />
                     </div>
                   )}
