@@ -350,10 +350,11 @@ Your package.json MUST include these dependencies for the scaffold components to
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@radix-ui/react-slot": "1.2.3",
-    "@radix-ui/react-label": "2.1.7",
-    "class-variance-authority": "0.7.1",
-    "tailwind-merge": "3.3.1",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-label": "^2.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0",
     "lucide-react": "^0.263.1"
   }
 }
