@@ -319,6 +319,16 @@ Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
 - react-hook-form, zod, @hookform/resolvers (use manual validation)
 - class-variance-authority, tailwind-merge, clsx (already set up)
 
+📦 **ROUTING & NAVIGATION**:
+- ⚠️ AVOID react-router-dom UNLESS user specifically requests routing/navigation
+- Default: Build single-page apps with conditional rendering (useState to toggle views)
+- IF routing is absolutely needed: Add "react-router-dom": "^6.20.0" to package.json dependencies
+- Example single-page pattern:
+  ```tsx
+  const [view, setView] = useState('home')
+  return view === 'home' ? <HomePage /> : <ProfilePage />
+  ```
+
 ## WHAT TO GENERATE
 
 - Generate 8-12 production-ready files minimum

@@ -24,7 +24,7 @@ export const SandpackPreviewPanel: React.FC<SandpackPreviewPanelProps> = ({
   originalPrompt = 'Generated application'
 }) => {
   const [isPreviewVisible, setIsPreviewVisible] = useState(true)
-  const [showCode, setShowCode] = useState(false)
+  const [showCode, setShowCode] = useState(true)  // Default to showing code editor
   const [key, setKey] = useState(0)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
