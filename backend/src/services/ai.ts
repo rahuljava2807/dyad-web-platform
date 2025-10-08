@@ -295,6 +295,30 @@ Every className MUST be real Tailwind utility classes:
 - Put components in src/components/
 - Main component MUST be App.tsx
 
+## AVAILABLE PACKAGES & LIBRARIES
+
+🎨 **shadcn/ui Components** (ALREADY INSTALLED - Just import and use!):
+- You ALREADY have ALL 49 shadcn/ui components installed and ready to use
+- You have ALL necessary Radix UI dependencies pre-installed
+- DO NOT install or add shadcn/ui components to dependencies - they're ready!
+
+Available shadcn/ui components:
+Button, Input, Card, Label, Form, Select, Checkbox, Textarea, Dialog, Sheet,
+Popover, Tabs, Table, Accordion, Alert, Avatar, Badge, Breadcrumb, Calendar,
+Carousel, Chart, Collapsible, Command, ContextMenu, DropdownMenu, HoverCard,
+Menubar, NavigationMenu, Pagination, Progress, RadioGroup, ScrollArea, Separator,
+Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
+
+**Icons**: lucide-react is installed (just import what you need)
+
+**Styling**: Tailwind CSS is fully configured (use utility classes)
+
+⚠️ **DO NOT ADD** these to dependencies (they're already included or not needed):
+- Any @/components/ui/* paths
+- Any @radix-ui/* packages
+- react-hook-form, zod, @hookform/resolvers (use manual validation)
+- class-variance-authority, tailwind-merge, clsx (already set up)
+
 ## WHAT TO GENERATE
 
 - Generate 8-12 production-ready files minimum
@@ -316,8 +340,20 @@ Example files for a dashboard:
 
 ## CODING GUIDELINES
 
+🎯 **SIMPLICITY FIRST** (Dyad Philosophy):
+- DON'T DO MORE THAN WHAT THE USER ASKS FOR
+- DO NOT OVERENGINEER - keep code simple and elegant
+- Each component should be under 100 lines (create new files for larger features)
+- NO placeholder content - everything must be fully functional
+- NO TODO comments - complete all features requested
+- Create a new file for every new component or hook, no matter how small
+
+⚠️ **ERROR HANDLING**:
+- Don't catch errors with try/catch blocks unless specifically requested
+- Let errors bubble up naturally - this helps with debugging
+
+✨ **CODE QUALITY**:
 - ALWAYS generate responsive designs
-- Don't catch errors with try/catch blocks unless specifically requested - it's important that errors bubble up so you can fix them
 - Use modern React patterns (hooks, functional components)
 - Include proper TypeScript types
 - Generate beautiful UIs with Tailwind gradients, shadows, and hover effects

@@ -105,52 +105,43 @@ export const COMPONENT_LIBRARY: Record<string, ComponentLibraryConfig> = {
 
   // Forms & Input
   'form': {
-    components: ['Button', 'Input', 'Form', 'Label', 'Textarea', 'Select', 'Checkbox', 'Toast'],
-    dependencies: ['react-hook-form', 'zod', '@hookform/resolvers'],
+    components: ['Button', 'Input', 'Label', 'Textarea', 'Select', 'Checkbox'],
+    dependencies: [],
     imports: [
       'import { Button } from "@/components/ui/button"',
       'import { Input } from "@/components/ui/input"',
-      'import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"',
       'import { Label } from "@/components/ui/label"',
       'import { Textarea } from "@/components/ui/textarea"',
       'import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"',
       'import { Checkbox } from "@/components/ui/checkbox"',
-      'import { useToast } from "@/hooks/use-toast"',
-      'import { useForm } from "react-hook-form"',
-      'import { zodResolver } from "@hookform/resolvers/zod"',
-      'import * as z from "zod"',
     ],
     validationSchema: true,
     fileStructure: [
       'components/DynamicForm.tsx',
       'components/FormPage.tsx',
-      'lib/validations/formSchema.ts',
+      'lib/validation.ts',
+      'types/form.ts',
       'app/page.tsx'
     ]
   },
 
   // Settings & Configuration
   'settings': {
-    components: ['Card', 'Button', 'Input', 'Form', 'Label', 'Switch', 'Tabs', 'Toast'],
-    dependencies: ['react-hook-form', 'zod', '@hookform/resolvers'],
+    components: ['Card', 'Button', 'Input', 'Label', 'Switch', 'Tabs'],
+    dependencies: [],
     imports: [
       'import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"',
       'import { Button } from "@/components/ui/button"',
       'import { Input } from "@/components/ui/input"',
-      'import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"',
       'import { Label } from "@/components/ui/label"',
       'import { Switch } from "@/components/ui/switch"',
       'import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"',
-      'import { useToast } from "@/hooks/use-toast"',
-      'import { useForm } from "react-hook-form"',
-      'import { zodResolver } from "@hookform/resolvers/zod"',
-      'import * as z from "zod"',
     ],
     validationSchema: true,
     fileStructure: [
       'components/SettingsForm.tsx',
       'components/SettingsPage.tsx',
-      'lib/validations/settingsSchema.ts',
+      'lib/validation.ts',
       'app/page.tsx'
     ]
   },
