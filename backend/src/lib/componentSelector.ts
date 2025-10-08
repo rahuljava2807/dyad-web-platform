@@ -342,6 +342,24 @@ COMPONENT EXAMPLES (these are already built, just import and use them):
 💡 These components have built-in TypeScript types, variants, and accessibility features.
 DO NOT recreate these components - they will be automatically included in the generated project!
 
+📦 REQUIRED DEPENDENCIES FOR SHADCN/UI COMPONENTS:
+
+Your package.json MUST include these dependencies for the scaffold components to work:
+
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@radix-ui/react-slot": "1.2.3",
+    "@radix-ui/react-label": "2.1.7",
+    "class-variance-authority": "0.7.1",
+    "tailwind-merge": "3.3.1",
+    "lucide-react": "^0.263.1"
+  }
+}
+
+⚠️ CRITICAL: These Radix UI and utility dependencies are REQUIRED for Button, Label, and other shadcn/ui components to function correctly!
+
 ${config.validationSchema ? `
 🔒 VALIDATION - MANUAL APPROACH (Preview Compatible):
 
