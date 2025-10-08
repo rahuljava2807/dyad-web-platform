@@ -161,8 +161,10 @@ class AIService {
         (match, libPath) => {
           if (file.path.startsWith('src/lib/')) {
             return `from "./${libPath}"`
+          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
+            return `from "../../lib/${libPath}"` // Two levels up from components/ui/
           } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../lib/${libPath}"`
+            return `from "../lib/${libPath}"` // One level up from components/
           } else {
             return `from "./lib/${libPath}"`
           }
@@ -175,8 +177,10 @@ class AIService {
         (match, hookPath) => {
           if (file.path.startsWith('src/hooks/')) {
             return `from "./${hookPath}"`
+          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
+            return `from "../../hooks/${hookPath}"` // Two levels up from components/ui/
           } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../hooks/${hookPath}"`
+            return `from "../hooks/${hookPath}"` // One level up from components/
           } else {
             return `from "./hooks/${hookPath}"`
           }
@@ -189,8 +193,10 @@ class AIService {
         (match, typePath) => {
           if (file.path.startsWith('src/types/')) {
             return `from "./${typePath}"`
+          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
+            return `from "../../types/${typePath}"` // Two levels up from components/ui/
           } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../types/${typePath}"`
+            return `from "../types/${typePath}"` // One level up from components/
           } else {
             return `from "./types/${typePath}"`
           }
@@ -203,8 +209,10 @@ class AIService {
         (match, utilPath) => {
           if (file.path.startsWith('src/utils/')) {
             return `from "./${utilPath}"`
+          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
+            return `from "../../utils/${utilPath}"` // Two levels up from components/ui/
           } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../utils/${utilPath}"`
+            return `from "../utils/${utilPath}"` // One level up from components/
           } else {
             return `from "./utils/${utilPath}"`
           }
