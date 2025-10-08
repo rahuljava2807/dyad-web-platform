@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sparkles, Code, FileText, Zap, CheckCircle, ArrowRight, Eye } from 'lucide-react'
-import { SandpackPreviewPanel } from '@/components/SandpackPreviewPanel'
+import { ImprovedSandpackPreview } from '@/components/ImprovedSandpackPreview'
 
 interface GeneratedFile {
   path: string
@@ -300,7 +300,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                   </div>
                 </div>
                 <div className="h-[600px]">
-                  <SandpackPreviewPanel files={files} />
+                  <ImprovedSandpackPreview files={files} />
                 </div>
               </div>
             ) : null}
