@@ -944,7 +944,35 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
         console.log(`Regenerated with ${retryResult.object.files.length} files`)
 
-        // Convert path aliases before returning
+        // 🚀 PHASE 3A: SCAFFOLD INTEGRATION for retry - Detect and bundle BEFORE path conversion
+        console.log('🎨 [Scaffold Integration] Analyzing retry result for component usage...')
+
+        const retryFilesForDetection = retryResult.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' : 'plaintext'
+        }))
+
+        const retryUsedComponents = detectUsedComponents(retryFilesForDetection)
+
+        if (retryUsedComponents.length > 0) {
+          console.log(`🎨 [Scaffold Integration] Detected ${retryUsedComponents.length} components in retry:`, retryUsedComponents)
+
+          const retryScaffoldFiles = bundleScaffoldComponents(retryUsedComponents)
+          console.log(`🎨 [Scaffold Integration] Bundled ${retryScaffoldFiles.length} scaffold files`)
+
+          for (const scaffoldFile of retryScaffoldFiles) {
+            retryResult.object.files.push({
+              path: scaffoldFile.path,
+              content: scaffoldFile.content,
+              type: 'create'
+            })
+          }
+
+          console.log(`✅ [Scaffold Integration] Total files with scaffold: ${retryResult.object.files.length}`)
+        }
+
+        // 🚀 PHASE 3B: Convert path aliases for ALL files (AI + scaffold)
         this.convertPathAliases(retryResult.object.files)
 
         return retryResult.object
@@ -1095,28 +1123,34 @@ Generate 8-12 complete, production-ready files NOW!`
 
           console.log('✅ JSON-safe retry successful!')
 
-          // Convert path aliases
-          this.convertPathAliases(safeResult.object.files)
-
-          // Apply scaffold integration to the retry result
-          const generatedFiles = safeResult.object.files.map(f => ({
+          // 🚀 PHASE 3A: SCAFFOLD INTEGRATION for JSON retry - Detect and bundle BEFORE path conversion
+          const jsonRetryFilesForDetection = safeResult.object.files.map(f => ({
             path: f.path,
             content: f.content,
             language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
                      f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
           }))
 
-          const usedComponents = detectUsedComponents(generatedFiles)
-          if (usedComponents.length > 0) {
-            const scaffoldFiles = bundleScaffoldComponents(usedComponents)
-            for (const scaffoldFile of scaffoldFiles) {
+          const jsonRetryUsedComponents = detectUsedComponents(jsonRetryFilesForDetection)
+          if (jsonRetryUsedComponents.length > 0) {
+            console.log(`🎨 [Scaffold Integration] Detected ${jsonRetryUsedComponents.length} components in JSON retry:`, jsonRetryUsedComponents)
+
+            const jsonRetryScaffoldFiles = bundleScaffoldComponents(jsonRetryUsedComponents)
+            console.log(`🎨 [Scaffold Integration] Bundled ${jsonRetryScaffoldFiles.length} scaffold files`)
+
+            for (const scaffoldFile of jsonRetryScaffoldFiles) {
               safeResult.object.files.push({
                 path: scaffoldFile.path,
                 content: scaffoldFile.content,
                 type: 'create'
               })
             }
+
+            console.log(`✅ [Scaffold Integration] Total files with scaffold: ${safeResult.object.files.length}`)
           }
+
+          // 🚀 PHASE 3B: Convert path aliases for ALL files (AI + scaffold)
+          this.convertPathAliases(safeResult.object.files)
 
           return safeResult.object
         } catch (retryError) {
