@@ -320,19 +320,43 @@ Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
 
 Each shadcn/ui component MUST be imported from its own file. NEVER combine imports from different components into a single import statement!
 
+🎨 **WCAG CONTRAST REQUIREMENT** - Ensure accessible text contrast:
+✅ Light backgrounds (white, gray-50, blue-50): Use dark text (text-gray-900, text-gray-800)
+✅ Dark backgrounds (gray-900, slate-900): Use light text (text-white, text-gray-50)
+✅ Colored backgrounds: Ensure minimum 4.5:1 contrast ratio for normal text, 3:1 for large text
+❌ NEVER use gray-600/gray-700 text on gray-800/gray-900 backgrounds (fails WCAG AA)
+❌ NEVER use dark text on dark backgrounds or light text on light backgrounds
+
+Examples:
+✅ GOOD: <div className="bg-white text-gray-900">Dark text on light bg</div>
+✅ GOOD: <div className="bg-slate-900 text-white">Light text on dark bg</div>
+❌ BAD:  <div className="bg-gray-900 text-gray-700">Poor contrast!</div>
+
 ⚠️ **DO NOT ADD** these to dependencies (they're already included or not needed):
 - Any @/components/ui/* paths
 - Any @radix-ui/* packages
 - react-hook-form, zod, @hookform/resolvers (use manual validation)
 - class-variance-authority, tailwind-merge, clsx (already set up)
 
-📦 **ROUTING & NAVIGATION**:
-- ⚠️ AVOID react-router-dom UNLESS user specifically requests routing/navigation
-- Default: Build single-page apps with conditional rendering (useState to toggle views)
-- IF routing is absolutely needed: Add "react-router-dom": "^6.20.0" to package.json dependencies
-- Example single-page pattern:
-  const [view, setView] = useState('home')
-  return view === 'home' ? <HomePage /> : <ProfilePage />
+🚫 **CRITICAL: NO ROUTING LIBRARIES**:
+❌ DO NOT USE react-router-dom - it's not installed and will cause errors
+❌ DO NOT import { BrowserRouter, Route, Routes } - these will fail
+✅ ALWAYS use conditional rendering with useState for navigation
+
+**REQUIRED PATTERN** for multi-page apps:
+```tsx
+function App() {
+  const [currentView, setCurrentView] = useState<'login' | 'dashboard'>('login')
+
+  if (currentView === 'login') {
+    return <LoginPage onLogin={() => setCurrentView('dashboard')} />
+  }
+
+  return <Dashboard onLogout={() => setCurrentView('login')} />
+}
+```
+
+**Why:** Sandpack preview doesn't support react-router-dom. Single-page conditional rendering works perfectly and previews instantly.
 
 🔐 **AUTHENTICATION FLOWS** (Login/Signup):
 When user requests login/signup, you MUST implement complete flow with post-auth navigation:

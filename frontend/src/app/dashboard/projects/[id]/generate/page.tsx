@@ -161,175 +161,134 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-white">Generating Your Application</h1>
-            {currentStep === 'complete' && (
-              <button
-                onClick={() => router.push(`/dashboard/projects/${params.id}`)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                View Project
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        {error ? (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center">
-            <p className="text-red-400 text-lg mb-4">{error}</p>
-            <button
-              onClick={() => router.push('/dashboard/projects/new')}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {/* Progress Steps */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
-              <div className="flex items-center justify-between mb-8">
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+      {/* Compact Status Banner - Only show during generation */}
+      {currentStep !== 'complete' && currentStep !== 'preview' && (
+        <div className="border-b border-white/10 bg-black/20 backdrop-blur-xl flex-shrink-0">
+          <div className="px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 {steps.map((step, index) => {
                   const StepIcon = step.icon
                   const isActive = index === getCurrentStepIndex()
                   const isComplete = index < getCurrentStepIndex()
+                  if (!isActive && !isComplete) return null
 
                   return (
-                    <div key={step.key} className="flex-1 flex items-center">
-                      <div className="flex flex-col items-center gap-2 flex-1">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all ${
-                          isActive ? `${step.color} border-current bg-current/10 scale-110` :
-                          isComplete ? 'border-green-500 bg-green-500/10 text-green-500' :
-                          'border-white/20 text-white/40'
-                        }`}>
-                          {isComplete ? (
-                            <CheckCircle className="h-6 w-6" />
-                          ) : (
-                            <StepIcon className={`h-6 w-6 ${isActive ? 'animate-pulse' : ''}`} />
-                          )}
-                        </div>
-                        <span className={`text-sm font-semibold ${
-                          isActive ? 'text-white' : isComplete ? 'text-green-400' : 'text-gray-400'
-                        }`}>
-                          {step.label}
-                        </span>
+                    <div key={step.key} className="flex items-center gap-2">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
+                        isActive ? `${step.color} border-current bg-current/10` :
+                        'border-green-500 bg-green-500/10 text-green-500'
+                      }`}>
+                        {isComplete ? (
+                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                          <StepIcon className="h-4 w-4 animate-pulse" />
+                        )}
                       </div>
-                      {index < steps.length - 1 && (
-                        <div className={`h-0.5 flex-1 mx-2 transition-all ${
-                          isComplete ? 'bg-green-500' : 'bg-white/10'
-                        }`} />
-                      )}
+                      {isActive && <span className="text-sm font-medium text-white">{thinking}</span>}
                     </div>
                   )
                 })}
               </div>
-
-              {/* Progress Bar */}
-              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-
-              {/* Current Thinking */}
-              <div className="mt-6 text-center">
-                <p className="text-white text-lg font-medium">{thinking}</p>
-                {currentStep !== 'complete' && (
-                  <div className="flex items-center justify-center gap-2 mt-4">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                )}
-              </div>
-
-              {/* Capabilities Being Added */}
-              {capabilities.length > 0 && (
-                <div className="mt-6 space-y-2">
-                  {[...new Set(capabilities)].map((capability, index) => (
-                    <div
-                      key={`${capability}-${index}`}
-                      className="text-white/90 text-sm flex items-center justify-start gap-2 animate-fade-in"
-                      style={{ animationDelay: `${index * 100}ms` }}
-                    >
-                      <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
-                      <span>{capability}</span>
-                    </div>
-                  ))}
+              <div className="flex items-center gap-4">
+                <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
-              )}
+                <span className="text-xs text-white/60 font-mono">{progress}%</span>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            {/* File List */}
-            {files.length > 0 && (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <FileText className="h-5 w-5 text-blue-400" />
-                  <h2 className="text-xl font-semibold text-white">Generated Files ({files.length})</h2>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {files.map((file, index) => (
-                    <div
-                      key={index}
-                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/80 text-sm font-mono truncate hover:bg-white/10 transition-colors"
-                      title={file.path}
-                    >
-                      <CheckCircle className="h-3 w-3 text-green-400 inline mr-2" />
-                      {file.path}
+      <main className="flex-1 w-full overflow-hidden">
+        {error ? (
+          <div className="flex items-center justify-center h-full p-8">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 text-center max-w-md">
+              <p className="text-red-400 text-lg mb-4">{error}</p>
+              <button
+                onClick={() => router.push('/dashboard/projects/new')}
+                className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Live Preview - Full Screen */}
+            {currentStep === 'preview' || currentStep === 'complete' ? (
+              <div className="w-full h-full">
+                <ImprovedSandpackPreview files={files} />
+              </div>
+            ) : (
+              /* Loading State - Centered with animations */
+              <div className="flex items-center justify-center h-full">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center max-w-2xl backdrop-blur-sm animate-slide-up">
+                  <div className="mb-6">
+                    {steps.map((step, index) => {
+                      const StepIcon = step.icon
+                      const isActive = index === getCurrentStepIndex()
+                      if (!isActive) return null
+
+                      return (
+                        <div key={step.key} className="flex flex-col items-center gap-4">
+                          <div className={`relative w-20 h-20 rounded-full flex items-center justify-center border-2 ${step.color} border-current bg-current/10 shadow-lg`}>
+                            <StepIcon className="h-10 w-10 animate-pulse-slow" />
+                            <div className={`absolute inset-0 rounded-full ${step.color.replace('text', 'bg')}/20 animate-ping`} />
+                          </div>
+                          <h2 className="text-2xl font-bold text-white animate-pulse-slow">{step.label}</h2>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {capabilities.length > 0 && (
+                    <div className="mt-8 space-y-2 text-left">
+                      {[...new Set(capabilities)].slice(-3).map((capability, index) => (
+                        <div
+                          key={`${capability}-${index}`}
+                          className="text-white/80 text-sm flex items-center gap-2 animate-slide-up"
+                          style={{ animationDelay: `${index * 100}ms` }}
+                        >
+                          <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                          <span>{capability}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Live Preview */}
-            {currentStep === 'preview' || currentStep === 'complete' ? (
-              <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-                <div className="p-4 border-b border-white/10 bg-black/20">
-                  <div className="flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-purple-400" />
-                    <h2 className="text-xl font-semibold text-white">Live Preview</h2>
+            {/* Floating Success Badge - Only when complete */}
+            {currentStep === 'complete' && (
+              <div className="fixed top-20 right-6 z-50 animate-success-pop">
+                <div className="bg-green-500/10 border border-green-500/30 backdrop-blur-xl rounded-xl px-4 py-3 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                      <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-green-400">Generated!</p>
+                      <p className="text-xs text-green-300/60">{files.length} files</p>
+                    </div>
+                    <button
+                      onClick={() => router.push(`/dashboard/projects/${params.id}`)}
+                      className="ml-2 px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    >
+                      View Project
+                    </button>
                   </div>
                 </div>
-                <div className="h-[600px]">
-                  <ImprovedSandpackPreview files={files} />
-                </div>
-              </div>
-            ) : null}
-
-            {/* Success Actions */}
-            {currentStep === 'complete' && (
-              <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 border border-green-500/20 rounded-2xl p-8 text-center">
-                <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-white mb-2">Application Generated!</h2>
-                <p className="text-white/60 mb-6">
-                  Your application has been created with {files.length} production-ready files
-                </p>
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    onClick={() => router.push(`/dashboard/projects/${params.id}`)}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
-                  >
-                    View Project
-                  </button>
-                  <button
-                    onClick={() => router.push('/dashboard')}
-                    className="px-6 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors font-semibold"
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
               </div>
             )}
-          </div>
+          </>
         )}
       </main>
     </div>
