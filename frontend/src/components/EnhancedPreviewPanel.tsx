@@ -61,8 +61,8 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
   // Capture console messages from iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Allow messages from localhost:5000 (backend) and localhost:3000 (frontend)
-      const allowedOrigins = ['http://localhost:5000', 'http://localhost:3000', window.location.origin]
+      // Allow messages from localhost:5001 (backend) and localhost:3000 (frontend)
+      const allowedOrigins = ['http://localhost:5001', 'http://localhost:3000', window.location.origin]
       if (!allowedOrigins.includes(event.origin)) return
 
       if (event.data.type === 'console') {

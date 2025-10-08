@@ -98,7 +98,7 @@ export const ErrorHealingPanel: React.FC<ErrorHealingPanelProps> = ({
     setHealingResult(null)
 
     try {
-      const response = await fetch('http://localhost:5000/api/error-healing/heal', {
+      const response = await fetch('http://localhost:5001/api/error-healing/heal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
