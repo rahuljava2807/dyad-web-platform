@@ -329,6 +329,66 @@ Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
   return view === 'home' ? <HomePage /> : <ProfilePage />
   ```
 
+🔐 **AUTHENTICATION FLOWS** (Login/Signup):
+When user requests login/signup, you MUST implement complete flow with post-auth navigation:
+
+```tsx
+// In App.tsx - handle auth state and navigation
+const [isAuthenticated, setIsAuthenticated] = useState(false)
+const [user, setUser] = useState<{ email: string; name: string } | null>(null)
+
+const handleLogin = (email: string, password: string) => {
+  // Simulate auth (in real app, this would be API call)
+  setUser({ email, name: email.split('@')[0] })
+  setIsAuthenticated(true)
+}
+
+const handleLogout = () => {
+  setUser(null)
+  setIsAuthenticated(false)
+}
+
+return isAuthenticated ? (
+  <Dashboard user={user} onLogout={handleLogout} />
+) : (
+  <LoginPage onLogin={handleLogin} />
+)
+```
+
+⚠️ **VALIDATION - DO NOT create separate helper functions**:
+Keep validation INLINE in the component - DO NOT extract to separate functions like validateEmail(), validatePassword(), etc.
+
+✅ CORRECT approach:
+```tsx
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault()
+  const newErrors: FormErrors = {}
+
+  // Validate inline - NO separate functions
+  if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+    newErrors.email = 'Valid email required'
+  }
+  if (!formData.password || formData.password.length < 8) {
+    newErrors.password = 'Password must be 8+ characters'
+  }
+
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors)
+    return
+  }
+
+  onLogin(formData.email, formData.password)
+}
+```
+
+❌ WRONG - DO NOT do this:
+```tsx
+const validateEmail = (email: string) => { ... }  // DON'T create separate functions
+const handleSubmit = () => {
+  const emailError = validateEmail(formData.email)  // This causes "validateEmail is not defined" errors
+}
+```
+
 ## WHAT TO GENERATE
 
 - Generate 8-12 production-ready files minimum
