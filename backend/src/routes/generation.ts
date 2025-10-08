@@ -57,29 +57,72 @@ router.post('/generate/stream', async (req: Request, res: Response) => {
     // Send initial session event
     sendEvent('session', { sessionId, timestamp: Date.now() });
 
-    // Send thinking events
+    // Send detailed thinking events with sub-steps
     sendEvent('thinking', {
       step: 'analyze',
       title: 'Analyzing Requirements',
-      description: 'Understanding your request and planning the architecture...',
+      description: 'Understanding your request and identifying key features...',
+      details: [
+        'Parsing user intent and core functionality',
+        'Identifying required components and features',
+        'Determining tech stack compatibility'
+      ],
       timestamp: Date.now()
     });
 
-    await sleep(500);
+    await sleep(300);
+
+    sendEvent('thinking', {
+      step: 'analyze-sub',
+      title: 'Analyzing Requirements',
+      description: 'Analyzing complexity and scope...',
+      details: [
+        'Estimating component count (8-12 files)',
+        'Checking for authentication requirements',
+        'Identifying data visualization needs'
+      ],
+      timestamp: Date.now()
+    });
+
+    await sleep(300);
 
     sendEvent('thinking', {
       step: 'plan',
       title: 'Planning Architecture',
-      description: 'Selecting optimal components and tech stack...',
+      description: 'Designing component structure and data flow...',
+      details: [
+        'Selecting React + TypeScript framework',
+        'Planning component hierarchy',
+        'Defining state management strategy'
+      ],
       timestamp: Date.now()
     });
 
-    await sleep(500);
+    await sleep(300);
+
+    sendEvent('thinking', {
+      step: 'plan-sub',
+      title: 'Planning Architecture',
+      description: 'Selecting optimal UI components...',
+      details: [
+        'Choosing shadcn/ui for component library',
+        'Adding Tailwind CSS for styling',
+        'Ensuring mobile responsiveness'
+      ],
+      timestamp: Date.now()
+    });
+
+    await sleep(300);
 
     sendEvent('thinking', {
       step: 'generate',
       title: 'Generating Code',
       description: 'Creating production-ready files with AI...',
+      details: [
+        'Initializing AI code generation',
+        'Applying best practices and patterns',
+        'Ensuring accessibility compliance'
+      ],
       timestamp: Date.now()
     });
 

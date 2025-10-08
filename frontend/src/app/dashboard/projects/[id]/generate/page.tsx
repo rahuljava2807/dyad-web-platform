@@ -4,11 +4,21 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Sparkles, Code, FileText, Zap, CheckCircle, ArrowRight, Eye } from 'lucide-react'
 import { ImprovedSandpackPreview } from '@/components/ImprovedSandpackPreview'
+import { ThinkingPanel } from '@/components/ThinkingPanel'
 
 interface GeneratedFile {
   path: string
   content: string
   language: string
+}
+
+interface ThinkingStep {
+  step: string
+  title: string
+  description: string
+  details?: string[]
+  timestamp: number
+  completed?: boolean
 }
 
 type GenerationStep = 'thinking' | 'generating' | 'writing' | 'preview' | 'complete'
@@ -24,6 +34,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('')
   const [thinking, setThinking] = useState('')
   const [capabilities, setCapabilities] = useState<string[]>([])
+  const [thinkingSteps, setThinkingSteps] = useState<ThinkingStep[]>([])
 
   const steps = [
     { key: 'thinking', icon: Sparkles, label: 'Analyzing Requirements', color: 'text-blue-500' },
@@ -111,6 +122,19 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                 // Thinking event
                 console.log('Thinking:', data.title)
                 setThinking(data.description)
+
+                // Mark previous thinking steps as completed
+                setThinkingSteps(prev => {
+                  const updated = prev.map(s => ({ ...s, completed: true }))
+                  return [...updated, {
+                    step: data.step,
+                    title: data.title,
+                    description: data.description,
+                    details: data.details || [],
+                    timestamp: data.timestamp,
+                    completed: false
+                  }]
+                })
 
                 if (data.step === 'analyze') {
                   setCurrentStep('thinking')
@@ -281,6 +305,16 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                           <span>{capability}</span>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {/* AI Reasoning Panel */}
+                  {thinkingSteps.length > 0 && (
+                    <div className="mt-8">
+                      <ThinkingPanel
+                        steps={thinkingSteps}
+                        currentStep={thinkingSteps[thinkingSteps.length - 1]?.step}
+                      />
                     </div>
                   )}
                 </div>
