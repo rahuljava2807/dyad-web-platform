@@ -129,6 +129,32 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
 
         if (done) {
           console.log('Stream complete')
+
+          // FALLBACK: If we received files but stream ended without complete event,
+          // automatically transition to preview (fixes stuck loading state)
+          if (accumulatedFiles.length > 0 && currentStep !== 'preview') {
+            console.log('Stream ended with files, auto-transitioning to preview')
+            const genId = `gen-${Date.now()}`
+            setCurrentGenerationId(genId)
+            setGenerations(prev => {
+              const newGen = {
+                id: genId,
+                prompt,
+                filesCount: accumulatedFiles.length,
+                timestamp: Date.now(),
+                files: accumulatedFiles
+              }
+              return [...prev, newGen].slice(-3)
+            })
+            setCurrentStep('preview')
+            setProgress(90)
+            setThinking('Building live preview...')
+            setTimeout(() => {
+              setCurrentStep('complete')
+              setProgress(100)
+              setThinking('Application ready!')
+            }, 1000)
+          }
           break
         }
 

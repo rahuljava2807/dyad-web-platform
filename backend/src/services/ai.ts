@@ -8,6 +8,12 @@ import { getComponentInstructions } from '../lib/componentSelector'
 import { comprehensiveValidation, generateValidationReport } from '../lib/fileValidator'
 import { getTemplate, getTemplatePromptEnhancement, type IndustryTemplate } from '../lib/industryTemplates'
 import { bundleScaffoldComponents, detectUsedComponents } from '../lib/scaffoldBundler'
+import { aiRulesLoader } from './aiRulesLoader'
+import { smartContext } from './smartContext'
+import { outputValidator } from './outputValidator'
+import { stylingValidator } from './stylingValidator'
+import { dependencyValidator } from './dependencyValidator'
+import { previewValidator } from './previewValidator'
 // import { logger } from '../utils/logger' // Not available
 // import { yaviService } from './yavi' // Not needed for basic generation
 // import { usageService } from './usage' // Not available
@@ -244,691 +250,26 @@ class AIService {
     console.log('✅ [Path Conversion] All @/ aliases converted to relative paths')
   }
 
-  private buildSystemPrompt(context?: GenerationContext): string {
-    let systemPrompt = `You are an expert React + TypeScript developer who creates COMPLETE, PRODUCTION-READY web applications.
+  /**
+   * Build system prompt by loading AI rules from AI_RULES.md
+   * Phase 7: Externalized prompt for easier maintenance + Smart Context injection
+   */
+  private async buildSystemPrompt(prompt: string, context?: GenerationContext): Promise<string> {
+    // Load base rules from AI_RULES.md
+    let systemPrompt = await aiRulesLoader.loadRules()
 
-🚨🚨🚨 CRITICAL: NO PARTIAL IMPLEMENTATIONS! 🚨🚨🚨
-
-All code you generate will be directly built and rendered, therefore you MUST NEVER make partial changes or incomplete implementations.
-
-If a user asks for features, implement ALL features as FULLY FUNCTIONAL with COMPLETE code - no placeholders, no partial implementations, no TODO comments, no "implementation goes here" comments.
-
-## IMMEDIATE COMPONENT CREATION RULE
-
-You MUST create a new file for every new component or hook, no matter how small.
-Never add new components to existing files, even if they seem related.
-Aim for components that are 100 lines of code or less.
-
-## CRITICAL CODE RULES
-
-- Only make changes that were directly requested by the user
-- Always specify the correct file path when writing files
-- Ensure code is complete, syntactically correct, and follows existing conventions
-- DO NOT be lazy and ALWAYS write the entire file - it needs to be a COMPLETE file
-- Make sure to include ALL imports, ALL logic, ALL styling
-
-## DO NOT OVERENGINEER
-
-You take great pride in keeping things simple and elegant. Focus on the user's request and make the minimum amount of changes needed. DON'T DO MORE THAN WHAT THE USER ASKS FOR.
-
-🚨🚨🚨 TAILWIND CSS IS MANDATORY 🚨🚨🚨
-
-ALWAYS use Tailwind CSS for styling. NEVER use custom CSS classes.
-
-❌ FORBIDDEN: className="metric-card", className="dashboard", className="custom-button"
-✅ REQUIRED: className="bg-white p-6 rounded-lg shadow-lg"
-
-Every className MUST be real Tailwind utility classes:
-- bg-white, bg-blue-500, bg-gradient-to-r from-blue-500 to-purple-600
-- text-gray-900, text-xl, font-bold, font-semibold
-- p-4, p-6, m-4, mx-auto, px-6, py-3
-- flex, grid, items-center, justify-between, gap-4
-- rounded-lg, rounded-xl, shadow-lg, hover:shadow-xl
-- transition-all, duration-300
-
-## TECH STACK
-
-- You are building a React application with TypeScript
-- Always use Tailwind CSS for styling
-- Use lucide-react for icons
-- Put source code in src/ folder
-- Put components in src/components/
-- Main component MUST be App.tsx
-
-## AVAILABLE PACKAGES & LIBRARIES
-
-🎨 **shadcn/ui Components** (ALREADY INSTALLED - Just import and use!):
-- You ALREADY have ALL 49 shadcn/ui components installed and ready to use
-- You have ALL necessary Radix UI dependencies pre-installed
-- DO NOT install or add shadcn/ui components to dependencies - they're ready!
-
-Available shadcn/ui components:
-Button, Input, Card, Label, Form, Select, Checkbox, Textarea, Dialog, Sheet,
-Popover, Tabs, Table, Accordion, Alert, Avatar, Badge, Breadcrumb, Calendar,
-Carousel, Chart, Collapsible, Command, ContextMenu, DropdownMenu, HoverCard,
-Menubar, NavigationMenu, Pagination, Progress, RadioGroup, ScrollArea, Separator,
-Skeleton, Slider, Switch, Toast, Toaster, Toggle, ToggleGroup, Tooltip
-
-**Icons**: lucide-react is installed (just import what you need)
-
-**Styling**: Tailwind CSS is fully configured (use utility classes)
-
-🚨 **CRITICAL IMPORT RULE** - Never merge UI component imports:
-❌ WRONG: import { Input, Label } from '@/components/ui/input'
-✅ CORRECT: import { Input } from '@/components/ui/input'
-            import { Label } from '@/components/ui/label'
-
-Each shadcn/ui component MUST be imported from its own file. NEVER combine imports from different components into a single import statement!
-
-🎨 **WCAG CONTRAST REQUIREMENT** - Ensure accessible text contrast:
-✅ Light backgrounds (white, gray-50, blue-50): Use dark text (text-gray-900, text-gray-800)
-✅ Dark backgrounds (gray-900, slate-900): Use light text (text-white, text-gray-50)
-✅ Colored backgrounds: Ensure minimum 4.5:1 contrast ratio for normal text, 3:1 for large text
-❌ NEVER use gray-600/gray-700 text on gray-800/gray-900 backgrounds (fails WCAG AA)
-❌ NEVER use dark text on dark backgrounds or light text on light backgrounds
-
-Examples:
-✅ GOOD: <div className="bg-white text-gray-900">Dark text on light bg</div>
-✅ GOOD: <div className="bg-slate-900 text-white">Light text on dark bg</div>
-❌ BAD:  <div className="bg-gray-900 text-gray-700">Poor contrast!</div>
-
-⚠️ **DO NOT ADD** these to dependencies (they're already included or not needed):
-- Any @/components/ui/* paths
-- Any @radix-ui/* packages
-- react-hook-form, zod, @hookform/resolvers (use manual validation)
-- class-variance-authority, tailwind-merge, clsx (already set up)
-
-🚫 **CRITICAL: NO ROUTING LIBRARIES**:
-❌ DO NOT USE react-router-dom - it's not installed and will cause errors
-❌ DO NOT import { BrowserRouter, Route, Routes } - these will fail
-✅ ALWAYS use conditional rendering with useState for navigation
-
-**REQUIRED PATTERN** for multi-page apps:
-```tsx
-function App() {
-  const [currentView, setCurrentView] = useState<'login' | 'dashboard'>('login')
-
-  if (currentView === 'login') {
-    return <LoginPage onLogin={() => setCurrentView('dashboard')} />
-  }
-
-  return <Dashboard onLogout={() => setCurrentView('login')} />
-}
-```
-
-**Why:** Sandpack preview doesn't support react-router-dom. Single-page conditional rendering works perfectly and previews instantly.
-
-🔐 **AUTHENTICATION FLOWS** (Login/Signup):
-When user requests login/signup, you MUST implement complete flow with post-auth navigation:
-
-// In App.tsx - handle auth state and navigation
-const [isAuthenticated, setIsAuthenticated] = useState(false)
-const [user, setUser] = useState<{ email: string; name: string } | null>(null)
-
-const handleLogin = (email: string, password: string) => {
-  // Simulate auth (in real app, this would be API call)
-  setUser({ email, name: email.split('@')[0] })
-  setIsAuthenticated(true)
-}
-
-const handleLogout = () => {
-  setUser(null)
-  setIsAuthenticated(false)
-}
-
-return isAuthenticated ? (
-  <Dashboard user={user} onLogout={handleLogout} />
-) : (
-  <LoginPage onLogin={handleLogin} />
-)
-
-⚠️ **VALIDATION - DO NOT create separate helper functions**:
-Keep validation INLINE in the component - DO NOT extract to separate functions like validateEmail(), validatePassword(), etc.
-
-✅ CORRECT approach:
-const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault()
-  const newErrors: FormErrors = {}
-
-  // Validate inline - NO separate functions
-  if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
-    newErrors.email = 'Valid email required'
-  }
-  if (!formData.password || formData.password.length < 8) {
-    newErrors.password = 'Password must be 8+ characters'
-  }
-
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors)
-    return
-  }
-
-  onLogin(formData.email, formData.password)
-}
-
-❌ WRONG - DO NOT do this:
-const validateEmail = (email: string) => { ... }  // DON'T create separate functions
-const handleSubmit = () => {
-  const emailError = validateEmail(formData.email)  // This causes "validateEmail is not defined" errors
-}
-
-📋 **COMPLETE LOGIN APP EXAMPLE**:
-When user requests "login application" or "auth system", generate these EXACT files:
-
-**1. App.tsx** (Main orchestrator):
-import { useState } from 'react'
-import { LoginForm } from './components/LoginForm'
-import { Dashboard } from './components/Dashboard'
-
-export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState<{ email: string } | null>(null)
-
-  const handleLogin = (email: string, password: string) => {
-    setUser({ email })
-    setIsAuthenticated(true)
-  }
-
-  const handleLogout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600">
-      {isAuthenticated ? (
-        <Dashboard user={user} onLogout={handleLogout} />
-      ) : (
-        <LoginForm onLogin={handleLogin} />
-      )}
-    </div>
-  )
-}
-
-**2. components/LoginForm.tsx** (The login UI):
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-
-interface LoginFormProps {
-  onLogin: (email: string, password: string) => void
-}
-
-export function LoginForm({ onLogin }: LoginFormProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const newErrors: { email?: string; password?: string } = {}
-
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Valid email required'
-    }
-    if (!password || password.length < 6) {
-      newErrors.password = 'Password must be 6+ characters'
+    // Phase 7.2: Inject Smart Context (relevant existing files)
+    try {
+      const relevantContext = await smartContext.getRelevantContext(prompt)
+      if (relevantContext) {
+        systemPrompt += `\n\n${relevantContext}`
+      }
+    } catch (error) {
+      console.warn('[buildSystemPrompt] Smart context failed:', error)
+      // Continue without context - not critical
     }
 
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors)
-      return
-    }
-
-    onLogin(email, password)
-  }
-
-  return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Login</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-            </div>
-            <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-            </div>
-            <Button type="submit" className="w-full">Login</Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
-
-**3. components/Dashboard.tsx** (Post-login view):
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-
-interface DashboardProps {
-  user: { email: string } | null
-  onLogout: () => void
-}
-
-export function Dashboard({ user, onLogout }: DashboardProps) {
-  return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-          <Button onClick={onLogout} variant="outline">Logout</Button>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome, {user?.email}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>You are successfully logged in!</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-}
-
-🚨 CRITICAL: For auth apps, you MUST generate ALL these files. The App.tsx MUST have the authentication state and conditional rendering logic.
-
-## WHAT TO GENERATE
-
-🚨 **MANDATORY ROOT FILE** - ALWAYS GENERATE THIS FIRST:
-- **App.tsx** - The main application component that orchestrates everything
-  - For auth flows: MUST contain isAuthenticated state and conditional rendering
-  - For dashboards: MUST contain the main layout and component composition
-  - For forms: MUST render the form component and handle success states
-  - This is THE ENTRY POINT - if you don't generate App.tsx, the preview will show a placeholder!
-
-📋 **FILE REQUIREMENTS**:
-- Generate 8-12 production-ready files minimum
-- Create separate files for each component (keep components under 100 lines each)
-- Include realistic mock data (20-50 items for lists/tables)
-- Add proper TypeScript types and interfaces
-- ALWAYS generate responsive designs
-- Include complete package.json with ALL dependencies
-
-Example files for a dashboard:
-- App.tsx (main component - MANDATORY!)
-- components/Dashboard.tsx
-- components/Sidebar.tsx
-- components/MetricCard.tsx
-- components/DataTable.tsx
-- utils/mockData.ts
-- package.json
-- README.md
-
-## CODING GUIDELINES
-
-🎯 **SIMPLICITY FIRST** (Dyad Philosophy):
-- DON'T DO MORE THAN WHAT THE USER ASKS FOR
-- DO NOT OVERENGINEER - keep code simple and elegant
-- Each component should be under 100 lines (create new files for larger features)
-- NO placeholder content - everything must be fully functional
-- NO TODO comments - complete all features requested
-- Create a new file for every new component or hook, no matter how small
-
-⚠️ **ERROR HANDLING**:
-- Don't catch errors with try/catch blocks unless specifically requested
-- Let errors bubble up naturally - this helps with debugging
-
-✨ **CODE QUALITY**:
-- ALWAYS generate responsive designs
-- Use modern React patterns (hooks, functional components)
-- Include proper TypeScript types
-- Generate beautiful UIs with Tailwind gradients, shadows, and hover effects
-
-## INTERACTIVE FORM GENERATION (PHASE 2)
-
-When generating forms, you MUST include:
-
-### FUNCTIONAL REQUIREMENTS:
-- All fields must be fully interactive with real onChange handlers
-- Include comprehensive validation (required, format, range, custom rules)
-- Implement proper TypeScript interfaces for form data
-- Add loading states for async operations (submit, API calls)
-- Include error handling with user-friendly messages
-- Implement success/error feedback (not just console.log)
-
-### VALIDATION RULES:
-- Email: Use RFC 5322 compliant regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-- Phone: Support international format with country code
-- Password: Min 8 chars, uppercase, lowercase, number, special char
-- Date: Validate against min/max dates, no weekends for business forms
-- File Upload: Check size limits (5MB default), allowed types, show file preview
-- Credit Card: Luhn algorithm validation (if applicable)
-- Custom Rules: Implement business logic (age > 18, quantity > 0, etc.)
-
-🚨 CRITICAL: DO NOT USE THESE LIBRARIES (Sandpack doesn't support them):
-❌ react-hook-form
-❌ @hookform/resolvers
-❌ zod (for validation schemas)
-❌ yup
-❌ formik
-❌ axios
-❌ @tanstack/react-query
-
-✅ INSTEAD: Use native React useState for forms and manual validation functions
-
-### STATE MANAGEMENT:
-typescript
-const [formData, setFormData] = useState<FormType>({...})
-const [errors, setErrors] = useState<Partial<FormType>>({})
-const [isSubmitting, setIsSubmitting] = useState(false)
-const [submitSuccess, setSubmitSuccess] = useState(false)
-
-
-### EVENT HANDLERS:
-- onChange: Update form data, clear field error
-- onBlur: Validate individual field, show error if invalid
-- onSubmit: Prevent default, validate all, submit if valid, show loading
-- onFocus: Clear error for that field (better UX)
-
-### ERROR DISPLAY:
-- Show errors below the input field
-- Red border on invalid inputs
-- Clear, actionable error messages ("Email is required" not "Invalid input")
-- Error summary at top of form if multiple errors
-
-### ACCESSIBILITY (WCAG 2.1 AA):
-- Proper label association: <label htmlFor="email">Email</label> <input id="email" />
-- ARIA attributes: aria-required="true", aria-invalid="true", aria-describedby="email-error"
-- Keyboard navigation: Tab order logical, Enter to submit, Esc to cancel
-- Focus indicators: Visible focus ring on all interactive elements
-- Error announcements: aria-live="polite" for screen readers
-- Color contrast: 4.5:1 minimum for text, 3:1 for UI components
-
-### UX ENHANCEMENTS:
-- Auto-focus first field on component mount
-- Show password toggle button (eye icon)
-- Character counter for textareas (e.g., "250/500 characters")
-- Password strength indicator (Weak/Medium/Strong)
-- Helpful placeholder text with examples
-- Disable submit button during submission
-- Loading spinner in submit button
-- Success message after submission (not just alert)
-
-### TAILWIND STYLING FOR FORMS:
-Input Default State:
-className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-
-Input Error State:
-className="w-full px-4 py-3 border border-red-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-
-Input Success State (optional):
-className="w-full px-4 py-3 border border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-
-Label:
-className="block text-sm font-medium text-gray-700 mb-2"
-
-Error Message:
-className="mt-1 text-sm text-red-600"
-
-Submit Button:
-className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-
-### CODE QUALITY FOR FORMS:
-- NO placeholder code or TODO comments
-- Extract validation to separate utils file (src/utils/validation.ts)
-- Reusable components for common patterns (FormInput, FormSelect, etc.)
-- Clear function names: handleEmailChange, validateEmail, submitForm
-- TypeScript strict mode compliant
-- Error boundaries around form components
-
-## REACT COMPONENT EXPORTS
-
-🚨 CRITICAL: All React components MUST be properly exported to avoid "Element type is invalid" errors.
-
-### DEFAULT EXPORT (Recommended for page components):
-
-✅ CORRECT:
-\`\`\`typescript
-// App.tsx
-export default function App() {
-  return <div>...</div>
-}
-
-// Import in another file:
-import App from './App'
-\`\`\`
-
-### NAMED EXPORT (For utility components):
-
-✅ CORRECT:
-\`\`\`typescript
-// LoginForm.tsx
-export function LoginForm() {
-  return <form>...</form>
-}
-
-// Import in another file:
-import { LoginForm } from './LoginForm'
-\`\`\`
-
-### MULTIPLE EXPORTS:
-
-✅ CORRECT:
-\`\`\`typescript
-// components/Cards.tsx
-export function MetricCard() { return <div>...</div> }
-export function UserCard() { return <div>...</div> }
-export function ProductCard() { return <div>...</div> }
-
-// Import in another file:
-import { MetricCard, UserCard } from './components/Cards'
-\`\`\`
-
-### COMMON MISTAKES TO AVOID:
-
-❌ WRONG: Missing export statement
-\`\`\`typescript
-function LoginForm() { return <form>...</form> }  // ❌ Not exported!
-\`\`\`
-
-❌ WRONG: Importing named export as default
-\`\`\`typescript
-// LoginForm.tsx
-export function LoginForm() {...}
-
-// Another file
-import LoginForm from './LoginForm'  // ❌ Wrong! Should be: import { LoginForm }
-\`\`\`
-
-❌ WRONG: Importing default export as named
-\`\`\`typescript
-// App.tsx
-export default function App() {...}
-
-// Another file
-import { App } from './App'  // ❌ Wrong! Should be: import App from './App'
-\`\`\`
-
-### RULES:
-1. **ALWAYS export every React component** you create
-2. **Use default export for main components** (App, pages)
-3. **Use named exports for reusable components** (LoginForm, Button, Card)
-4. **Match import style to export style** (default ↔ default, named ↔ named)
-5. **One component per file** for clarity (except for closely related components)
-
-## FUNCTION DEFINITIONS AND SCOPE
-
-🚨 CRITICAL: All functions must be defined before they are called to avoid "X is not defined" runtime errors.
-
-### CORRECT PATTERN - Define functions INSIDE component:
-
-✅ CORRECT:
-\`\`\`typescript
-export function LoginForm() {
-  const [formData, setFormData] = useState({email: '', password: ''})
-  const [errors, setErrors] = useState<any>({})
-
-  // ✅ Define validation function INSIDE component
-  const validateForm = (data: typeof formData): boolean => {
-    const newErrors: any = {}
-
-    if (!data.email) {
-      newErrors.email = 'Email is required'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-      newErrors.email = 'Invalid email format'
-    }
-
-    if (!data.password) {
-      newErrors.password = 'Password is required'
-    } else if (data.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  // ✅ Now validateForm is in scope when handleSubmit calls it
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm(formData)) return  // ✅ Works!
-
-    // Submit logic...
-  }
-
-  return <form onSubmit={handleSubmit}>...</form>
-}
-\`\`\`
-
-### ALTERNATIVE - Import from utility file:
-
-✅ ALSO CORRECT:
-\`\`\`typescript
-// lib/validation.ts
-export const validateEmail = (email: string): string | null => {
-  if (!email) return 'Email is required'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'Invalid email format'
-  return null
-}
-
-export const validatePassword = (password: string): string | null => {
-  if (!password) return 'Password is required'
-  if (password.length < 8) return 'Password must be at least 8 characters'
-  return null
-}
-
-// components/LoginForm.tsx
-import { validateEmail, validatePassword } from '../lib/validation'
-
-export function LoginForm() {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const emailError = validateEmail(formData.email)  // ✅ Works!
-    const passwordError = validatePassword(formData.password)  // ✅ Works!
-
-    if (emailError || passwordError) {
-      setErrors({ email: emailError, password: passwordError })
-      return
-    }
-
-    // Submit logic...
-  }
-
-  return <form onSubmit={handleSubmit}>...</form>
-}
-\`\`\`
-
-### COMMON MISTAKES TO AVOID:
-
-❌ WRONG: Calling function before it is defined
-\`\`\`typescript
-export function LoginForm() {
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!validateForm(formData)) return  // ❌ ReferenceError: validateForm is not defined!
-  }
-
-  // ❌ Function defined AFTER it is used
-  const validateForm = (data: any) => { ... }
-}
-\`\`\`
-
-❌ WRONG: Calling imported function without import statement
-\`\`\`typescript
-// components/LoginForm.tsx
-export function LoginForm() {
-  const handleSubmit = async (e: React.FormEvent) => {
-    if (!validateEmail(formData.email)) return  // ❌ validateEmail is not defined!
-  }
-}
-
-// ❌ Missing: import { validateEmail } from '../lib/validation'
-\`\`\`
-
-❌ WRONG: Defining function outside component scope
-\`\`\`typescript
-// ❌ Function defined outside component - not accessible
-const validateForm = (data: any) => { ... }
-
-export function LoginForm() {
-  const handleSubmit = async (e: React.FormEvent) => {
-    if (!validateForm(formData)) return  // ❌ May not have access to component state
-  }
-}
-\`\`\`
-
-### RULES:
-1. **Define helper functions INSIDE the component** if they need access to state/props
-2. **Define validation functions in separate files** (lib/validation.ts) for reusability
-3. **ALWAYS import** functions from other files before using them
-4. **Define functions BEFORE calling them** in the same file (or hoist with function declarations)
-5. **Use descriptive names**: validateForm, handleSubmit, calculateTotal (not validate, submit, calc)
-
-### FUNCTION PLACEMENT ORDER (inside component):
-1. State declarations (useState, useRef, etc.)
-2. Helper/validation functions
-3. Event handlers (handleSubmit, handleChange, etc.)
-4. useEffect hooks
-5. Return JSX
-
-## JSON OUTPUT SAFETY
-
-🚨 CRITICAL: Your response will be parsed as JSON. Follow these rules strictly:
-
-1. **AVOID APOSTROPHES IN STRINGS:**
-   ❌ WRONG: 'Don\'t have an account?'
-   ✅ RIGHT: "Don't have an account?" (use double quotes)
-   ✅ RIGHT: 'Do not have an account?' (rephrase to avoid apostrophes)
-
-2. **USE TEMPLATE LITERALS FOR COMPLEX TEXT:**
-   ❌ WRONG: 'User\'s profile'
-   ✅ RIGHT: \`User's profile\` (template literal)
-
-3. **ESCAPE SEQUENCES IN REGEX:**
-   When writing regex patterns in strings, use proper JSON escaping:
-   ✅ CORRECT: "!/\\\\S+@\\\\S+\\\\.\\\\S+/.test(email)"
-   (Double backslashes for JSON string escaping)
-
-4. **CONTRACTIONS:**
-   Prefer full words over contractions to avoid apostrophe issues:
-   ✅ Use "cannot" instead of "can't"
-   ✅ Use "do not" instead of "don't"
-   ✅ Use "does not" instead of "doesn't"
-   ✅ Use "will not" instead of "won't"
-
-## REMEMBER
-
-Make every application beautiful, complete, and production-ready. Code should be something developers want to show off.`
-
+    // Append context-specific information (preserve existing behavior)
     if (context?.framework) {
       systemPrompt += `\n\nFramework: ${context.framework}
 Use ${context.framework}-specific best practices and modern patterns.
@@ -952,10 +293,87 @@ Use strict TypeScript with proper type definitions and interfaces.`
 - Make this project stand out with exceptional design and functionality.`
     }
 
+    // 🎨 CRITICAL STYLING EMPHASIS - Production Quality Requirements
+    systemPrompt += `
+
+═══════════════════════════════════════════════════════════════════
+🚨 CRITICAL STYLING REQUIREMENT - PRODUCTION-READY VISUAL QUALITY 🚨
+═══════════════════════════════════════════════════════════════════
+
+The user expects a PRODUCTION-READY, VISUALLY STUNNING application.
+Generated code MUST look like modern SaaS products (Linear, Vercel, Stripe).
+Wireframe-quality or basic styling is COMPLETELY UNACCEPTABLE.
+
+MANDATORY VISUAL STANDARDS (Refer to "🎨 VISUAL DESIGN STANDARDS" section in your rules):
+
+1. 🎨 GRADIENT BACKGROUNDS - MANDATORY for all full-page layouts:
+   ✅ ALWAYS USE: bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50
+   ✅ DARK MODE: dark:from-gray-900 dark:via-gray-800 dark:to-gray-900
+   ❌ FORBIDDEN: Plain bg-white or bg-gray-50 backgrounds
+
+2. 💎 DEEP SHADOWS - MANDATORY for depth and elevation:
+   ✅ Cards: shadow-2xl shadow-purple-500/10
+   ✅ Elevated: shadow-xl shadow-gray-200/50 dark:shadow-gray-900/50
+   ❌ FORBIDDEN: No shadows or shallow shadow-sm
+
+3. 📐 GENEROUS SPACING - Professional polish requires proper breathing room:
+   ✅ Cards: p-8 (32px minimum)
+   ✅ Sections: space-y-8 or gap-8
+   ❌ FORBIDDEN: Cramped p-4 (16px) spacing
+
+4. 🎭 SMOOTH ANIMATIONS - Every interactive element needs polish:
+   ✅ MANDATORY: transition-all duration-200
+   ✅ Hover: hover:scale-[1.02] hover:shadow-xl
+   ❌ FORBIDDEN: Static, non-interactive elements
+
+5. 🔤 TYPOGRAPHY HIERARCHY - Clear visual hierarchy:
+   ✅ H1: text-3xl font-bold text-gray-900 dark:text-white
+   ✅ H2: text-2xl font-semibold text-gray-800 dark:text-gray-100
+   ✅ Body: text-base text-gray-600 dark:text-gray-300
+   ❌ FORBIDDEN: Flat text-xl without hierarchy
+
+6. 🎨 BORDER RADIUS - Modern, polished corners:
+   ✅ Cards: rounded-2xl (16px)
+   ✅ Components: rounded-xl (12px)
+   ❌ FORBIDDEN: Sharp rounded or rounded-sm
+
+7. 🌓 DARK MODE - MANDATORY dark: variants on ALL color classes:
+   ✅ bg-white dark:bg-gray-800
+   ✅ text-gray-900 dark:text-white
+   ❌ FORBIDDEN: Missing dark mode variants
+
+8. ✨ VISUAL POLISH CHECKLIST - Verify EVERY component has:
+   • Gradient backgrounds on full-page layouts
+   • Deep shadows (shadow-xl or shadow-2xl)
+   • Proper spacing (p-8 on cards)
+   • Smooth transitions on interactive elements
+   • Professional typography hierarchy
+   • lucide-react icons where appropriate
+   • Loading states with spinners
+   • Hover effects on buttons/links
+   • Dark mode support
+   • Color contrast (WCAG AA)
+
+═══════════════════════════════════════════════════════════════════
+🎯 QUALITY STANDARD: 9/10 Production-Ready, NOT 2/10 Wireframe
+═══════════════════════════════════════════════════════════════════
+
+BEFORE generating ANY code, ask yourself:
+• Does this look like a modern SaaS product?
+• Would a user pay for an app that looks like this?
+• Is every element professionally styled with gradients, shadows, animations?
+
+If the answer is NO, DO NOT GENERATE. Go back and add proper styling.
+
+═══════════════════════════════════════════════════════════════════`
+
     return systemPrompt
   }
 
   async generateCode(request: GenerateCodeRequest) {
+    // Declare enhancedPrompt before try block so it's accessible in catch block
+    let enhancedPrompt = request.prompt
+
     try {
       // Mock response when no API key is configured
       if (!process.env.OPENAI_API_KEY && !process.env.ANTHROPIC_API_KEY && !process.env.GOOGLE_GENERATIVE_AI_API_KEY && !process.env.AZURE_OPENAI_API_KEY) {
@@ -992,7 +410,7 @@ Use strict TypeScript with proper type definitions and interfaces.`
       // })
 
       // Enhanced prompt with Yavi.ai integration if available
-      let enhancedPrompt = request.prompt
+      enhancedPrompt = request.prompt
       // if (request.context?.project) {
       //   const yaviContext = await yaviService.getRelevantContext(request.prompt, request.context.project.id)
       //   if (yaviContext) {
@@ -1072,12 +490,13 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
 🚨 Make every component beautiful, interactive, and polished with proper Tailwind classes!`
 
       console.log('🎯 Making initial generateObject call...')
-      console.log(`System prompt size: ${this.buildSystemPrompt(request.context).length} chars`)
+      const systemPrompt = await this.buildSystemPrompt(request.prompt, request.context)
+      console.log(`System prompt size: ${systemPrompt.length} chars`)
       console.log(`Enhanced prompt size: ${enhancedPrompt.length} chars`)
 
       const result = await generateObject({
         model,
-        system: this.buildSystemPrompt(request.context),
+        system: systemPrompt,
         prompt: enhancedPrompt,
         schema: z.object({
           code: z.string().optional().describe('DEPRECATED: Leave empty, use files array instead'),
@@ -1150,10 +569,10 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
 
         const retryResult = await generateObject({
           model,
-          system: this.buildSystemPrompt(request.context),
+          system: await this.buildSystemPrompt(request.prompt, request.context),
           prompt: tailwindEnforcementPrompt,
           schema: z.object({
-            code: z.string().describe('DEPRECATED: Leave empty'),
+            code: z.string().optional().describe('DEPRECATED: Leave empty'),
             explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             files: z.array(z.object({
               path: z.string().describe('File path (e.g., src/App.tsx)'),
@@ -1166,6 +585,45 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
         })
 
         console.log(`Regenerated with proper Tailwind classes: ${retryResult.object.files.length} files`)
+
+        // 🚀 DEPENDENCY VALIDATION WITH AUTO-FIX (Tailwind retry path)
+        console.log('📦 [Dependency Validator] Checking import/dependency consistency...')
+        const tailwindRetryDependencyValidation = dependencyValidator.validate(
+          retryResult.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' :
+                     f.path.endsWith('.json') ? 'json' : 'plaintext'
+          }))
+        )
+
+        console.log(dependencyValidator.formatResults(tailwindRetryDependencyValidation))
+
+        if (!tailwindRetryDependencyValidation.isValid) {
+          console.warn(`⚠️  [Dependency Validator] Found ${tailwindRetryDependencyValidation.summary.missingPackages} missing dependencies`)
+          console.log(`🔧 [Dependency Validator] Attempting auto-fix...`)
+
+          const fixedPackageJson = dependencyValidator.autoFix(
+            retryResult.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+            })),
+            tailwindRetryDependencyValidation
+          )
+
+          if (fixedPackageJson) {
+            const packageJsonIndex = retryResult.object.files.findIndex(f => f.path.endsWith('package.json'))
+            if (packageJsonIndex !== -1) {
+              retryResult.object.files[packageJsonIndex].content = fixedPackageJson.content
+              console.log(`✅ [Dependency Validator] Auto-fixed package.json with ${tailwindRetryDependencyValidation.summary.missingPackages} missing packages`)
+            }
+          }
+        } else {
+          console.log(`✅ [Dependency Validator] All ${tailwindRetryDependencyValidation.summary.uniquePackages} packages properly declared`)
+        }
+
         return retryResult.object
       }
 
@@ -1267,7 +725,7 @@ Generate 8-12 complete files!`
 
           const antiEchoResult = await generateObject({
             model,
-            system: this.buildSystemPrompt(request.context),
+            system: await this.buildSystemPrompt(request.prompt, request.context),
             prompt: antiEchoPrompt,
             schema: z.object({
               code: z.string().optional(),
@@ -1358,7 +816,7 @@ Generate 8-12 production-ready files NOW!`
 
         const qualityResult = await generateObject({
           model,
-          system: this.buildSystemPrompt(request.context),
+          system: await this.buildSystemPrompt(request.prompt, request.context),
           prompt: qualityPrompt,
           schema: z.object({
             code: z.string().optional(),
@@ -1414,10 +872,10 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
         const retryResult = await generateObject({
           model,
-          system: this.buildSystemPrompt(request.context),
+          system: await this.buildSystemPrompt(request.prompt, request.context),
           prompt: forcefulPrompt,
           schema: z.object({
-            code: z.string().describe('DEPRECATED: Leave empty'),
+            code: z.string().optional().describe('DEPRECATED: Leave empty'),
             explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             files: z.array(z.object({
               path: z.string().describe('File path (e.g., src/App.tsx)'),
@@ -1461,6 +919,44 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
         // 🚀 PHASE 3B: Convert path aliases for ALL files (AI + scaffold)
         this.convertPathAliases(retryResult.object.files)
+
+        // 🚀 PHASE 3C: DEPENDENCY VALIDATION WITH AUTO-FIX (retry path)
+        console.log('📦 [Dependency Validator] Checking import/dependency consistency...')
+        const retryDependencyValidation = dependencyValidator.validate(
+          retryResult.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' :
+                     f.path.endsWith('.json') ? 'json' : 'plaintext'
+          }))
+        )
+
+        console.log(dependencyValidator.formatResults(retryDependencyValidation))
+
+        if (!retryDependencyValidation.isValid) {
+          console.warn(`⚠️  [Dependency Validator] Found ${retryDependencyValidation.summary.missingPackages} missing dependencies`)
+          console.log(`🔧 [Dependency Validator] Attempting auto-fix...`)
+
+          const fixedPackageJson = dependencyValidator.autoFix(
+            retryResult.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+            })),
+            retryDependencyValidation
+          )
+
+          if (fixedPackageJson) {
+            const packageJsonIndex = retryResult.object.files.findIndex(f => f.path.endsWith('package.json'))
+            if (packageJsonIndex !== -1) {
+              retryResult.object.files[packageJsonIndex].content = fixedPackageJson.content
+              console.log(`✅ [Dependency Validator] Auto-fixed package.json with ${retryDependencyValidation.summary.missingPackages} missing packages`)
+            }
+          }
+        } else {
+          console.log(`✅ [Dependency Validator] All ${retryDependencyValidation.summary.uniquePackages} packages properly declared`)
+        }
 
         return retryResult.object
       }
@@ -1540,6 +1036,155 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
       // 🚀 PHASE 3B: CONVERT PATH ALIASES - Now convert ALL files (AI + scaffold)
       this.convertPathAliases(result.object.files)
 
+      // 🚀 PHASE 7.3: STRUCTURED OUTPUT VALIDATION
+      console.log('🔍 [Output Validator] Running quality checks...')
+      const outputValidation = outputValidator.validate(
+        result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                   f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+        }))
+      )
+
+      // Log validation results
+      console.log(outputValidator.formatResults(outputValidation))
+
+      // Check for CRITICAL errors that cause immediate runtime failures
+      const criticalErrors = outputValidation.errors.filter(e =>
+        e.type === 'missing_import' ||  // Missing cn() import causes ReferenceError
+        e.type === 'quality' && e.message.includes('JSX syntax but uses .ts extension')  // JSX in .ts causes SyntaxError
+      )
+
+      if (criticalErrors.length > 0) {
+        console.error('❌ [Output Validator] CRITICAL errors detected that will cause runtime failures:')
+        criticalErrors.forEach(e => console.error(`  - ${e.message}`))
+        throw new Error(`Output validation failed with ${criticalErrors.length} critical error(s). Cannot proceed.`)
+      }
+
+      // Non-critical errors: log as warnings but don't block
+      const nonCriticalErrors = outputValidation.errors.filter(e =>
+        !(e.type === 'missing_import' || (e.type === 'quality' && e.message.includes('JSX syntax but uses .ts extension')))
+      )
+      if (nonCriticalErrors.length > 0) {
+        console.warn('⚠️  [Output Validator] Output has quality issues (non-blocking):')
+        nonCriticalErrors.forEach(e => console.warn(`  - ${e.message}`))
+      }
+
+      // 🚀 PHASE 7.3.5: STYLING QUALITY VALIDATION
+      console.log('🎨 [Styling Validator] Running production quality checks...')
+      const stylingValidation = stylingValidator.validate(
+        result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                   f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+        }))
+      )
+
+      // Log validation results
+      console.log(stylingValidator.formatResults(stylingValidation))
+
+      // If styling quality is too low (wireframe-like), log warnings but don't block
+      if (!stylingValidation.isValid) {
+        console.warn(`⚠️  [Styling Validator] Production quality below threshold:`)
+        console.warn(`   Score: ${stylingValidation.score}/100 (need 70+)`)
+        console.warn(`   Wireframe quality: ${stylingValidation.details.wireframeQuality}/100 (lower is better)`)
+        console.warn(`   Consider regenerating with enhanced styling prompts`)
+        stylingValidation.errors.forEach(e => console.warn(`  - [${e.severity}] ${e.message}`))
+        // Don't throw error - log for monitoring, but allow generation to proceed
+        // Future: Could trigger automatic regeneration with styling-focused prompts
+      } else {
+        console.log(`✨ [Styling Validator] Production-ready! Score: ${stylingValidation.score}/100`)
+      }
+
+      // 🚀 PHASE 7.3.6: DEPENDENCY VALIDATION WITH AUTO-FIX
+      console.log('📦 [Dependency Validator] Checking import/dependency consistency...')
+      const dependencyValidation = dependencyValidator.validate(
+        result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                   f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' :
+                   f.path.endsWith('.json') ? 'json' : 'plaintext'
+        }))
+      )
+
+      // Log validation results
+      console.log(dependencyValidator.formatResults(dependencyValidation))
+
+      // If dependencies are missing, AUTO-FIX package.json
+      if (!dependencyValidation.isValid) {
+        console.warn(`⚠️  [Dependency Validator] Found ${dependencyValidation.summary.missingPackages} missing dependencies`)
+        console.log(`🔧 [Dependency Validator] Attempting auto-fix...`)
+
+        const fixedPackageJson = dependencyValidator.autoFix(
+          result.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+          })),
+          dependencyValidation
+        )
+
+        if (fixedPackageJson) {
+          // Replace package.json with fixed version
+          const packageJsonIndex = result.object.files.findIndex(f => f.path.endsWith('package.json'))
+          if (packageJsonIndex !== -1) {
+            result.object.files[packageJsonIndex].content = fixedPackageJson.content
+            console.log(`✅ [Dependency Validator] Auto-fixed package.json with ${dependencyValidation.summary.missingPackages} missing packages`)
+
+            // Re-validate to confirm fix
+            const revalidation = dependencyValidator.validate(
+              result.object.files.map(f => ({
+                path: f.path,
+                content: f.content,
+                language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+              }))
+            )
+            if (revalidation.isValid) {
+              console.log(`✨ [Dependency Validator] All dependencies now satisfied!`)
+            }
+          }
+        } else {
+          console.error(`❌ [Dependency Validator] Auto-fix failed`)
+        }
+      } else {
+        console.log(`✅ [Dependency Validator] All ${dependencyValidation.summary.uniquePackages} packages properly declared`)
+      }
+
+      // 🚀 PHASE 7.4: PREVIEW RENDERING VALIDATION (Optional - enabled via env var)
+      const enablePreviewValidation = process.env.ENABLE_PREVIEW_VALIDATION === 'true'
+
+      if (enablePreviewValidation) {
+        console.log('🌐 [Preview Validator] Running headless browser validation...')
+
+        try {
+          const previewValidation = await previewValidator.validate(
+            result.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                       f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+            }))
+          )
+
+          // Log validation results
+          console.log(previewValidator.formatResults(previewValidation))
+
+          // If preview fails, reject the output
+          if (!previewValidation.isValid) {
+            console.error('❌ [Preview Validator] Preview rendering failed, triggering retry...')
+            throw new Error(`Preview validation failed: ${previewValidation.errors.map(e => e.message).join('; ')}`)
+          }
+        } catch (error: any) {
+          // If preview validation fails completely, log but don't block (it's experimental)
+          console.warn('⚠️ [Preview Validator] Validation error (non-blocking):', error.message)
+        }
+      } else {
+        console.log('ℹ️  [Preview Validator] Skipped (set ENABLE_PREVIEW_VALIDATION=true to enable)')
+      }
+
       return result.object
     } catch (error: any) {
       console.error('❌ Error generating code:', error)
@@ -1612,7 +1257,7 @@ Generate 8-12 complete, production-ready files NOW!`
 
           const safeResult = await generateObject({
             model,
-            system: this.buildSystemPrompt(request.context),
+            system: await this.buildSystemPrompt(request.prompt, request.context),
             prompt: jsonSafePrompt,
             schema: z.object({
               code: z.string().optional(),
@@ -1682,12 +1327,16 @@ Generate 8-12 complete, production-ready files NOW!`
       //   promptTokens: request.messages.reduce((acc, msg) => acc + msg.content.length, 0),
       // })
 
+      // Extract the last user message as the prompt for context
+      const lastUserMessage = request.messages.filter(m => m.role === 'user').pop()
+      const userPrompt = lastUserMessage?.content || ''
+
       // Add system message if not present
       const messages = request.messages
       if (messages[0]?.role !== 'system') {
         messages.unshift({
           role: 'system',
-          content: this.buildSystemPrompt(request.context),
+          content: await this.buildSystemPrompt(userPrompt, request.context),
         })
       }
 
@@ -1776,7 +1425,7 @@ Generate 8-12 complete, production-ready files NOW!`
 
       const result = streamText({
         model,
-        system: this.buildSystemPrompt(request.context),
+        system: await this.buildSystemPrompt(request.prompt, request.context),
         prompt: request.prompt,
       })
 
