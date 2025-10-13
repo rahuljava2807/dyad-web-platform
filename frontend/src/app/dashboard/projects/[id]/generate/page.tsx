@@ -489,19 +489,19 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
             {/* Floating Success Badge - Only when complete */}
             {currentStep === 'complete' && (
               <div className="fixed top-20 right-6 z-50 animate-success-pop">
-                <div className="bg-gradient-to-br from-green-900 to-emerald-900 border-2 border-green-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
+                <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <CheckCircle className="h-6 w-6 text-green-400" />
-                      <div className="absolute inset-0 bg-green-400/30 rounded-full animate-ping" />
+                      <CheckCircle className="h-6 w-6 text-blue-400" />
+                      <div className="absolute inset-0 bg-blue-400/30 rounded-full animate-ping" />
                     </div>
                     <div>
-                      <p className="text-base font-bold text-green-300">✨ Generated!</p>
-                      <p className="text-xs text-green-200/80">{files.length} production files</p>
+                      <p className="text-base font-bold text-blue-300">✨ Generated!</p>
+                      <p className="text-xs text-blue-200/80">{files.length} production files</p>
                     </div>
                     <button
                       onClick={() => router.push('/dashboard')}
-                      className="ml-2 px-4 py-2 bg-green-500 text-gray-900 font-semibold text-sm rounded-lg hover:bg-green-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="ml-2 px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
                       Back to Dashboard
                     </button>
