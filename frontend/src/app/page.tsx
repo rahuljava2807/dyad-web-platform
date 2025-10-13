@@ -65,34 +65,64 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="relative py-32 overflow-hidden">
+        {/* Hero Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/logos/hero-bg.jpg"
+            alt="Yavi Studio Hero Background"
+            fill
+            className="object-cover opacity-20"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/90 via-indigo-50/90 to-purple-50/90"></div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="mb-8">
-            <Badge className="bg-blue-100 text-blue-800 border-blue-200 mb-4">
-              🚀 Web-Based Development Platform
+            <Badge className="bg-blue-100 text-blue-800 border-blue-200 mb-6 text-sm py-2 px-4">
+              <Sparkles className="inline h-4 w-4 mr-2" />
+              AI-Powered Development Platform
             </Badge>
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Build AI-Powered Applications
-              <span className="text-blue-600 block">With Yavi Integration</span>
+            <h1 className="text-6xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+              Build Intelligent Apps
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 block mt-2">
+                In Minutes, Not Months
+              </span>
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              Transform from desktop to web. Create intelligent document processing applications,
-              automate workflows, and integrate with Yavi.ai's powerful capabilities - all through
-              an intuitive web interface.
+            <p className="text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto mb-10 leading-relaxed">
+              Transform ideas into production-ready applications with Yavi Studio's AI-powered code generation,
+              industry templates, and enterprise-grade security.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild className="bg-blue-600 hover:bg-blue-700">
+              <Button size="lg" asChild className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg py-6 px-8 shadow-xl hover:shadow-2xl transition-all">
                 <Link href="/dashboard">
-                  <Rocket className="mr-2 h-5 w-5" />
-                  Start Building Now
+                  <Rocket className="mr-2 h-6 w-6" />
+                  Start Building Free
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
+              <Button size="lg" variant="outline" asChild className="text-lg py-6 px-8 border-2 border-blue-600 text-blue-600 hover:bg-blue-50">
                 <Link href="#features">
-                  <FileText className="mr-2 h-5 w-5" />
-                  View Capabilities
+                  <Play className="mr-2 h-6 w-6" />
+                  Watch Demo
                 </Link>
               </Button>
+            </div>
+
+            {/* Social Proof */}
+            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span>No Credit Card Required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span>Production-Ready Code</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span>Enterprise Security</span>
+              </div>
             </div>
           </div>
         </div>
@@ -214,6 +244,137 @@ export default function HomePage() {
                 View Complete Setup Guide
               </Link>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Visual Features Showcase */}
+      <section className="py-20 bg-gradient-to-b from-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="bg-purple-100 text-purple-800 border-purple-200 mb-4">
+              Enterprise-Grade Platform
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Built for Scale and Security
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Production-ready infrastructure with enterprise compliance and AI-powered intelligence
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
+            <div className="relative h-80 rounded-2xl overflow-hidden shadow-2xl">
+              <Image
+                src="/images/features/secure-01-scaled.webp"
+                alt="Enterprise Security"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 rounded-full">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-green-800 font-semibold">Enterprise Security</span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">
+                Security & Compliance Built-In
+              </h3>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                SOC2, HIPAA, GDPR, and PCI-DSS compliant from day one. End-to-end encryption,
+                role-based access control, and comprehensive audit logs keep your data secure.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span>Multi-factor authentication and SSO</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span>Data encryption at rest and in transit</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span>Automated compliance reporting</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-20">
+            <div className="space-y-6 md:order-1">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full">
+                <Zap className="h-5 w-5 text-blue-600" />
+                <span className="text-blue-800 font-semibold">Seamless Integration</span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">
+                Connect Everything, Effortlessly
+              </h3>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Pre-built connectors to 60+ enterprise systems. Real-time data sync with automatic
+                conflict resolution and data quality monitoring.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <span>API-first architecture with webhooks</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <span>Real-time bidirectional sync</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                  <span>Custom connector SDK</span>
+                </li>
+              </ul>
+            </div>
+            <div className="relative h-80 rounded-2xl overflow-hidden shadow-2xl md:order-2">
+              <Image
+                src="/images/features/seamless-new001-scaled.webp"
+                alt="Seamless Integration"
+                fill
+                className="object-cover"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="relative h-80 rounded-2xl overflow-hidden shadow-2xl">
+              <Image
+                src="/images/features/Prebuilt-rag-01-scaled.webp"
+                alt="AI-Powered Intelligence"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+                <span className="text-purple-800 font-semibold">AI Intelligence</span>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-900">
+                Pre-Built RAG & AI Workflows
+              </h3>
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Production-ready Retrieval Augmented Generation with vector databases, semantic search,
+                and intelligent document processing powered by Claude and GPT-4.
+              </p>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                  <span>Multi-model AI orchestration</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                  <span>Intelligent document extraction</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-700">
+                  <CheckCircle className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                  <span>Semantic search and embeddings</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </section>
