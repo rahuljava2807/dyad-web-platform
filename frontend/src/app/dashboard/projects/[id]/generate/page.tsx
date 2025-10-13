@@ -325,9 +325,9 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
       <div className="border-b border-white/10 bg-black/30 backdrop-blur-xl flex-shrink-0">
         <div className="px-6 py-3 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2 group">
-            <div className="relative w-7 h-7 transition-transform group-hover:scale-105">
+            <div className="relative w-10 h-10 transition-transform group-hover:scale-105">
               <Image
-                src="/images/logos/yavi-logo.svg"
+                src="/images/logos/Yavi-logo.webp"
                 alt="Yavi Studio"
                 fill
                 className="object-contain brightness-0 invert"

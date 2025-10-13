@@ -127,9 +127,9 @@ export default function NewProjectPage() {
 
             {/* Yavi Logo */}
             <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="relative w-8 h-8 transition-transform group-hover:scale-105">
+              <div className="relative w-10 h-10 transition-transform group-hover:scale-105">
                 <Image
-                  src="/images/logos/yavi-logo.svg"
+                  src="/images/logos/Yavi-logo.webp"
                   alt="Yavi Studio"
                   fill
                   className="object-contain brightness-0 invert"
@@ -369,9 +369,9 @@ export default function NewProjectPage() {
               <span className="text-white/20">•</span>
               <div className="flex items-center gap-2">
                 <span className="text-white/40 text-sm">Built with</span>
-                <div className="relative w-20 h-6">
+                <div className="relative w-24 h-8">
                   <Image
-                    src="/images/logos/yavi-logo.svg"
+                    src="/images/logos/Yavi-logo.webp"
                     alt="Yavi Studio"
                     fill
                     className="object-contain brightness-0 invert opacity-60"

@@ -34,9 +34,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="relative w-10 h-10 transition-transform group-hover:scale-105">
+              <div className="relative w-14 h-14 transition-transform group-hover:scale-105">
                 <Image
-                  src="/images/logos/yavi-logo.svg"
+                  src="/images/logos/Yavi-logo.webp"
                   alt="Yavi Studio"
                   fill
                   className="object-contain"
@@ -585,9 +585,9 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="relative w-10 h-10">
+                <div className="relative w-12 h-12">
                   <Image
-                    src="/images/logos/yavi-logo.svg"
+                    src="/images/logos/Yavi-logo.webp"
                     alt="Yavi Studio"
                     fill
                     className="object-contain brightness-0 invert"

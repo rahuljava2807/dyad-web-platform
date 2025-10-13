@@ -63,9 +63,9 @@ export default function DashboardPage() {
             <div className="flex items-center gap-6">
               {/* Yavi Logo */}
               <Link href="/dashboard" className="flex items-center gap-3 group">
-                <div className="relative w-12 h-12 transition-transform group-hover:scale-105">
+                <div className="relative w-16 h-16 transition-transform group-hover:scale-105">
                   <Image
-                    src="/images/logos/yavi-logo.svg"
+                    src="/images/logos/Yavi-logo.webp"
                     alt="Yavi Studio"
                     fill
                     className="object-contain"
