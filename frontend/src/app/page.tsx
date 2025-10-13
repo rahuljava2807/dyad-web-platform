@@ -22,7 +22,8 @@ import {
   CheckCircle,
   ExternalLink,
   Workflow,
-  Key
+  Key,
+  Sparkles
 } from 'lucide-react'
 
 export default function HomePage() {
