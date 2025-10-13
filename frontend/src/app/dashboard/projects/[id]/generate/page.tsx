@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
 import { Sparkles, Code, FileText, Zap, CheckCircle, ArrowRight, Eye } from 'lucide-react'
 import { ImprovedSandpackPreview } from '@/components/ImprovedSandpackPreview'
 import { ThinkingPanel } from '@/components/ThinkingPanel'
@@ -318,6 +320,29 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
           onReject={handleReject}
         />
       )}
+
+      {/* Top Header with Logo */}
+      <div className="border-b border-white/10 bg-black/30 backdrop-blur-xl flex-shrink-0">
+        <div className="px-6 py-3 flex items-center justify-between">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <div className="relative w-7 h-7 transition-transform group-hover:scale-105">
+              <Image
+                src="/images/logos/yavi-logo.svg"
+                alt="Yavi Studio"
+                fill
+                className="object-contain brightness-0 invert"
+                priority
+              />
+            </div>
+            <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
+              Yavi Studio
+            </span>
+          </Link>
+          <div className="text-xs text-white/40">
+            AI Code Generation in Progress
+          </div>
+        </div>
+      </div>
 
       {/* Compact Status Banner - Only show during generation */}
       {currentStep !== 'complete' && currentStep !== 'preview' && (
