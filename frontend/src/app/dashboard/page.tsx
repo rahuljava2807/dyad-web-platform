@@ -36,8 +36,10 @@ interface Project {
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     fetchProjects()
   }, [])
 
@@ -245,8 +247,8 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* Yavi Assistant Widget */}
-      <YaviAssistant />
+      {/* Yavi Assistant Widget - Only render on client to avoid hydration errors */}
+      {mounted && <YaviAssistant />}
     </div>
     </AssistantProvider>
   )
