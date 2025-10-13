@@ -31,7 +31,10 @@ const initialUIState: UIState = {
   isOpen: false,
   isMinimized: true,
   isExpanded: false,
-  position: { x: window.innerWidth - 400, y: window.innerHeight - 100 },
+  position: {
+    x: typeof window !== 'undefined' ? window.innerWidth - 400 : 100,
+    y: typeof window !== 'undefined' ? window.innerHeight - 100 : 100
+  },
   size: { width: 380, height: 600 },
   activeTab: 'suggestions',
   notificationCount: 0,

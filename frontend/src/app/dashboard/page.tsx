@@ -17,6 +17,8 @@ import {
   MoreVertical,
   Sparkles
 } from 'lucide-react'
+import { AssistantProvider } from '@/contexts/AssistantContext'
+import { YaviAssistant } from '@/components/assistant'
 
 interface Project {
   id: string
@@ -55,7 +57,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <AssistantProvider projectId="dashboard">
+      <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -241,6 +244,10 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* Yavi Assistant Widget */}
+      <YaviAssistant />
     </div>
+    </AssistantProvider>
   )
 }
