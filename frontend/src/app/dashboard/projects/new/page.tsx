@@ -137,7 +137,7 @@ export default function NewProjectPage() {
                 />
               </div>
               <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
-                Yavi Studio
+                Studio
               </span>
             </Link>
           </div>

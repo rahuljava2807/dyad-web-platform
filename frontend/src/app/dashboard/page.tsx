@@ -74,7 +74,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                    Yavi Studio
+                    Studio
                   </span>
                   <span className="text-xs text-slate-500">AI Development Platform</span>
                 </div>

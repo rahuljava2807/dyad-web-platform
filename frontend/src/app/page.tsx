@@ -44,7 +44,7 @@ export default function HomePage() {
                 />
               </div>
               <span className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                Yavi Studio
+                Studio
               </span>
             </Link>
             <div className="flex items-center gap-4">
@@ -593,7 +593,7 @@ export default function HomePage() {
                     className="object-contain brightness-0 invert"
                   />
                 </div>
-                <span className="text-xl font-bold">Yavi Studio</span>
+                <span className="text-xl font-bold">Studio</span>
               </div>
               <p className="text-gray-400">
                 Empowering developers to create intelligent applications with Yavi.ai integration.

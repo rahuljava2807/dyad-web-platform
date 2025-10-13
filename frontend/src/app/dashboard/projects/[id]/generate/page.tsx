@@ -335,7 +335,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
               />
             </div>
             <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
-              Yavi Studio
+              Studio
             </span>
           </Link>
           <div className="text-xs text-white/40">
