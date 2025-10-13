@@ -55,6 +55,7 @@ export default function NewProjectPage() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
   const [projectName, setProjectName] = useState('')
   const [customPrompt, setCustomPrompt] = useState('')
+  const [provider, setProvider] = useState<'anthropic' | 'openai'>('anthropic')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -86,7 +87,8 @@ export default function NewProjectPage() {
           template: selectedTemplate || 'custom',
           framework: 'React + TypeScript',
           yaviIntegration: true,
-          prompt: customPrompt || selectedTemplateData?.description
+          prompt: customPrompt || selectedTemplateData?.description,
+          provider: provider // Add provider selection
         })
       })
 
@@ -96,7 +98,7 @@ export default function NewProjectPage() {
         const promptText = customPrompt || selectedTemplateData?.description || ''
 
         // Redirect to generation page with Dyad-like flow
-        router.push(`/dashboard/projects/${projectId}/generate?prompt=${encodeURIComponent(promptText)}`)
+        router.push(`/dashboard/projects/${projectId}/generate?prompt=${encodeURIComponent(promptText)}&provider=${provider}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || 'Failed to create project')
@@ -160,6 +162,78 @@ export default function NewProjectPage() {
               className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="My Awesome Project"
             />
+          </div>
+
+          {/* AI Provider Selection */}
+          <div className="space-y-3">
+            <label className="block text-white text-lg font-semibold">
+              AI Provider
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setProvider('anthropic')}
+                className={`relative p-6 rounded-2xl border-2 transition-all group ${
+                  provider === 'anthropic'
+                    ? 'border-purple-500/60 bg-purple-500/10 shadow-lg shadow-purple-500/20'
+                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl">🤖</div>
+                    {provider === 'anthropic' && (
+                      <div className="h-6 w-6 rounded-full bg-purple-500 flex items-center justify-center">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-white font-semibold text-lg">
+                    Claude (Anthropic)
+                  </h3>
+                  <p className="text-white/60 text-sm">
+                    Best for complex logic and architecture
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setProvider('openai')}
+                className={`relative p-6 rounded-2xl border-2 transition-all group ${
+                  provider === 'openai'
+                    ? 'border-green-500/60 bg-green-500/10 shadow-lg shadow-green-500/20'
+                    : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl">⚡</div>
+                    {provider === 'openai' && (
+                      <div className="h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
+                        <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-white font-semibold text-lg">
+                    GPT-4 (OpenAI)
+                  </h3>
+                  <p className="text-white/60 text-sm">
+                    Fast and creative UI generation
+                  </p>
+                </div>
+              </button>
+            </div>
+            <p className="text-white/40 text-sm">
+              {provider === 'anthropic'
+                ? '💡 Using Claude 3.5 Sonnet - Excels at structured code generation'
+                : '💡 Using GPT-4 Turbo - Great for rapid prototyping and UI design'
+              }
+            </p>
           </div>
 
           {/* Template Selection */}

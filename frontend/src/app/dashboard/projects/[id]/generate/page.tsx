@@ -33,6 +33,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const prompt = searchParams.get('prompt') || ''
+  const provider = (searchParams.get('provider') || 'anthropic') as 'anthropic' | 'openai'
 
   const [showApprovalModal, setShowApprovalModal] = useState(true)
   const [currentStep, setCurrentStep] = useState<GenerationStep>('thinking')
@@ -102,7 +103,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
         body: JSON.stringify({
           prompt,
           settings: {
-            provider: 'anthropic', // Use Claude for faster, better generation
+            provider: provider, // Use selected provider from UI
             selectedIndustry: 'general'
           }
         })
@@ -312,6 +313,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
           prompt={prompt}
           estimatedFiles={10}
           techStack={['React', 'TypeScript', 'Tailwind CSS', 'shadcn/ui']}
+          provider={provider}
           onApprove={handleApprove}
           onReject={handleReject}
         />

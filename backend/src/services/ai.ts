@@ -388,6 +388,30 @@ If the answer is NO, DO NOT GENERATE. Go back and add proper styling.
 9. Make it production-ready and portfolio-worthy with complete, working functionality
 10. 🚨 DO NOT create placeholder components with just text - BUILD THE ACTUAL APPLICATION! 🚨
 
+🚨🚨🚨 CRITICAL EXPORT/IMPORT RULES (PREVENTS REACT ERRORS) 🚨🚨🚨
+MANDATORY PATTERN - USE NAMED EXPORTS FOR ALL COMPONENTS:
+
+✅ CORRECT PATTERN (use this for ALL React components):
+// Component file: src/components/LoginForm.tsx
+export const LoginForm = () => {
+  return <div>...</div>
+}
+
+// Import in App.tsx:
+import { LoginForm } from './components/LoginForm'
+
+❌ FORBIDDEN - DO NOT MIX EXPORT STYLES:
+// ❌ WRONG: export default function LoginForm()  (causes "Element type is invalid")
+// ❌ WRONG: export default LoginForm  (causes import mismatches)
+
+🔒 RULES TO FOLLOW:
+1. ALL React components MUST use: export const ComponentName = () => { ... }
+2. ALL imports MUST use destructuring: import { ComponentName } from './path'
+3. NEVER use "export default" for React components (causes runtime errors)
+4. ONLY App.tsx can use "export default App" if needed
+5. Function components: Use arrow functions with export const
+6. NO mixing of default and named exports in the same file
+
 🚨 DEPENDENCIES ARRAY RULES:
 ❌ NEVER include "@/components/ui" in dependencies - it is NOT an npm package!
 ❌ NEVER include path aliases (@/ or ~/) in dependencies array
@@ -417,6 +441,25 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
 - Types/interfaces file (types.ts) with proper TypeScript definitions
 - Mock data utilities (mockData.ts) with 20+ realistic items
 - Comprehensive README.md with setup instructions
+- 🚨 MANDATORY: tailwind.config.js with darkMode: 'class' for dark mode support
+
+🚨 CRITICAL: DARK MODE REQUIRES tailwind.config.js:
+Generate tailwind.config.js with this EXACT content:
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+Without this file, ALL dark: classes will be ignored and dark mode WON'T WORK!
 
 🚨 REMEMBER: Generic class names = ZERO styling in preview!
 🚨 ONLY Tailwind CSS utility classes will work!
@@ -430,6 +473,13 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
       console.log('🔍 [AI Service] Calling generateObject with provider:', provider);
 
       const startTime = Date.now();
+
+      // 🚨 CRITICAL FIX: Set maxTokens and minFiles based on provider limits
+      // GPT-4 Turbo: 4096 max completion tokens (can generate 2-4 files)
+      // Claude 3.5 Sonnet: 8192 max completion tokens (can generate 6-10 files)
+      const maxTokens = provider === 'openai' ? 4096 : 8000
+      const minFiles = provider === 'openai' ? 2 : 6
+
       const result = await generateObject({
         model,
         system: systemPrompt,
@@ -439,14 +489,14 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
             path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
             content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
             type: z.enum(['create', 'modify', 'delete']),
-          })).min(6).describe('🚨 CRITICAL - REQUIRED FIELD: Generate minimum 6-10 complete files with REAL, EXECUTABLE code. This field is MANDATORY. Use ONLY Tailwind CSS classes for styling.'),
+          })).min(minFiles).describe(`🚨 CRITICAL - REQUIRED FIELD: Generate minimum ${minFiles} complete files with REAL, EXECUTABLE code. This field is MANDATORY. Use ONLY Tailwind CSS classes for styling.`),
           explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
         // 🚨 CRITICAL FIX: Use 'tool' mode for Claude - forces schema adherence via tool calling
         mode: provider === 'anthropic' ? 'tool' : 'auto',
-        maxTokens: 8000, // Increase token limit to allow full response
+        maxTokens: maxTokens,
       })
 
       const elapsed = Date.now() - startTime;
@@ -1271,15 +1321,242 @@ REGENERATE WITH package.json NOW!`
       // Log validation results
       console.log(stylingValidator.formatResults(stylingValidation))
 
-      // If styling quality is too low (wireframe-like), log warnings but don't block
-      if (!stylingValidation.isValid) {
+      // 🚀 AUTO-REGENERATE if styling quality is too low (like v0.dev)
+      if (!stylingValidation.isValid && stylingValidation.score < 50) {
+        console.warn(`⚠️  [Styling Validator] Production quality TOO LOW:`)
+        console.warn(`   Score: ${stylingValidation.score}/100 (need 70+)`)
+        console.warn(`   Wireframe quality: ${stylingValidation.details.wireframeQuality}/100`)
+        console.warn(`🔄 [Styling Validator] AUTO-REGENERATING with v0.dev-quality styling...`)
+
+        const stylingEnforcementPrompt = `${enhancedPrompt}
+
+🚨🚨🚨 CRITICAL STYLING FAILURE - YOUR PREVIOUS ATTEMPT WAS REJECTED! 🚨🚨🚨
+
+Your previous generation scored ${stylingValidation.score}/100 for production quality.
+This is COMPLETELY UNACCEPTABLE and looks like a wireframe, NOT a polished app like v0.dev!
+
+YOU MUST FOLLOW THESE v0.dev-QUALITY STYLING RULES:
+
+1. 🎨 GRADIENT BACKGROUNDS (MANDATORY on main containers):
+   ✅ <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-purple-950 dark:to-gray-900">
+
+2. 💎 DEEP SHADOWS (MANDATORY on all cards):
+   ✅ <Card className="shadow-2xl shadow-purple-500/10 dark:shadow-purple-500/5">
+   ✅ <div className="bg-white dark:bg-gray-900 shadow-xl shadow-gray-200/50 dark:shadow-gray-950/50 rounded-2xl">
+
+3. 📐 GENEROUS SPACING (MANDATORY - p-8 minimum on cards):
+   ✅ <Card className="p-8 space-y-6">
+   ❌ FORBIDDEN: <Card className="p-4">  (too cramped!)
+
+4. 🎭 SMOOTH TRANSITIONS (MANDATORY on ALL interactive elements):
+   ✅ <Button className="transition-all duration-200 hover:scale-[1.02] hover:shadow-xl">
+   ✅ <div className="transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+
+5. 🌓 DARK MODE (MANDATORY dark: variant on EVERY color class):
+   ✅ className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white border-gray-200 dark:border-gray-800"
+   ❌ FORBIDDEN: className="bg-white text-gray-900"  (missing dark mode!)
+
+6. 🎨 MODERN BORDER RADIUS (MANDATORY - rounded-xl minimum):
+   ✅ className="rounded-2xl"  (for cards)
+   ✅ className="rounded-xl"   (for components)
+   ❌ FORBIDDEN: className="rounded" or "rounded-md"
+
+7. ✨ ICONS (MANDATORY from lucide-react):
+   ✅ import { Check, X, Moon, Sun, Plus, Edit, Trash2 } from 'lucide-react'
+   ✅ <Check className="h-5 w-5 text-green-500" />
+
+8. 🎯 EXAMPLE: PERFECT TASK CARD (COPY THIS EXACT STYLING):
+
+<Card className="bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-2xl shadow-purple-500/10 dark:shadow-purple-500/5 border border-gray-100 dark:border-gray-800 transition-all duration-200 hover:shadow-3xl hover:scale-[1.01]">
+  <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center gap-4">
+      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+        <Check className="h-6 w-6 text-white" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Task Title</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Task description here</p>
+      </div>
+    </div>
+    <Button variant="ghost" size="icon" className="transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-110 rounded-xl">
+      <Trash2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+    </Button>
+  </div>
+</Card>
+
+9. 🌓 DARK MODE TOGGLE (MANDATORY - must generate WORKING dark mode):
+
+Step 1: Create a SANDPACK-COMPATIBLE dark mode hook (src/hooks/useDarkMode.tsx):
+
+import { useState, useEffect } from 'react'
+
+export const useDarkMode = () => {
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    // Initialize from localStorage or system preference
+    const stored = localStorage.getItem('darkMode')
+    const initialDark = stored ? stored === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches
+    setIsDark(initialDark)
+  }, [])
+
+  useEffect(() => {
+    // Update body class and localStorage whenever isDark changes
+    if (isDark) {
+      document.body.classList.add('dark')
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('darkMode', 'true')
+    } else {
+      document.body.classList.remove('dark')
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('darkMode', 'false')
+    }
+  }, [isDark])
+
+  const toggleDark = () => setIsDark(!isDark)
+
+  return { isDark, toggleDark }
+}
+
+Step 2: Use the hook in App.tsx (NO context provider needed):
+
+import { useDarkMode } from './hooks/useDarkMode'
+import { DarkModeToggle } from './components/DarkModeToggle'
+
+export default function App() {
+  const { isDark, toggleDark } = useDarkMode()
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-purple-950 dark:to-gray-900 transition-colors duration-300">
+      <header className="p-6 flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Your App</h1>
+        <DarkModeToggle isDark={isDark} toggleDark={toggleDark} />
+      </header>
+      {/* Rest of your app */}
+    </div>
+  )
+}
+
+Step 3: Create DarkModeToggle component (src/components/DarkModeToggle.tsx):
+
+import { Moon, Sun } from 'lucide-react'
+import { Button } from './ui/button'
+
+interface DarkModeToggleProps {
+  isDark: boolean
+  toggleDark: () => void
+}
+
+export const DarkModeToggle = ({ isDark, toggleDark }: DarkModeToggleProps) => {
+  return (
+    <Button
+      onClick={toggleDark}
+      variant="ghost"
+      size="icon"
+      className="rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-110"
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+    >
+      {isDark ? (
+        <Sun className="h-5 w-5 text-yellow-500" />
+      ) : (
+        <Moon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+      )}
+    </Button>
+  )
+}
+
+🚨 CRITICAL: SANDPACK-COMPATIBLE Dark Mode Pattern:
+1. Create useDarkMode hook that toggles dark class on body AND documentElement
+2. Use the hook directly in App.tsx (no context provider needed - simpler!)
+3. Pass isDark and toggleDark as props to DarkModeToggle
+4. Hook updates both document.body.classList and document.documentElement.classList
+5. Generate tailwind.config.js with darkMode: 'class'
+
+Step 4: MANDATORY - Generate tailwind.config.js:
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  darkMode: 'class',
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+
+🚨 WITHOUT tailwind.config.js with darkMode: 'class', dark mode WILL NOT WORK!
+🚨 You MUST generate this file or dark: variants will be ignored!
+
+🚨 REGENERATE WITH THESE EXACT STYLING PATTERNS NOW!
+Every element must look like v0.dev quality - gradients, shadows, icons, WORKING dark mode!`
+
+        const stylingRetry = await generateObject({
+          model,
+          system: await this.buildSystemPrompt(request.prompt, request.context),
+          prompt: stylingEnforcementPrompt,
+          schema: z.object({
+            files: z.array(z.object({
+              path: z.string(),
+              content: z.string(),
+              type: z.enum(['create', 'modify', 'delete']),
+            })).min(minFiles),
+            explanation: z.string(),
+            dependencies: z.array(z.string()).optional(),
+            instructions: z.string().optional(),
+          }),
+          mode: provider === 'anthropic' ? 'tool' : 'auto',
+          maxTokens: maxTokens,
+        })
+
+        console.log(`✨ [Styling Validator] Regenerated with v0.dev-quality styling: ${stylingRetry.object.files.length} files`)
+
+        // Replace result with styling retry
+        result.object = stylingRetry.object
+
+        // Re-run scaffold bundling for styling retry
+        const stylingRetryFilesForDetection = result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' : 'plaintext'
+        }))
+        const stylingRetryUsedComponents = detectUsedComponents(stylingRetryFilesForDetection)
+        if (stylingRetryUsedComponents.length > 0) {
+          const stylingRetryScaffoldFiles = bundleScaffoldComponents(stylingRetryUsedComponents)
+          for (const scaffoldFile of stylingRetryScaffoldFiles) {
+            result.object.files.push({
+              path: scaffoldFile.path,
+              content: scaffoldFile.content,
+              type: 'create'
+            })
+          }
+        }
+        this.convertPathAliases(result.object.files)
+
+        // Re-validate styling
+        const stylingRevalidation = stylingValidator.validate(
+          result.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+          }))
+        )
+
+        console.log(stylingValidator.formatResults(stylingRevalidation))
+
+        if (stylingRevalidation.isValid) {
+          console.log(`✨ [Styling Validator] Styling retry SUCCESS! Score: ${stylingRevalidation.score}/100`)
+        } else {
+          console.warn(`⚠️  [Styling Validator] Styling retry still below threshold: ${stylingRevalidation.score}/100`)
+          console.warn(`   Proceeding anyway (one retry attempt made)`)
+        }
+      } else if (!stylingValidation.isValid) {
         console.warn(`⚠️  [Styling Validator] Production quality below threshold:`)
         console.warn(`   Score: ${stylingValidation.score}/100 (need 70+)`)
-        console.warn(`   Wireframe quality: ${stylingValidation.details.wireframeQuality}/100 (lower is better)`)
-        console.warn(`   Consider regenerating with enhanced styling prompts`)
-        stylingValidation.errors.forEach(e => console.warn(`  - [${e.severity}] ${e.message}`))
-        // Don't throw error - log for monitoring, but allow generation to proceed
-        // Future: Could trigger automatic regeneration with styling-focused prompts
+        console.warn(`   Skipping auto-regeneration (score >= 50)`)
       } else {
         console.log(`✨ [Styling Validator] Production-ready! Score: ${stylingValidation.score}/100`)
       }
