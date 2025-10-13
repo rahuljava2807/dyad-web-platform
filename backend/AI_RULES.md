@@ -329,6 +329,339 @@ function App() {
 export default App
 ```
 
+## 1.6 🤖 YAVI ASSISTANT WIDGET - MANDATORY INTEGRATION
+
+**CRITICAL: Every generated application MUST include the Yavi Assistant Widget.**
+
+### Why Include the Widget?
+
+The Yavi Assistant Widget provides users with:
+- **Real-time, domain-specific AI assistance** based on their work context
+- **Access to namespace knowledge** (compliance rules, best practices, documentation)
+- **Intelligent suggestions** that improve code quality and compliance
+- **Interactive chat** for asking questions about domain-specific topics
+- **Compliance checking** for regulated industries (HIPAA, GDPR, etc.)
+
+This transforms your generated apps from "static code" to "intelligent applications" that continue providing value.
+
+---
+
+### MANDATORY: Widget Integration Checklist
+
+Every generated application MUST include:
+
+- [ ] `src/contexts/AssistantContext.tsx` - State management
+- [ ] `src/components/assistant/YaviAssistant.tsx` - Main widget component
+- [ ] `src/components/assistant/AssistantHeader.tsx` - Header with controls
+- [ ] `src/components/assistant/ContextDisplay.tsx` - Context panel
+- [ ] `src/components/assistant/SuggestionList.tsx` - Suggestions UI
+- [ ] `src/components/assistant/InsightPanel.tsx` - Insights display
+- [ ] `src/components/assistant/ConversationInterface.tsx` - Chat UI
+- [ ] `src/components/assistant/AssistantFooter.tsx` - Footer with analytics
+- [ ] `src/components/assistant/index.ts` - Export barrel
+- [ ] `src/types/assistant.ts` - TypeScript type definitions
+- [ ] Widget wrapped around App.tsx with AssistantProvider
+- [ ] YaviAssistant component rendered in App.tsx
+
+---
+
+### Step 1: Wrap App with AssistantProvider
+
+**MANDATORY: Update `src/main.tsx` to include the provider:**
+
+```typescript
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
+import { AssistantProvider } from './contexts/AssistantContext'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <AssistantProvider projectId="generated-app">
+      <App />
+    </AssistantProvider>
+  </React.StrictMode>,
+)
+```
+
+---
+
+### Step 2: Add Widget to App Component
+
+**MANDATORY: Update `src/App.tsx` to render the widget:**
+
+```typescript
+import React from 'react'
+import { YaviAssistant } from './components/assistant'
+
+function App() {
+  return (
+    <>
+      <div className="min-h-screen bg-background text-foreground">
+        {/* Your application code */}
+      </div>
+
+      {/* Yavi Assistant Widget - MANDATORY */}
+      <YaviAssistant />
+    </>
+  )
+}
+
+export default App
+```
+
+---
+
+### Step 3: Domain-Specific Configuration
+
+**Configure the widget based on the application domain:**
+
+#### Legal Domain
+```typescript
+// For contract management, legal compliance, etc.
+const LEGAL_CONFIG = {
+  domain: 'legal',
+  features: ['compliance-check', 'citation-helper', 'precedent-search'],
+  icons: { primary: 'Scale', accent: 'Gavel' },
+  complianceFrameworks: ['Indian Contract Act 1872', 'Constitution of India', 'IT Act 2000']
+}
+```
+
+#### Medical/Healthcare Domain
+```typescript
+// For patient management, medical records, etc.
+const MEDICAL_CONFIG = {
+  domain: 'medical',
+  features: ['hipaa-check', 'clinical-guidance', 'drug-interaction'],
+  icons: { primary: 'Heart', accent: 'Shield' },
+  complianceFrameworks: ['HIPAA', 'HITECH', 'Clinical Guidelines']
+}
+```
+
+#### Finance Domain
+```typescript
+// For financial applications, banking, etc.
+const FINANCE_CONFIG = {
+  domain: 'finance',
+  features: ['sox-compliance', 'fraud-detection', 'regulatory-check'],
+  icons: { primary: 'DollarSign', accent: 'Shield' },
+  complianceFrameworks: ['SOX', 'PCI-DSS', 'GDPR']
+}
+```
+
+#### General/Default Domain
+```typescript
+// For general applications
+const GENERAL_CONFIG = {
+  domain: 'general',
+  features: ['suggestions', 'chat', 'insights'],
+  icons: { primary: 'Lightbulb', accent: 'Sparkles' },
+  complianceFrameworks: []
+}
+```
+
+---
+
+### Required Files to Generate
+
+**1. `src/types/assistant.ts`** - Type definitions (400+ lines)
+
+Generate complete TypeScript types including:
+- `AssistantState` - Complete state shape
+- `Suggestion` - Suggestion structure
+- `Insight` - Insight structure
+- `Message` - Chat message structure
+- `Pattern` - Detected code pattern
+- `Connection` - WebSocket connection status
+- `UIState` - Widget UI state
+- All action types for the reducer
+
+**2. `src/contexts/AssistantContext.tsx`** - State management (450+ lines)
+
+Must include:
+- `AssistantProvider` component
+- `useAssistant` hook
+- `useReducer` for state management
+- Initial state with SSR safety: `typeof window !== 'undefined'`
+- All reducer actions (TOGGLE_MINIMIZED, SUGGESTION_RECEIVED, etc.)
+- Convenience hooks (useAssistantUI, useAssistantSuggestions, etc.)
+- localStorage persistence for UI state
+
+**3. `src/components/assistant/YaviAssistant.tsx`** - Main widget (240+ lines)
+
+Features:
+- Draggable widget (drag from header)
+- Resizable (from bottom-right corner)
+- Minimized state (floating button with notification badge)
+- Expanded state (full interface)
+- Tab navigation (Suggestions, Insights, Chat)
+- Responsive positioning (stays within viewport)
+
+**4. `src/components/assistant/AssistantHeader.tsx`** - Header component
+
+Must include:
+- Connection status indicator
+- Namespace/domain display
+- Minimize button
+- Close button
+- Status badge (live/offline)
+
+**5. `src/components/assistant/ContextDisplay.tsx`** - Context panel
+
+Shows:
+- Current file being worked on
+- Domain/namespace information
+- Code statistics
+- Analysis status
+
+**6. `src/components/assistant/SuggestionList.tsx`** - Suggestions UI
+
+Features:
+- Priority-based suggestion cards
+- Apply/Dismiss actions
+- Category badges (compliance, best-practice, etc.)
+- Priority indicators (critical, high, medium, low)
+- Empty state when no suggestions
+
+**7. `src/components/assistant/InsightPanel.tsx`** - Insights display
+
+Shows:
+- Namespace statistics
+- Related documents
+- Recent queries
+- Pro tips
+
+**8. `src/components/assistant/ConversationInterface.tsx`** - Chat UI
+
+Features:
+- Message history
+- User/assistant message differentiation
+- Input field with send button
+- Typing indicator
+- Auto-scroll to latest message
+
+**9. `src/components/assistant/AssistantFooter.tsx`** - Footer
+
+Shows:
+- "Powered by Yavi.ai" branding
+- Analytics summary
+- Settings button
+
+**10. `src/components/assistant/index.ts`** - Export barrel
+
+```typescript
+export { YaviAssistant } from './YaviAssistant'
+export { AssistantHeader } from './AssistantHeader'
+export { ContextDisplay } from './ContextDisplay'
+export { SuggestionList } from './SuggestionList'
+export { InsightPanel } from './InsightPanel'
+export { ConversationInterface } from './ConversationInterface'
+export { AssistantFooter } from './AssistantFooter'
+```
+
+---
+
+### Styling Requirements for Widget
+
+**The widget MUST use these exact styles for consistency:**
+
+```tsx
+// Minimized button (floating)
+className="fixed bottom-6 right-6 w-14 h-14 rounded-full
+           bg-gradient-to-br from-blue-600 to-purple-600
+           shadow-xl hover:shadow-2xl hover:scale-110
+           transition-all duration-200 flex items-center justify-center
+           group z-50"
+
+// Full widget container
+className="fixed z-50 flex flex-col bg-slate-900 rounded-xl
+           shadow-2xl overflow-hidden border border-slate-700"
+style={{ left: position.x, top: position.y, width: size.width, height: size.height }}
+
+// Widget header (draggable area)
+className="cursor-move bg-slate-800 border-b border-slate-700 p-3"
+
+// Tab buttons
+className="flex-1 px-4 py-2.5 text-sm font-medium transition-colors
+           ${active ? 'text-white bg-slate-800 border-b-2 border-blue-500'
+                   : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}"
+
+// Suggestion cards
+className="border rounded-lg p-3 bg-slate-800/50 border-slate-700
+           hover:border-slate-600 transition-colors"
+
+// Buttons
+className="bg-purple-600 hover:bg-purple-700 text-white text-xs
+           font-medium py-2 px-3 rounded transition-colors"
+```
+
+---
+
+### Widget Behavior
+
+**Drag Functionality:**
+- User can drag widget by clicking and holding the header
+- Widget stays within viewport bounds (constrained positioning)
+- Smooth drag with mouse events
+
+**Resize Functionality:**
+- User can resize from bottom-right corner
+- Min size: 320×400px
+- Max size: 600×800px
+
+**Minimize/Maximize:**
+- Click minimize button → widget collapses to floating button
+- Click floating button → widget expands to full interface
+- Notification badge shows count of new suggestions
+
+**Tab Navigation:**
+- Three tabs: Suggestions, Insights, Chat
+- Active tab highlighted with blue border
+- Tab content switches instantly
+
+**State Persistence:**
+- Widget position saved to localStorage
+- Widget size saved to localStorage
+- Active tab saved to localStorage
+- State restored on page reload
+
+---
+
+### Integration Testing Checklist
+
+After generating the application, verify:
+
+- [ ] Widget renders in bottom-right corner as minimized button
+- [ ] Clicking button expands widget to full interface
+- [ ] Widget can be dragged to different positions
+- [ ] Widget can be resized from bottom-right corner
+- [ ] All three tabs (Suggestions, Insights, Chat) are functional
+- [ ] Minimize button collapses widget back to button
+- [ ] Widget has proper z-index (z-50) and appears above all content
+- [ ] Dark mode styling is consistent
+- [ ] No TypeScript errors in widget files
+- [ ] No console errors when widget renders
+- [ ] Widget is responsive and works on different screen sizes
+
+---
+
+### IMPORTANT: Widget is NOT Optional
+
+**The Yavi Assistant Widget is a core feature of all generated applications.**
+
+- ❌ DO NOT skip widget generation
+- ❌ DO NOT mark widget files as "optional"
+- ❌ DO NOT add TODO comments about widget
+- ✅ ALWAYS generate all 10 required widget files
+- ✅ ALWAYS integrate widget into App.tsx
+- ✅ ALWAYS wrap with AssistantProvider
+- ✅ ALWAYS configure for the appropriate domain
+
+**If the widget is not included, the generated application is INCOMPLETE.**
+
+---
+
 ## 2. CODE QUALITY STANDARDS
 
 ### NO PLACEHOLDERS OR INCOMPLETE CODE
