@@ -476,7 +476,7 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
           files: z.array(z.object({
             path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
             content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
-            type: z.enum(['create', 'modify', 'delete']).default('create'),
+            type: z.enum(['create', 'modify', 'delete']).optional(),
           })).min(minFiles).describe(`🚨 CRITICAL - REQUIRED FIELD: Generate minimum ${minFiles} complete files with REAL, EXECUTABLE code. This field is MANDATORY. Use ONLY Tailwind CSS classes for styling.`),
           explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
@@ -1879,7 +1879,7 @@ Generate 8-12 complete, production-ready files NOW!`
               files: z.array(z.object({
                 path: z.string(),
                 content: z.string(),
-                type: z.enum(['create', 'modify', 'delete']).default('create'),
+                type: z.enum(['create', 'modify', 'delete']).optional(),
               })).min(minFiles, `🚨 CRITICAL - REQUIRED FIELD: MUST generate at least ${minFiles} complete, substantial files. This field is MANDATORY and must come first.`),
               explanation: z.string(),
               code: z.string().optional(),
