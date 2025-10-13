@@ -361,10 +361,24 @@ export default function NewProjectPage() {
           </div>
 
           {/* Info Footer */}
-          <div className="text-center space-y-2 pt-8">
-            <p className="text-white/40 text-sm">
-              Powered by Claude & GPT-4
-            </p>
+          <div className="text-center space-y-4 pt-8">
+            <div className="flex items-center justify-center gap-3">
+              <p className="text-white/40 text-sm">
+                Powered by Claude & GPT-4
+              </p>
+              <span className="text-white/20">•</span>
+              <div className="flex items-center gap-2">
+                <span className="text-white/40 text-sm">Built with</span>
+                <div className="relative w-20 h-6">
+                  <Image
+                    src="/images/logos/yavi-logo.svg"
+                    alt="Yavi Studio"
+                    fill
+                    className="object-contain brightness-0 invert opacity-60"
+                  />
+                </div>
+              </div>
+            </div>
             <p className="text-white/30 text-xs">
               Production-ready code with TypeScript, Tailwind CSS, and best practices
             </p>

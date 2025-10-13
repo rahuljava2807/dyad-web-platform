@@ -517,6 +517,43 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Partner Logos */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-8">
+              Trusted by Enterprise Teams Using
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-12 md:gap-16 opacity-60 hover:opacity-100 transition-opacity">
+              <div className="relative w-32 h-12 grayscale hover:grayscale-0 transition-all">
+                <Image
+                  src="/images/partners/microsoft-logo.png"
+                  alt="Microsoft"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="relative w-32 h-12 grayscale hover:grayscale-0 transition-all">
+                <Image
+                  src="/images/partners/Front.png"
+                  alt="Front"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <div className="relative w-32 h-12 grayscale hover:grayscale-0 transition-all">
+                <Image
+                  src="/images/partners/Intercom.png"
+                  alt="Intercom"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Call to Action */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -583,8 +620,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-400">
-            <p>&copy; 2024 Yavi Studio. Built for Yavi.ai integration and intelligent application development.</p>
+          <div className="border-t border-gray-800 pt-8 mt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <p className="text-gray-400 text-center md:text-left">
+                &copy; 2024 Yavi Studio. Built for Yavi.ai integration and intelligent application development.
+              </p>
+              <div className="flex items-center gap-4">
+                <span className="text-gray-500 text-sm">Powered by</span>
+                <div className="relative w-24 h-8">
+                  <Image
+                    src="/images/logos/poweredbtcky.svg"
+                    alt="Powered by Nimbusnext"
+                    fill
+                    className="object-contain brightness-0 invert opacity-50 hover:opacity-100 transition-opacity"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
