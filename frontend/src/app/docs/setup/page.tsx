@@ -63,7 +63,7 @@ export default function SetupGuidePage() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Complete Setup Guide</h1>
-                <p className="text-gray-600">Get Dyad Web Platform running locally in 10 minutes</p>
+                <p className="text-gray-600">Get Yavi Studio running locally in 10 minutes</p>
               </div>
             </div>
             <Button asChild className="bg-blue-600 hover:bg-blue-700">

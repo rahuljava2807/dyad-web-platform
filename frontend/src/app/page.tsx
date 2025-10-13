@@ -35,7 +35,7 @@ export default function HomePage() {
               <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                 <Code2 className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-gray-900">Dyad Web Platform</span>
+              <span className="text-xl font-bold text-gray-900">Yavi Studio</span>
             </div>
             <div className="flex items-center gap-4">
               <Button variant="outline" asChild>
@@ -380,7 +380,7 @@ export default function HomePage() {
                 <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                   <Code2 className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold">Dyad Web Platform</span>
+                <span className="text-xl font-bold">Yavi Studio</span>
               </div>
               <p className="text-gray-400">
                 Empowering developers to create intelligent applications with Yavi.ai integration.
@@ -409,7 +409,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-400">
-            <p>&copy; 2024 Dyad Web Platform. Built for Yavi.ai integration and intelligent application development.</p>
+            <p>&copy; 2024 Yavi Studio. Built for Yavi.ai integration and intelligent application development.</p>
           </div>
         </div>
       </footer>

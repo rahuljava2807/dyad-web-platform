@@ -58,7 +58,7 @@ import {
  * ShadcnExample Component
  * 
  * This component demonstrates the integration of shadcn/ui components
- * with the DYAD platform's design system and animation patterns.
+ * with the Yavi Studio platform's design system and animation patterns.
  * 
  * Features demonstrated:
  * - All major shadcn/ui components
@@ -88,7 +88,7 @@ export function ShadcnExample() {
             Shadcn/UI Components Demo
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Comprehensive showcase of shadcn/ui components integrated with DYAD platform
+            Comprehensive showcase of shadcn/ui components integrated with Yavi Studio platform
           </p>
         </motion.div>
 

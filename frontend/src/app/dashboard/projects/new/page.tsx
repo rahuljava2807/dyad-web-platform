@@ -97,7 +97,7 @@ export default function NewProjectPage() {
         const projectId = data.data.project.id
         const promptText = customPrompt || selectedTemplateData?.description || ''
 
-        // Redirect to generation page with Dyad-like flow
+        // Redirect to generation page with Yavi Studio flow
         router.push(`/dashboard/projects/${projectId}/generate?prompt=${encodeURIComponent(promptText)}&provider=${provider}`)
       } else {
         const errorData = await response.json()

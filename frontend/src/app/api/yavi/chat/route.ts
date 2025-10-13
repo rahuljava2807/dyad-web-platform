@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Build system prompt based on mode
     const systemPrompts = {
-      help: `You are Yavi, an intelligent AI assistant for the Dyad platform. You help developers build enterprise applications with:
+      help: `You are Yavi, an intelligent AI assistant for the Yavi Studio platform. You help developers build enterprise applications with:
 - Industry-specific templates (healthcare, fintech, legal, e-commerce, SaaS)
 - Form validation and business logic
 - Compliance requirements (HIPAA, PCI-DSS, GDPR, SOC2)

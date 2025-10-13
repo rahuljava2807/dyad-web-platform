@@ -19,8 +19,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Dyad - AI App Builder Platform',
-    template: '%s | Dyad',
+    default: 'Yavi Studio - AI App Builder',
+    template: '%s | Yavi Studio',
   },
   description: 'Build AI-powered applications with ease. The cloud-native platform for modern AI development.',
   keywords: [
@@ -42,22 +42,22 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://dyad.ai',
-    title: 'Dyad - AI App Builder Platform',
+    url: 'https://yavi.ai',
+    title: 'Yavi Studio - AI App Builder',
     description: 'Build AI-powered applications with ease. The cloud-native platform for modern AI development.',
-    siteName: 'Dyad',
+    siteName: 'Yavi Studio',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Dyad - AI App Builder Platform',
+        alt: 'Yavi Studio - AI App Builder',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Dyad - AI App Builder Platform',
+    title: 'Yavi Studio - AI App Builder',
     description: 'Build AI-powered applications with ease. The cloud-native platform for modern AI development.',
     images: ['/og-image.png'],
     creator: '@nimbusnext',
