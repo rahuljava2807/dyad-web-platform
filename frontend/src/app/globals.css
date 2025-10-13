@@ -201,6 +201,54 @@
   .animate-slide-down {
     animation: slide-down 0.3s ease-out forwards;
   }
+
+  /* Grid flow animation for background */
+  @keyframes grid-flow {
+    0% {
+      transform: translateY(0) translateX(0);
+    }
+    100% {
+      transform: translateY(50px) translateX(50px);
+    }
+  }
+
+  /* Code rain effect animation */
+  @keyframes code-fall {
+    0% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    10% {
+      opacity: 0.3;
+    }
+    90% {
+      opacity: 0.3;
+    }
+    100% {
+      transform: translateY(100vh);
+      opacity: 0;
+    }
+  }
+
+  .animate-code-fall {
+    animation: code-fall 10s linear infinite;
+  }
+
+  /* Scale-in animation for central elements */
+  @keyframes scale-in {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
 }
 
 /* UNIVERSAL TEXT VISIBILITY FIX - PRODUCTION GRADE */

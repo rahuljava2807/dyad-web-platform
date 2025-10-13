@@ -344,56 +344,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Compact Status Banner - Only show during generation */}
-      {currentStep !== 'complete' && currentStep !== 'preview' && (
-        <div className="border-b border-white/10 bg-black/20 backdrop-blur-xl flex-shrink-0">
-          <div className="px-6 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {steps.map((step, index) => {
-                  const StepIcon = step.icon
-                  const isActive = index === getCurrentStepIndex()
-                  const isComplete = index < getCurrentStepIndex()
-                  if (!isActive && !isComplete) return null
-
-                  return (
-                    <div key={step.key} className="flex items-center gap-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all ${
-                        isActive ? `${step.color} border-current bg-current/10` :
-                        'border-green-500 bg-green-500/10 text-green-500'
-                      }`}>
-                        {isComplete ? (
-                          <CheckCircle className="h-4 w-4" />
-                        ) : (
-                          <StepIcon className="h-4 w-4 animate-pulse" />
-                        )}
-                      </div>
-                      {isActive && <span className="text-sm font-medium text-white">{thinking}</span>}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/60 font-mono">{progress}%</span>
-                  {estimatedTimeRemaining > 0 && (
-                    <span className="text-xs text-white/40 font-mono">
-                      • ~{estimatedTimeRemaining}s remaining
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Main Content - Split Screen Layout */}
       <main className="flex-1 w-full overflow-hidden">
         {error ? (
           <div className="flex items-center justify-center h-full p-8">
@@ -408,108 +359,295 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
             </div>
           </div>
         ) : (
-          <>
-            {/* Live Preview - Full Screen */}
-            {currentStep === 'preview' || currentStep === 'complete' ? (
-              <div className="w-full h-full">
-                <ImprovedSandpackPreview files={files} />
-              </div>
-            ) : (
-              /* Loading State - Centered with animations */
-              <div className="flex items-center justify-center h-full">
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center max-w-2xl backdrop-blur-sm animate-slide-up">
-                  <div className="mb-6">
+          <div className="flex h-full">
+            {/* LEFT PANEL - Progress & Information (40%) */}
+            <div className="w-[40%] border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden">
+              {/* Progress Ring & Current Step */}
+              <div className="flex-shrink-0 p-8 border-b border-white/10">
+                <div className="flex items-center gap-6">
+                  {/* Circular Progress Ring */}
+                  <div className="relative">
+                    <svg className="w-24 h-24 transform -rotate-90">
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="40"
+                        stroke="url(#gradient)"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 40}`}
+                        strokeDashoffset={`${2 * Math.PI * 40 * (1 - progress / 100)}`}
+                        className="transition-all duration-500"
+                      />
+                      <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="50%" stopColor="#a855f7" />
+                          <stop offset="100%" stopColor="#22c55e" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-2xl font-bold text-white">{progress}%</span>
+                    </div>
+                  </div>
+
+                  {/* Current Step Info */}
+                  <div className="flex-1">
                     {steps.map((step, index) => {
                       const StepIcon = step.icon
                       const isActive = index === getCurrentStepIndex()
                       if (!isActive) return null
 
                       return (
-                        <div key={step.key} className="flex flex-col items-center gap-4">
-                          <div className={`relative w-20 h-20 rounded-full flex items-center justify-center border-2 ${step.color} border-current bg-current/10 shadow-lg`}>
-                            <StepIcon className="h-10 w-10 animate-pulse-slow" />
-                            <div className={`absolute inset-0 rounded-full ${step.color.replace('text', 'bg')}/20 animate-ping`} />
+                        <div key={step.key} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${step.color} bg-current/20 border-2 border-current`}>
+                              <StepIcon className="h-5 w-5 animate-pulse" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-white">{step.label}</h3>
+                              {estimatedTimeRemaining > 0 && (
+                                <p className="text-xs text-white/50">~{estimatedTimeRemaining}s remaining</p>
+                              )}
+                            </div>
                           </div>
-                          <h2 className="text-2xl font-bold text-white animate-pulse-slow">{step.label}</h2>
+                          <p className="text-sm text-white/70 mt-2">{thinking}</p>
                         </div>
                       )
                     })}
                   </div>
+                </div>
 
-                  {capabilities.length > 0 && (
-                    <div className="mt-8 space-y-2 text-left">
-                      {[...new Set(capabilities)].slice(-3).map((capability, index) => (
+                {/* Step Progress Indicators */}
+                <div className="flex items-center gap-2 mt-6">
+                  {steps.map((step, index) => {
+                    const isComplete = index < getCurrentStepIndex()
+                    const isActive = index === getCurrentStepIndex()
+                    return (
+                      <div key={step.key} className="flex-1">
+                        <div className={`h-1.5 rounded-full transition-all duration-500 ${
+                          isComplete ? 'bg-green-500' :
+                          isActive ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-green-500' :
+                          'bg-white/10'
+                        }`} />
+                        <p className={`text-xs mt-1 text-center transition-colors ${
+                          isActive ? 'text-white font-medium' : 'text-white/40'
+                        }`}>
+                          {step.key}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Scrollable Content Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* AI Reasoning Steps */}
+                {thinkingSteps.length > 0 && (
+                  <div className="animate-slide-up">
+                    <h4 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-blue-400" />
+                      AI Reasoning
+                    </h4>
+                    <ThinkingPanel
+                      steps={thinkingSteps}
+                      currentStep={thinkingSteps[thinkingSteps.length - 1]?.step}
+                    />
+                  </div>
+                )}
+
+                {/* Capabilities List */}
+                {capabilities.length > 0 && (
+                  <div className="space-y-2 animate-slide-up">
+                    <h4 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-400" />
+                      Features Added
+                    </h4>
+                    <div className="space-y-2">
+                      {[...new Set(capabilities)].map((capability, index) => (
                         <div
                           key={`${capability}-${index}`}
-                          className="text-white/80 text-sm flex items-center gap-2 animate-slide-up"
-                          style={{ animationDelay: `${index * 100}ms` }}
+                          className="text-white/70 text-sm flex items-start gap-2 p-2 rounded-lg bg-white/5 backdrop-blur-sm animate-slide-up"
+                          style={{ animationDelay: `${index * 50}ms` }}
                         >
-                          <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0" />
+                          <CheckCircle className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
                           <span>{capability}</span>
                         </div>
                       ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* AI Reasoning Panel */}
-                  {thinkingSteps.length > 0 && (
-                    <div className="mt-8">
-                      <ThinkingPanel
-                        steps={thinkingSteps}
-                        currentStep={thinkingSteps[thinkingSteps.length - 1]?.step}
-                      />
-                    </div>
-                  )}
+                {/* File Tree */}
+                {files.length > 0 && (
+                  <div className="animate-slide-up">
+                    <h4 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-purple-400" />
+                      Generated Files ({files.length}/{totalExpectedFiles || files.length})
+                    </h4>
+                    <FileTreePanel
+                      files={files}
+                      totalExpected={totalExpectedFiles}
+                    />
+                  </div>
+                )}
 
-                  {/* File Tree Panel */}
-                  {files.length > 0 && (
-                    <div className="mt-8">
-                      <FileTreePanel
-                        files={files}
-                        totalExpected={totalExpectedFiles}
-                      />
-                    </div>
-                  )}
-
-                  {/* Version History Panel */}
-                  {generations.length > 0 && currentStep === 'complete' && (
-                    <div className="mt-8">
-                      <VersionHistoryPanel
-                        generations={generations}
-                        currentGenerationId={currentGenerationId}
-                        onSelectVersion={handleSelectVersion}
-                        onRetry={handleRetry}
-                      />
-                    </div>
-                  )}
-                </div>
+                {/* Version History */}
+                {generations.length > 0 && (
+                  <div className="animate-slide-up">
+                    <h4 className="text-sm font-semibold text-white/80 mb-3 flex items-center gap-2">
+                      <Code className="h-4 w-4 text-orange-400" />
+                      Version History
+                    </h4>
+                    <VersionHistoryPanel
+                      generations={generations}
+                      currentGenerationId={currentGenerationId}
+                      onSelectVersion={handleSelectVersion}
+                      onRetry={handleRetry}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Floating Success Badge - Only when complete */}
-            {currentStep === 'complete' && (
-              <div className="fixed top-20 right-6 z-50 animate-success-pop">
-                <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <CheckCircle className="h-6 w-6 text-blue-400" />
-                      <div className="absolute inset-0 bg-blue-400/30 rounded-full animate-ping" />
-                    </div>
-                    <div>
-                      <p className="text-base font-bold text-blue-300">✨ Generated!</p>
-                      <p className="text-xs text-blue-200/80">{files.length} production files</p>
-                    </div>
-                    <button
-                      onClick={() => router.push('/dashboard')}
-                      className="ml-2 px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-                    >
-                      Back to Dashboard
-                    </button>
+            {/* RIGHT PANEL - Live Preview & Simulation (60%) */}
+            <div className="w-[60%] flex flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+              {currentStep === 'preview' || currentStep === 'complete' ? (
+                /* Full Preview Mode */
+                <div className="w-full h-full animate-fade-in">
+                  <ImprovedSandpackPreview files={files} />
+                </div>
+              ) : (
+                /* Simulation & Real-time Updates During Generation */
+                <div className="flex-1 flex flex-col items-center justify-center p-12 relative overflow-hidden">
+                  {/* Animated Background Grid */}
+                  <div className="absolute inset-0 opacity-20">
+                    <div className="absolute inset-0" style={{
+                      backgroundImage: 'linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)',
+                      backgroundSize: '50px 50px',
+                      animation: 'grid-flow 20s linear infinite'
+                    }} />
+                  </div>
+
+                  {/* Code Rain Effect */}
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    {[...Array(20)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute text-blue-500/30 font-mono text-xs animate-code-fall"
+                        style={{
+                          left: `${Math.random() * 100}%`,
+                          animationDelay: `${Math.random() * 5}s`,
+                          animationDuration: `${5 + Math.random() * 10}s`
+                        }}
+                      >
+                        {['<div>', 'const', 'function', 'import', 'export', 'return', '{}', '[]', '=>'][Math.floor(Math.random() * 9)]}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Central Animation */}
+                  <div className="relative z-10 text-center space-y-8">
+                    {/* Large Icon Animation */}
+                    {steps.map((step, index) => {
+                      const StepIcon = step.icon
+                      const isActive = index === getCurrentStepIndex()
+                      if (!isActive) return null
+
+                      return (
+                        <div key={step.key} className="animate-scale-in">
+                          <div className="relative inline-flex">
+                            <div className={`w-32 h-32 rounded-full flex items-center justify-center ${step.color} border-4 border-current bg-current/10 shadow-2xl backdrop-blur-xl`}>
+                              <StepIcon className="h-16 w-16 animate-pulse-slow" />
+                            </div>
+                            {/* Pulse Rings */}
+                            <div className={`absolute inset-0 rounded-full ${step.color.replace('text', 'bg')}/20 animate-ping`} />
+                            <div className={`absolute -inset-4 rounded-full ${step.color.replace('text', 'bg')}/10 animate-pulse`} />
+                          </div>
+                          <h2 className="text-3xl font-bold text-white mt-6 animate-pulse-slow">
+                            {step.label}
+                          </h2>
+                        </div>
+                      )
+                    })}
+
+                    {/* Live Code Snippet Preview */}
+                    {files.length > 0 && (
+                      <div className="mt-12 animate-slide-up">
+                        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl p-6 max-w-2xl">
+                          <div className="flex items-center gap-2 mb-4">
+                            <FileText className="h-5 w-5 text-blue-400" />
+                            <span className="text-white font-mono text-sm">{files[files.length - 1]?.path}</span>
+                          </div>
+                          <div className="text-left">
+                            <pre className="text-xs text-white/70 font-mono overflow-x-auto max-h-48">
+                              {files[files.length - 1]?.content.split('\n').slice(0, 10).join('\n')}
+                              {files[files.length - 1]?.content.split('\n').length > 10 && '\n...'}
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stats Cards */}
+                    {files.length > 0 && (
+                      <div className="grid grid-cols-3 gap-4 mt-8">
+                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 animate-slide-up">
+                          <p className="text-white/60 text-xs mb-1">Files Generated</p>
+                          <p className="text-2xl font-bold text-white">{files.length}</p>
+                        </div>
+                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 animate-slide-up" style={{animationDelay: '100ms'}}>
+                          <p className="text-white/60 text-xs mb-1">Lines of Code</p>
+                          <p className="text-2xl font-bold text-white">
+                            {files.reduce((sum, f) => sum + f.content.split('\n').length, 0)}
+                          </p>
+                        </div>
+                        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 animate-slide-up" style={{animationDelay: '200ms'}}>
+                          <p className="text-white/60 text-xs mb-1">Progress</p>
+                          <p className="text-2xl font-bold text-white">{progress}%</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
-          </>
+              )}
+
+              {/* Floating Success Badge - Only when complete */}
+              {currentStep === 'complete' && (
+                <div className="absolute top-6 right-6 z-50 animate-success-pop">
+                  <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <CheckCircle className="h-6 w-6 text-blue-400" />
+                        <div className="absolute inset-0 bg-blue-400/30 rounded-full animate-ping" />
+                      </div>
+                      <div>
+                        <p className="text-base font-bold text-blue-300">✨ Generated!</p>
+                        <p className="text-xs text-blue-200/80">{files.length} production files</p>
+                      </div>
+                      <button
+                        onClick={() => router.push('/dashboard')}
+                        className="ml-2 px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      >
+                        Back to Dashboard
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </main>
     </div>
