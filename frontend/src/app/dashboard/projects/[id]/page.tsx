@@ -17,7 +17,8 @@ import {
   Settings,
   Zap,
   Download,
-  MoreVertical
+  MoreVertical,
+  Sparkles
 } from 'lucide-react'
 
 // Dynamically import Monaco Editor to avoid SSR issues
@@ -183,6 +184,119 @@ export default function ProjectPage() {
     )
   }
 
+  // If no files exist, show project overview page instead of editor
+  if (project.files.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+        {/* Header */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-4">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Dashboard
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Project Header */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-6">
+              <FolderOpen className="h-10 w-10 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-slate-800 mb-3">{project.name}</h1>
+            {project.description && (
+              <p className="text-xl text-slate-600 mb-4">{project.description}</p>
+            )}
+            <div className="flex items-center justify-center gap-2">
+              {project.framework && (
+                <Badge variant="secondary" className="text-sm">
+                  {project.framework}
+                </Badge>
+              )}
+              <Badge variant="outline" className="text-sm">
+                {project.status}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <Card className="mb-8 border-2 border-blue-200 shadow-xl">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl flex items-center justify-center gap-2">
+                <Zap className="h-6 w-6 text-blue-600" />
+                Ready to Build?
+              </CardTitle>
+              <CardDescription className="text-base">
+                This project doesn't have any files yet. Let's get started!
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                asChild
+                size="lg"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg py-6"
+              >
+                <Link href={`/dashboard/projects/${project.id}/generate?prompt=${encodeURIComponent(project.description || project.name)}`}>
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Generate Code with AI
+                </Link>
+              </Button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" size="lg" disabled>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Files Manually
+                </Button>
+                <Button variant="outline" size="lg" disabled>
+                  <Download className="mr-2 h-4 w-4" />
+                  Import Code
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Project Info */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-slate-600">Created</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold text-slate-800">
+                  {new Date(project.createdAt).toLocaleDateString()}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-slate-600">Files</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold text-slate-800">{project.files.length}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium text-slate-600">AI Generations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-lg font-semibold text-slate-800">{project.aiGenerationCount}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Header */}
@@ -227,9 +341,11 @@ export default function ProjectPage() {
                 Run
               </Button>
 
-              <Button size="sm" variant="outline">
-                <Zap className="mr-2 h-4 w-4" />
-                AI Generate
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/dashboard/projects/${project.id}/generate?prompt=${encodeURIComponent(project.description || project.name)}`}>
+                  <Zap className="mr-2 h-4 w-4" />
+                  AI Generate
+                </Link>
               </Button>
 
               <Button variant="ghost" size="sm">
