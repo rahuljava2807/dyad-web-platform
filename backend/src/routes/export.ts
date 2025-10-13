@@ -160,3 +160,4 @@ router.get('/github/repositories', async (req: AuthRequest, res: Response, next:
 })
 
 export default router
+
