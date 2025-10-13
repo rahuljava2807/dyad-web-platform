@@ -196,11 +196,11 @@ router.post('/generate', async (req: Request, res: Response) => {
   }
 
   try {
-    // Step 1: Check for template match (DISABLED FOR PHASE 1 TESTING)
-    console.log('🔍 Skipping template match - testing AI generation with inline components...');
-    const template = null; // Temporarily disabled: TemplateMatcher.selectTemplate(prompt);
+    // Step 1: Check for template match
+    console.log('🔍 Checking for template match...');
+    const template = TemplateMatcher.selectTemplate(prompt);
 
-    if (false && template) { // Template matching disabled
+    if (template) { // Template matching enabled
       console.log(`✨ Template matched: ${template.metadata.name} (${template.metadata.id})`);
       console.log(`📦 Returning ${template.files.length} pre-built files`);
 
@@ -244,8 +244,11 @@ router.post('/generate', async (req: Request, res: Response) => {
 
     // Step 2: No template match - use AI generation
     console.log('🚀 No template match, generating with enhanced AI prompts...');
+    console.log('🔍 [Debug] Using provider:', provider || 'anthropic');
+    console.log('🔍 [Debug] Prompt length:', prompt.length);
+    console.log('🔍 [Debug] Starting AI generation...');
 
-    // Use the REAL AI service with enhanced prompts
+    // Use the REAL AI service with enhanced prompts (Default to Claude)
     const result = await aiService.generateCode({
       prompt,
       context: context || {
@@ -253,7 +256,7 @@ router.post('/generate', async (req: Request, res: Response) => {
         language: 'typescript',
       },
       userId: userId || 'anonymous',
-      provider: provider || 'openai',
+      provider: provider || 'anthropic', // Default to Claude
     });
 
     console.log(`✅ Generated ${result.files.length} files with AI`);

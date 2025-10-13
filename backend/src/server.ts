@@ -144,9 +144,9 @@ async function startServer() {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason)
-  process.exit(1)
-})
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
@@ -155,7 +155,12 @@ process.on('uncaughtException', (error) => {
 })
 
 if (require.main === module) {
-  startServer()
+  try {
+    startServer()
+  } catch (error) {
+    console.error('Caught unhandled exception in startServer:', error);
+    process.exit(1);
+  }
 }
 
 export { app, server, io }

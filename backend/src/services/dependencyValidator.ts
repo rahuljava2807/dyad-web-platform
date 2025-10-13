@@ -76,7 +76,7 @@ export class DependencyValidator {
   /**
    * Main validation method - validates dependency consistency
    */
-  validate(files: GeneratedFile[]): DependencyValidationResult {
+  async validate(files: GeneratedFile[]): Promise<DependencyValidationResult> {
     const errors: DependencyError[] = []
     const warnings: DependencyWarning[] = []
 
@@ -166,7 +166,8 @@ export class DependencyValidator {
       if (!declaredDependencies.includes(packageName)) {
         missingPackages++
 
-        const suggestedVersion = SUGGESTED_VERSIONS[packageName] || 'latest'
+        const npmInfo = await this.getNpmPackageInfo(packageName);
+        const suggestedVersion = npmInfo.latestVersion || SUGGESTED_VERSIONS[packageName] || 'latest';
 
         errors.push({
           type: 'missing_dependency',
@@ -175,6 +176,17 @@ export class DependencyValidator {
           usedInFiles,
           suggestedVersion,
         })
+
+        if (npmInfo.typesPackage && !declaredDependencies.includes(npmInfo.typesPackage)) {
+          missingPackages++;
+          errors.push({
+            type: 'missing_dependency',
+            message: `Types for package "${packageName}" are available but not in dependencies array`,
+            packageName: npmInfo.typesPackage,
+            usedInFiles,
+            suggestedVersion: 'latest',
+          });
+        }
       }
     }
 
@@ -214,7 +226,7 @@ export class DependencyValidator {
     // import X from 'package-name'
     // import * as X from 'package-name'
     // import 'package-name'
-    const importRegex = /import\s+(?:(?:[\w*\s{},]*)\s+from\s+)?['"]([^'"]+)['"]/g
+    const importRegex = /(?:import|export)(?:\s+(?:[\w*{}\s,]+)\s+from)?\s+['"]([^'"]+)['"]/g
 
     let match
     while ((match = importRegex.exec(content)) !== null) {
@@ -256,6 +268,26 @@ export class DependencyValidator {
     // Regular package (package or package/subpath)
     const parts = importPath.split('/')
     return parts[0] || null
+  }
+
+  private async getNpmPackageInfo(packageName: string): Promise<{ latestVersion: string | null, typesPackage: string | null }> {
+    try {
+      const response = await fetch(`https://registry.npmjs.org/${packageName}`);
+      if (!response.ok) {
+        return { latestVersion: null, typesPackage: null };
+      }
+      const data = await response.json();
+      const latestVersion = data['dist-tags']?.latest || null;
+
+      const typesPackageName = `@types/${packageName}`;
+      const typesResponse = await fetch(`https://registry.npmjs.org/${typesPackageName}`);
+      const typesPackage = typesResponse.ok ? typesPackageName : null;
+
+      return { latestVersion, typesPackage };
+    } catch (error) {
+      console.error(`[DependencyValidator] Error fetching npm package info for ${packageName}:`, error);
+      return { latestVersion: null, typesPackage: null };
+    }
   }
 
   /**

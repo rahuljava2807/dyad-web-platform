@@ -25,7 +25,7 @@ interface SmartContextOptions {
 
 export class SmartContextService {
   private static instance: SmartContextService
-  private readonly MAX_TOKENS = 8000 // Phase 7 requirement
+  private readonly MAX_TOKENS = 500 // 🚨 CRITICAL FIX: Reduce to 500 to prevent Claude truncation
   private readonly CHARS_PER_TOKEN = 4 // Rough approximation
 
   private constructor() {}
@@ -41,6 +41,17 @@ export class SmartContextService {
    * Get relevant context files based on user prompt
    */
   async getRelevantContext(
+    prompt: string,
+    options: SmartContextOptions = {}
+  ): Promise<string> {
+    // 🚨 TEMPORARILY DISABLED: Smart Context causes response truncation
+    // The formatted context exceeds token budget, causing Claude to truncate response
+    console.log(`[SmartContext] DISABLED - Skipping context injection to prevent truncation`)
+    return ''
+  }
+
+  // DISABLED METHOD - Uncomment to re-enable Smart Context
+  private async getRelevantContextDISABLED(
     prompt: string,
     options: SmartContextOptions = {}
   ): Promise<string> {

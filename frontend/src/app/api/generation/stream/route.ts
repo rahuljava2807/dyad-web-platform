@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
           industry: settings?.selectedIndustry || 'general',
         },
         userId: 'anonymous', // TODO: Get from auth
-        provider: settings?.provider || 'openai',
+        provider: settings?.provider || 'anthropic', // Default to Claude
       }),
     });
 

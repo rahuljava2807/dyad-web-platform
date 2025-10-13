@@ -1,3 +1,4 @@
+import * as path from 'path'
 import { openai } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { google } from '@ai-sdk/google'
@@ -13,6 +14,7 @@ import { smartContext } from './smartContext'
 import { outputValidator } from './outputValidator'
 import { stylingValidator } from './stylingValidator'
 import { dependencyValidator } from './dependencyValidator'
+import { syntaxValidator } from './syntaxValidator'
 import { previewValidator } from './previewValidator'
 // import { logger } from '../utils/logger' // Not available
 // import { yaviService } from './yavi' // Not needed for basic generation
@@ -59,7 +61,7 @@ interface AnalyzeCodeRequest {
 
 class AIService {
   private providers: Map<string, AIProvider> = new Map()
-  private defaultProvider = 'gpt-4-turbo' // gpt-4-turbo supports structured JSON output required by generateObject
+  private defaultProvider = 'anthropic' // Claude 3.5 Sonnet - 200K context window, excellent for code generation
 
   constructor() {
     this.initializeProviders()
@@ -120,13 +122,13 @@ class AIService {
       case 'openai':
         return openai(model || 'gpt-4-turbo')
       case 'anthropic':
-        return anthropic(model || 'claude-3-sonnet-20240229')
+        return anthropic(model || 'claude-3-5-sonnet-20240620') // Claude 3.5 Sonnet - 200K context, best for code
       case 'google':
         return google(model || 'gemini-pro')
       case 'azure':
         return azure(model || 'gpt-4-turbo')
       default:
-        return openai('gpt-4-turbo') // fallback - gpt-4-turbo supports structured JSON output
+        return anthropic('claude-3-5-sonnet-20240620') // fallback to Claude 3.5 Sonnet
     }
   }
 
@@ -135,119 +137,39 @@ class AIService {
    * Sandpack doesn't support TypeScript tsconfig path aliases
    */
   private convertPathAliases(files: any[]): void {
-    console.log('🔧 [Path Conversion] Converting @/ aliases to relative paths for Sandpack...')
+    console.log('🔧 [Path Conversion] Converting @/ aliases to relative paths for Sandpack...');
+
+    const pathMapping = {
+      '@/': 'src/'
+    };
 
     for (const file of files) {
-      // Only convert code files
-      if (!file.path.match(/\.(tsx?|jsx?)$/)) continue
+      if (!file.path.match(/\.(tsx?|jsx?)$/)) continue;
 
-      let convertedContent = file.content
+      let convertedContent = file.content;
 
-      // Convert @/components/ui/* imports to relative paths
-      convertedContent = convertedContent.replace(
-        /from\s+["']@\/components\/ui\/([^"']+)["']/g,
-        (match, componentPath) => {
-          if (file.path.startsWith('src/components/ui/')) {
-            return `from "./${componentPath}"`
-          } else if (file.path.startsWith('src/components/')) {
-            return `from "./ui/${componentPath}"`
-          } else if (file.path.startsWith('components/ui/')) {
-            return `from "./${componentPath}"`
-          } else if (file.path.startsWith('components/')) {
-            return `from "./ui/${componentPath}"`
-          } else {
-            return `from "./components/ui/${componentPath}"`
-          }
+      // 🚨 FIX: Preserve original quote style to avoid mismatched quotes
+      const importRegex = /from\s+(['"])(@\/[^'"]+)['"]/g;
+      convertedContent = convertedContent.replace(importRegex, (match, openQuote, importPath) => {
+        const alias = importPath.substring(0, 2);
+        const importFile = importPath.substring(2);
+        const fromPath = path.dirname(file.path);
+        const toPath = path.join(pathMapping[alias], importFile);
+        let relativePath = path.relative(fromPath, toPath);
+        if (!relativePath.startsWith('.')) {
+          relativePath = './' + relativePath;
         }
-      )
-
-      // Convert @/lib/* imports
-      convertedContent = convertedContent.replace(
-        /from\s+["']@\/lib\/([^"']+)["']/g,
-        (match, libPath) => {
-          if (file.path.startsWith('src/lib/')) {
-            return `from "./${libPath}"`
-          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
-            return `from "../../lib/${libPath}"` // Two levels up from components/ui/
-          } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../lib/${libPath}"` // One level up from components/
-          } else {
-            return `from "./lib/${libPath}"`
-          }
-        }
-      )
-
-      // Convert @/hooks/* imports
-      convertedContent = convertedContent.replace(
-        /from\s+["']@\/hooks\/([^"']+)["']/g,
-        (match, hookPath) => {
-          if (file.path.startsWith('src/hooks/')) {
-            return `from "./${hookPath}"`
-          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
-            return `from "../../hooks/${hookPath}"` // Two levels up from components/ui/
-          } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../hooks/${hookPath}"` // One level up from components/
-          } else {
-            return `from "./hooks/${hookPath}"`
-          }
-        }
-      )
-
-      // Convert @/types/* imports
-      convertedContent = convertedContent.replace(
-        /from\s+["']@\/types\/([^"']+)["']/g,
-        (match, typePath) => {
-          if (file.path.startsWith('src/types/')) {
-            return `from "./${typePath}"`
-          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
-            return `from "../../types/${typePath}"` // Two levels up from components/ui/
-          } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../types/${typePath}"` // One level up from components/
-          } else {
-            return `from "./types/${typePath}"`
-          }
-        }
-      )
-
-      // Convert @/utils/* imports
-      convertedContent = convertedContent.replace(
-        /from\s+["']@\/utils\/([^"']+)["']/g,
-        (match, utilPath) => {
-          if (file.path.startsWith('src/utils/')) {
-            return `from "./${utilPath}"`
-          } else if (file.path.startsWith('src/components/ui/') || file.path.startsWith('components/ui/')) {
-            return `from "../../utils/${utilPath}"` // Two levels up from components/ui/
-          } else if (file.path.startsWith('src/components/') || file.path.startsWith('components/')) {
-            return `from "../utils/${utilPath}"` // One level up from components/
-          } else {
-            return `from "./utils/${utilPath}"`
-          }
-        }
-      )
-
-      // Convert @/components/* (non-ui) imports
-      convertedContent = convertedContent.replace(
-        /from\s+["']@\/components\/([^"']+)["']/g,
-        (match, componentPath) => {
-          if (componentPath.startsWith('ui/')) return match // Skip ui imports (already converted)
-
-          if (file.path.startsWith('src/components/')) {
-            return `from "./${componentPath}"`
-          } else if (file.path.startsWith('components/')) {
-            return `from "./${componentPath}"`
-          } else {
-            return `from "./components/${componentPath}"`
-          }
-        }
-      )
+        // Use the same quote style as the original import
+        return `from ${openQuote}${relativePath}${openQuote}`;
+      });
 
       if (convertedContent !== file.content) {
-        file.content = convertedContent
-        console.log(`🔧 [Path Conversion] Converted imports in ${file.path}`)
+        file.content = convertedContent;
+        console.log(`🔧 [Path Conversion] Converted imports in ${file.path}`);
       }
     }
 
-    console.log('✅ [Path Conversion] All @/ aliases converted to relative paths')
+    console.log('✅ [Path Conversion] All @/ aliases converted to relative paths');
   }
 
   /**
@@ -371,6 +293,12 @@ If the answer is NO, DO NOT GENERATE. Go back and add proper styling.
   }
 
   async generateCode(request: GenerateCodeRequest) {
+    console.log('🔍 [AI Service] ===== GENERATE CODE START =====');
+    console.log('🔍 [AI Service] Provider requested:', request.provider);
+    console.log('🔍 [AI Service] Default provider:', this.defaultProvider);
+    console.log('🔍 [AI Service] Prompt:', request.prompt.substring(0, 100) + '...');
+    console.log('🔍 [AI Service] Prompt length:', request.prompt.length);
+    
     // Declare enhancedPrompt before try block so it's accessible in catch block
     let enhancedPrompt = request.prompt
 
@@ -399,7 +327,12 @@ If the answer is NO, DO NOT GENERATE. Go back and add proper styling.
       }
 
       const provider = request.provider || this.defaultProvider
+      console.log('🔍 [AI Service] Using provider:', provider);
+      console.log('🔍 [AI Service] ANTHROPIC_API_KEY present:', !!process.env.ANTHROPIC_API_KEY);
+      console.log('🔍 [AI Service] Getting model instance...');
+      
       const model = this.getModelInstance(provider)
+      console.log('🔍 [AI Service] Model instance obtained');
 
       // Track usage
       // await usageService.trackUsage({
@@ -490,29 +423,34 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
 🚨 Make every component beautiful, interactive, and polished with proper Tailwind classes!`
 
       console.log('🎯 Making initial generateObject call...')
+      console.log('🔍 [AI Service] Building system prompt...');
       const systemPrompt = await this.buildSystemPrompt(request.prompt, request.context)
-      console.log(`System prompt size: ${systemPrompt.length} chars`)
-      console.log(`Enhanced prompt size: ${enhancedPrompt.length} chars`)
+      console.log(`🔍 [AI Service] System prompt size: ${systemPrompt.length} chars`)
+      console.log(`🔍 [AI Service] Enhanced prompt size: ${enhancedPrompt.length} chars`)
+      console.log('🔍 [AI Service] Calling generateObject with provider:', provider);
 
+      const startTime = Date.now();
       const result = await generateObject({
         model,
         system: systemPrompt,
         prompt: enhancedPrompt,
         schema: z.object({
-          code: z.string().optional().describe('DEPRECATED: Leave empty, use files array instead'),
+          files: z.array(z.object({
+            path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
+            content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
+            type: z.enum(['create', 'modify', 'delete']),
+          })).min(6).describe('🚨 CRITICAL - REQUIRED FIELD: Generate minimum 6-10 complete files with REAL, EXECUTABLE code. This field is MANDATORY. Use ONLY Tailwind CSS classes for styling.'),
           explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
-            files: z.array(z.object({
-              path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
-              content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
-              type: z.enum(['create', 'modify', 'delete']),
-            })).min(2).describe('MUST generate minimum 2-5 complete files with REAL code using ONLY Tailwind CSS classes'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
           instructions: z.string().optional().describe('Setup instructions'),
         }),
-        // Note: Using default structured output mode (works with all OpenAI models including base gpt-4)
-        // mode: 'json' requires gpt-4-turbo or later
+        // 🚨 CRITICAL FIX: Use 'tool' mode for Claude - forces schema adherence via tool calling
+        mode: provider === 'anthropic' ? 'tool' : 'auto',
+        maxTokens: 8000, // Increase token limit to allow full response
       })
 
+      const elapsed = Date.now() - startTime;
+      console.log(`🔍 [AI Service] generateObject completed in ${elapsed}ms`);
       console.log(`✅ Generated code for user ${request.userId}`, {
         provider,
         promptLength: request.prompt.length,
@@ -572,13 +510,12 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
           system: await this.buildSystemPrompt(request.prompt, request.context),
           prompt: tailwindEnforcementPrompt,
           schema: z.object({
-            code: z.string().optional().describe('DEPRECATED: Leave empty'),
-            explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             files: z.array(z.object({
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code with PROPER TAILWIND CSS CLASSES. NO generic class names like "metric-card" or "dashboard". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg". EVERY className must be a valid Tailwind CSS utility class.'),
               type: z.enum(['create', 'modify', 'delete']),
             })).min(2, 'MUST generate at least 2 complete files'),
+            explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
@@ -587,8 +524,9 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
         console.log(`Regenerated with proper Tailwind classes: ${retryResult.object.files.length} files`)
 
         // 🚀 DEPENDENCY VALIDATION WITH AUTO-FIX (Tailwind retry path)
+        this.convertPathAliases(retryResult.object.files);
         console.log('📦 [Dependency Validator] Checking import/dependency consistency...')
-        const tailwindRetryDependencyValidation = dependencyValidator.validate(
+        const tailwindRetryDependencyValidation = await dependencyValidator.validate(
           retryResult.object.files.map(f => ({
             path: f.path,
             content: f.content,
@@ -622,6 +560,32 @@ MANDATORY TAILWIND PATTERNS (USE ONLY THESE):
           }
         } else {
           console.log(`✅ [Dependency Validator] All ${tailwindRetryDependencyValidation.summary.uniquePackages} packages properly declared`)
+        }
+
+        // 🚀 SYNTAX VALIDATION (Tailwind retry path)
+        console.log('🔧 [Syntax Validator] Checking Tailwind retry for syntax errors...')
+        const tailwindRetrySyntaxValidation = await syntaxValidator.validate(
+          retryResult.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+          }))
+        )
+
+        console.log(syntaxValidator.formatResults(tailwindRetrySyntaxValidation))
+
+        if (tailwindRetrySyntaxValidation.fixedFiles.length > 0) {
+          retryResult.object.files = syntaxValidator.applyFixes(
+            retryResult.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                       f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+            })),
+            tailwindRetrySyntaxValidation
+          )
+          console.log(`✅ [Syntax Validator] Applied ${tailwindRetrySyntaxValidation.fixedFiles.length} fixes to Tailwind retry`)
         }
 
         return retryResult.object
@@ -728,13 +692,12 @@ Generate 8-12 complete files!`
             system: await this.buildSystemPrompt(request.prompt, request.context),
             prompt: antiEchoPrompt,
             schema: z.object({
-              code: z.string().optional(),
-              explanation: z.string(),
               files: z.array(z.object({
                 path: z.string(),
                 content: z.string(),
                 type: z.enum(['create', 'modify', 'delete']),
               })).min(2, 'MUST generate at least 2 complete files'),
+              explanation: z.string(),
               dependencies: z.array(z.string()).optional(),
               instructions: z.string().optional(),
             }),
@@ -819,13 +782,13 @@ Generate 8-12 production-ready files NOW!`
           system: await this.buildSystemPrompt(request.prompt, request.context),
           prompt: qualityPrompt,
           schema: z.object({
-            code: z.string().optional(),
-            explanation: z.string(),
             files: z.array(z.object({
               path: z.string(),
               content: z.string(),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(6, 'MUST generate at least 6 complete, substantial files'),
+            })).min(6, '🚨 CRITICAL - REQUIRED FIELD: MUST generate at least 6 complete, substantial files. This field is MANDATORY and must come first.'),
+            explanation: z.string(),
+            code: z.string().optional(),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
@@ -875,13 +838,13 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
           system: await this.buildSystemPrompt(request.prompt, request.context),
           prompt: forcefulPrompt,
           schema: z.object({
-            code: z.string().optional().describe('DEPRECATED: Leave empty'),
-            explanation: z.string().describe('Brief explanation (2-3 sentences)'),
             files: z.array(z.object({
               path: z.string().describe('File path (e.g., src/App.tsx)'),
               content: z.string().describe('CRITICAL: ONLY raw executable code. NO explanations, NO placeholders like "This is" or "Implementation goes here". Write COMPLETE working code with all imports, exports, logic, and styling. For React: full components with JSX, hooks, handlers. For data: full arrays with 20-50 items. EXECUTABLE CODE ONLY.'),
               type: z.enum(['create', 'modify', 'delete']),
-            })).min(2, 'MUST generate at least 2 complete files'),
+            })).min(2, '🚨 CRITICAL - REQUIRED FIELD: MUST generate at least 2 complete files. This field is MANDATORY and must come first.'),
+            explanation: z.string().describe('Brief explanation (2-3 sentences)'),
+            code: z.string().optional().describe('DEPRECATED: Leave empty'),
             dependencies: z.array(z.string()).optional(),
             instructions: z.string().optional(),
           }),
@@ -922,7 +885,7 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
         // 🚀 PHASE 3C: DEPENDENCY VALIDATION WITH AUTO-FIX (retry path)
         console.log('📦 [Dependency Validator] Checking import/dependency consistency...')
-        const retryDependencyValidation = dependencyValidator.validate(
+        const retryDependencyValidation = await dependencyValidator.validate(
           retryResult.object.files.map(f => ({
             path: f.path,
             content: f.content,
@@ -934,7 +897,184 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
         console.log(dependencyValidator.formatResults(retryDependencyValidation))
 
-        if (!retryDependencyValidation.isValid) {
+        // 🚨 CRITICAL: Check if package.json is missing in retry path
+        const retryHasNoPackageJson = retryDependencyValidation.errors.some(e => e.type === 'no_package_json')
+
+        if (retryHasNoPackageJson) {
+          console.error('🚨 [Dependency Validator] CRITICAL: No package.json in retry!')
+          console.error('🔄 [Dependency Validator] Regenerating retry with package.json...')
+
+          const retryPackageJsonPrompt = `${enhancedPrompt}
+
+🚨🚨🚨 CRITICAL ERROR: YOU FORGOT package.json AGAIN! 🚨🚨🚨
+
+This is the SECOND TIME you forgot it! package.json is ABSOLUTELY MANDATORY!
+
+INCLUDE package.json with ALL imports as dependencies:
+- react, react-dom (ALWAYS required)
+- react-router-dom (if you use BrowserRouter, Routes, Route)
+- framer-motion (if you use motion components)
+- lucide-react (if you use icons from lucide)
+- recharts (if you use charts)
+- Any other packages you import
+
+Example with react-router-dom:
+{
+  "name": "crm-app",
+  "version": "0.1.0",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "lucide-react": "^0.294.0"
+  }
+}
+
+REGENERATE WITH package.json NOW!`
+
+          const retryPackageJsonResult = await generateObject({
+            model,
+            system: await this.buildSystemPrompt(request.prompt, request.context),
+            prompt: retryPackageJsonPrompt,
+            schema: z.object({
+              files: z.array(z.object({
+                path: z.string(),
+                content: z.string(),
+                type: z.enum(['create', 'modify', 'delete']),
+              })).min(2, '🚨 CRITICAL - REQUIRED FIELD: Must include package.json. This field is MANDATORY and must come first.'),
+              explanation: z.string(),
+              code: z.string().optional(),
+              dependencies: z.array(z.string()).optional(),
+              instructions: z.string().optional(),
+            }),
+          })
+
+          console.log(`✅ Retry regenerated with package.json: ${retryPackageJsonResult.object.files.length} files`)
+
+          // 🚨 CRITICAL FIX: Only EXTRACT package.json, keep all other files!
+          const packageJsonFile = retryPackageJsonResult.object.files.find(f =>
+            f.path.endsWith('package.json') || f.path === 'package.json'
+          )
+
+          if (packageJsonFile) {
+            // Add ONLY the package.json to existing files
+            retryResult.object.files.push(packageJsonFile)
+            console.log(`✅ Added package.json to existing ${retryResult.object.files.length - 1} files`)
+          } else {
+            console.warn(`⚠️ Package.json regeneration didn't include package.json, using all ${retryPackageJsonResult.object.files.length} files`)
+            // Fallback: if no package.json found, add all files (shouldn't happen)
+            for (const file of retryPackageJsonResult.object.files) {
+              if (!retryResult.object.files.some(f => f.path === file.path)) {
+                retryResult.object.files.push(file)
+              }
+            }
+          }
+
+          // No need to re-run scaffold detection - package.json won't have component imports
+          // Just convert path aliases for the package.json if needed (it won't have any)
+          this.convertPathAliases(retryResult.object.files)
+
+          // Final dependency validation and auto-fix
+          const finalValidation = await dependencyValidator.validate(
+            retryResult.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                       f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' :
+                       f.path.endsWith('.json') ? 'json' : 'plaintext'
+            }))
+          )
+
+          console.log(dependencyValidator.formatResults(finalValidation))
+
+          // 🚨 FINAL SAFETY NET: If STILL no package.json after ALL retries, create default one
+          const stillNoPackageJson = finalValidation.errors.some(e => e.type === 'no_package_json')
+
+          if (stillNoPackageJson) {
+            console.error('🚨 [Emergency Fallback] AI REFUSED to generate package.json even after 2 attempts!')
+            console.error('🛟 [Emergency Fallback] Creating default package.json as last resort...')
+
+            // Create a minimal default package.json
+            const defaultPackageJson = {
+              name: "generated-app",
+              version: "0.1.0",
+              private: true,
+              scripts: {
+                dev: "vite",
+                build: "vite build",
+                preview: "vite preview"
+              },
+              dependencies: {
+                "react": "^18.2.0",
+                "react-dom": "^18.2.0"
+              },
+              devDependencies: {
+                "@types/react": "^18.2.0",
+                "@types/react-dom": "^18.2.0",
+                "typescript": "^5.3.0",
+                "vite": "^5.0.0"
+              }
+            }
+
+            retryResult.object.files.push({
+              path: 'package.json',
+              content: JSON.stringify(defaultPackageJson, null, 2),
+              type: 'create'
+            })
+
+            console.log('✅ [Emergency Fallback] Created default package.json')
+
+            // Now run auto-fix to add any missing imports
+            const emergencyValidation = await dependencyValidator.validate(
+              retryResult.object.files.map(f => ({
+                path: f.path,
+                content: f.content,
+                language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                         f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' :
+                         f.path.endsWith('.json') ? 'json' : 'plaintext'
+              }))
+            )
+
+            if (!emergencyValidation.isValid) {
+              const emergencyFix = dependencyValidator.autoFix(
+                retryResult.object.files.map(f => ({
+                  path: f.path,
+                  content: f.content,
+                  language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+                })),
+                emergencyValidation
+              )
+
+              if (emergencyFix) {
+                const pkgIndex = retryResult.object.files.findIndex(f => f.path.endsWith('package.json'))
+                if (pkgIndex !== -1) {
+                  retryResult.object.files[pkgIndex].content = emergencyFix.content
+                  console.log(`✅ [Emergency Fallback] Auto-fixed package.json with detected imports`)
+                }
+              }
+            }
+          } else if (!finalValidation.isValid) {
+            // Normal auto-fix path (package.json exists but missing deps)
+            const finalFix = dependencyValidator.autoFix(
+              retryResult.object.files.map(f => ({
+                path: f.path,
+                content: f.content,
+                language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+              })),
+              finalValidation
+            )
+            if (finalFix) {
+              const pkgIndex = retryResult.object.files.findIndex(f => f.path.endsWith('package.json'))
+              if (pkgIndex !== -1) {
+                retryResult.object.files[pkgIndex].content = finalFix.content
+                console.log(`✅ [Dependency Validator] Final auto-fix applied`)
+              }
+            }
+          }
+
+          return retryResult.object
+        } else if (!retryDependencyValidation.isValid) {
+          // Normal auto-fix path (package.json exists but missing deps)
           console.warn(`⚠️  [Dependency Validator] Found ${retryDependencyValidation.summary.missingPackages} missing dependencies`)
           console.log(`🔧 [Dependency Validator] Attempting auto-fix...`)
 
@@ -956,6 +1096,32 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
           }
         } else {
           console.log(`✅ [Dependency Validator] All ${retryDependencyValidation.summary.uniquePackages} packages properly declared`)
+        }
+
+        // 🚀 SYNTAX VALIDATION (retry path)
+        console.log('🔧 [Syntax Validator] Checking retry result for syntax errors...')
+        const retrySyntaxValidation = await syntaxValidator.validate(
+          retryResult.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+          }))
+        )
+
+        console.log(syntaxValidator.formatResults(retrySyntaxValidation))
+
+        if (retrySyntaxValidation.fixedFiles.length > 0) {
+          retryResult.object.files = syntaxValidator.applyFixes(
+            retryResult.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                       f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+            })),
+            retrySyntaxValidation
+          )
+          console.log(`✅ [Syntax Validator] Applied ${retrySyntaxValidation.fixedFiles.length} fixes to retry result`)
         }
 
         return retryResult.object
@@ -1038,6 +1204,26 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
       // 🚀 PHASE 7.3: STRUCTURED OUTPUT VALIDATION
       console.log('🔍 [Output Validator] Running quality checks...')
+
+      // 🔧 AUTO-FIX file extensions BEFORE validation
+      const extensionFix = outputValidator.autoFixExtensions(
+        result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                   f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+        }))
+      )
+
+      if (extensionFix.fixed > 0) {
+        // Apply the fixes to the actual files
+        result.object.files = extensionFix.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          type: result.object.files.find(orig => orig.path === f.path || orig.path.replace('.ts', '.tsx') === f.path)?.type || 'create'
+        }))
+      }
+
       const outputValidation = outputValidator.validate(
         result.object.files.map(f => ({
           path: f.path,
@@ -1100,7 +1286,7 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
 
       // 🚀 PHASE 7.3.6: DEPENDENCY VALIDATION WITH AUTO-FIX
       console.log('📦 [Dependency Validator] Checking import/dependency consistency...')
-      const dependencyValidation = dependencyValidator.validate(
+      const dependencyValidation = await dependencyValidator.validate(
         result.object.files.map(f => ({
           path: f.path,
           content: f.content,
@@ -1113,8 +1299,124 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
       // Log validation results
       console.log(dependencyValidator.formatResults(dependencyValidation))
 
-      // If dependencies are missing, AUTO-FIX package.json
-      if (!dependencyValidation.isValid) {
+      // 🚨 CRITICAL: Check if package.json is missing - REGENERATE if so
+      const hasNoPackageJson = dependencyValidation.errors.some(e => e.type === 'no_package_json')
+
+      if (hasNoPackageJson) {
+        console.error('🚨 [Dependency Validator] CRITICAL: No package.json found!')
+        console.error('🔄 [Dependency Validator] Regenerating with package.json requirement...')
+
+        const packageJsonPrompt = `${enhancedPrompt}
+
+🚨🚨🚨 CRITICAL ERROR: YOU FORGOT TO GENERATE package.json! 🚨🚨🚨
+
+This is COMPLETELY UNACCEPTABLE! package.json is MANDATORY for ANY React application!
+
+YOU MUST INCLUDE package.json WITH:
+1. name, version, scripts (dev, build, start)
+2. dependencies: ALL packages you import (react, react-dom, etc.)
+3. devDependencies: typescript, @types packages, tailwindcss, etc.
+
+Example package.json structure:
+{
+  "name": "app-name",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "framer-motion": "^10.16.0",
+    "lucide-react": "^0.294.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0",
+    "tailwindcss": "^3.3.0"
+  }
+}
+
+REGENERATE NOW with package.json included! DO NOT SKIP IT AGAIN!`
+
+        const packageJsonRetry = await generateObject({
+          model,
+          system: await this.buildSystemPrompt(request.prompt, request.context),
+          prompt: packageJsonPrompt,
+          schema: z.object({
+            files: z.array(z.object({
+              path: z.string(),
+              content: z.string(),
+              type: z.enum(['create', 'modify', 'delete']),
+            })).min(2, '🚨 CRITICAL - REQUIRED FIELD: MUST generate at least 2 complete files including package.json. This field is MANDATORY and must come first.'),
+            explanation: z.string(),
+            code: z.string().optional(),
+            dependencies: z.array(z.string()).optional(),
+            instructions: z.string().optional(),
+          }),
+        })
+
+        console.log(`✅ Regenerated with package.json: ${packageJsonRetry.object.files.length} files`)
+
+        // Replace result with package.json retry
+        result.object.files = packageJsonRetry.object.files
+
+        // Re-run scaffold bundling and path conversion for new files
+        const retryFilesForDetection = result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' : 'plaintext'
+        }))
+        const retryUsedComponents = detectUsedComponents(retryFilesForDetection)
+        if (retryUsedComponents.length > 0) {
+          const retryScaffoldFiles = bundleScaffoldComponents(retryUsedComponents)
+          for (const scaffoldFile of retryScaffoldFiles) {
+            result.object.files.push({
+              path: scaffoldFile.path,
+              content: scaffoldFile.content,
+              type: 'create'
+            })
+          }
+        }
+        this.convertPathAliases(result.object.files)
+
+        // Re-validate dependencies
+        const packageJsonRevalidation = await dependencyValidator.validate(
+          result.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' :
+                     f.path.endsWith('.json') ? 'json' : 'plaintext'
+          }))
+        )
+
+        console.log(dependencyValidator.formatResults(packageJsonRevalidation))
+
+        // If still invalid, try to auto-fix
+        if (!packageJsonRevalidation.isValid && !packageJsonRevalidation.errors.some(e => e.type === 'no_package_json')) {
+          const fixedPackageJson = dependencyValidator.autoFix(
+            result.object.files.map(f => ({
+              path: f.path,
+              content: f.content,
+              language: f.path.endsWith('.json') ? 'json' : 'plaintext'
+            })),
+            packageJsonRevalidation
+          )
+
+          if (fixedPackageJson) {
+            const packageJsonIndex = result.object.files.findIndex(f => f.path.endsWith('package.json'))
+            if (packageJsonIndex !== -1) {
+              result.object.files[packageJsonIndex].content = fixedPackageJson.content
+              console.log(`✅ [Dependency Validator] Auto-fixed package.json`)
+            }
+          }
+        }
+      } else if (!dependencyValidation.isValid) {
+        // If dependencies are missing, AUTO-FIX package.json (normal path)
         console.warn(`⚠️  [Dependency Validator] Found ${dependencyValidation.summary.missingPackages} missing dependencies`)
         console.log(`🔧 [Dependency Validator] Attempting auto-fix...`)
 
@@ -1135,7 +1437,7 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
             console.log(`✅ [Dependency Validator] Auto-fixed package.json with ${dependencyValidation.summary.missingPackages} missing packages`)
 
             // Re-validate to confirm fix
-            const revalidation = dependencyValidator.validate(
+            const revalidation = await dependencyValidator.validate(
               result.object.files.map(f => ({
                 path: f.path,
                 content: f.content,
@@ -1151,6 +1453,39 @@ CRITICAL: Generate PRODUCTION-QUALITY, EXECUTABLE CODE with:
         }
       } else {
         console.log(`✅ [Dependency Validator] All ${dependencyValidation.summary.uniquePackages} packages properly declared`)
+      }
+
+      // 🚀 PHASE 7.3.7: SYNTAX VALIDATION WITH AUTO-FIX
+      console.log('🔧 [Syntax Validator] Checking for syntax errors...')
+      const syntaxValidation = await syntaxValidator.validate(
+        result.object.files.map(f => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                   f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+        }))
+      )
+
+      // Log validation results
+      console.log(syntaxValidator.formatResults(syntaxValidation))
+
+      // Apply syntax fixes if any errors were auto-fixed
+      if (syntaxValidation.fixedFiles.length > 0) {
+        console.log(`🔧 [Syntax Validator] Applying ${syntaxValidation.fixedFiles.length} auto-fixes...`)
+
+        result.object.files = syntaxValidator.applyFixes(
+          result.object.files.map(f => ({
+            path: f.path,
+            content: f.content,
+            language: f.path.endsWith('.tsx') || f.path.endsWith('.ts') ? 'typescript' :
+                     f.path.endsWith('.jsx') || f.path.endsWith('.js') ? 'javascript' : 'plaintext'
+          })),
+          syntaxValidation
+        )
+
+        console.log(`✅ [Syntax Validator] Applied fixes to ${syntaxValidation.fixedFiles.length} files`)
+      } else if (syntaxValidation.isValid) {
+        console.log(`✅ [Syntax Validator] No syntax errors found`)
       }
 
       // 🚀 PHASE 7.4: PREVIEW RENDERING VALIDATION (Optional - enabled via env var)
@@ -1260,13 +1595,13 @@ Generate 8-12 complete, production-ready files NOW!`
             system: await this.buildSystemPrompt(request.prompt, request.context),
             prompt: jsonSafePrompt,
             schema: z.object({
-              code: z.string().optional(),
-              explanation: z.string(),
               files: z.array(z.object({
                 path: z.string(),
                 content: z.string(),
                 type: z.enum(['create', 'modify', 'delete']),
-              })).min(6, 'MUST generate at least 6 complete, substantial files'),
+              })).min(6, '🚨 CRITICAL - REQUIRED FIELD: MUST generate at least 6 complete, substantial files. This field is MANDATORY and must come first.'),
+              explanation: z.string(),
+              code: z.string().optional(),
               dependencies: z.array(z.string()).optional(),
               instructions: z.string().optional(),
             }),

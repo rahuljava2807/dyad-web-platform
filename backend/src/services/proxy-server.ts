@@ -22,31 +22,14 @@ class ProxyServerManager {
   private portCounter = 5500; // Start from port 5500 to avoid backend port 5001
 
   private async findAvailablePort(): Promise<number> {
-    const startPort = this.portCounter;
-    const maxPort = 6000;
-    
-    const { createServer } = await import('http');
-    
-    for (let port = startPort; port <= maxPort; port++) {
-      try {
-        await new Promise((resolve, reject) => {
-          const server = createServer();
-          server.listen(port, () => {
-            server.close(() => {
-              this.portCounter = port + 1;
-              resolve(port);
-            });
-          });
-          server.on('error', (err) => reject(err));
-        });
-        // If we get here, the port is available
-        return port;
-      } catch {
-        // Port is in use, try the next one
-        continue;
-      }
-    }
-    throw new Error('No available ports found for proxy server');
+    return new Promise((resolve, reject) => {
+      const server = createServer();
+      server.listen(0, () => {
+        const port = (server.address() as any).port;
+        server.close(() => resolve(port));
+      });
+      server.on('error', (err) => reject(err));
+    });
   }
 
   async startProxy(options: ProxyServerOptions): Promise<ProxyServer> {
@@ -75,11 +58,14 @@ class ProxyServerManager {
 
       // Set up worker event handlers
       worker.on('message', (message) => {
-        logger.info(`[Proxy ${port}] ${message}`);
-        
-        if (typeof message === 'string' && message.startsWith('proxy-server-start url=')) {
-          const url = message.substring('proxy-server-start url='.length);
-          onStarted?.(url);
+        if (typeof message === 'object' && message.type === 'unhandledRejection') {
+          logger.error(`[Proxy ${port}] Unhandled Rejection in worker:`, message.reason);
+        } else if (typeof message === 'string') {
+          logger.info(`[Proxy ${port}] ${message}`);
+          if (message.startsWith('proxy-server-start url=')) {
+            const url = message.substring('proxy-server-start url='.length);
+            onStarted?.(url);
+          }
         }
       });
 

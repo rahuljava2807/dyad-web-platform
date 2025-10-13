@@ -44,32 +44,18 @@ class ProcessManager {
   }
 
   private async findAvailablePort(): Promise<number> {
-    // Simple port finding - in production, use a more robust solution
-    const startPort = 3001; // Start from 3001 to avoid frontend port 3000
-    const maxPort = 4000;
-    
-    const { createServer } = await import('http');
-    
-    for (let port = startPort; port <= maxPort; port++) {
-      try {
-        await new Promise((resolve, reject) => {
-          const server = createServer();
-          server.listen(port, () => {
-            server.close(() => resolve(port));
-          });
-          server.on('error', (err) => reject(err));
-        });
-        // If we get here, the port is available
-        return port;
-      } catch {
-        // Port is in use, try the next one
-        continue;
-      }
-    }
-    throw new Error('No available ports found');
+    return new Promise((resolve, reject) => {
+      const server = createServer();
+      server.listen(0, () => {
+        const port = (server.address() as any).port;
+        server.close(() => resolve(port));
+      });
+      server.on('error', (err) => reject(err));
+    });
   }
 
   async createAppProject(files: Array<{ path: string; content: string; language: string }>): Promise<string> {
+    logger.info('ENTERING createAppProject - v3');
     const appId = uuidv4();
     const appPath = path.join(this.tempDir, appId);
     
@@ -104,7 +90,7 @@ class ProcessManager {
           private: true,
           type: 'module',
           scripts: {
-            dev: 'vite build && npx serve dist -p 3001 -s',
+            dev: 'vite',
             build: 'vite build',
             preview: 'npx serve dist -p 3001 -s'
           },

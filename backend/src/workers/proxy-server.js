@@ -282,3 +282,7 @@ process.on("SIGINT", () => {
     process.exit(0);
   });
 });
+
+process.on('unhandledRejection', (reason, promise) => {
+  parentPort?.postMessage({ type: 'unhandledRejection', reason: reason?.toString() });
+});

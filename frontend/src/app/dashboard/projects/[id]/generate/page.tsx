@@ -102,7 +102,7 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
         body: JSON.stringify({
           prompt,
           settings: {
-            provider: 'openai',
+            provider: 'anthropic', // Use Claude for faster, better generation
             selectedIndustry: 'general'
           }
         })

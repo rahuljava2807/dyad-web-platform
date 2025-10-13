@@ -412,6 +412,36 @@ export class OutputValidator {
   }
 
   /**
+   * Auto-fix file extensions (.ts → .tsx when JSX detected)
+   */
+  autoFixExtensions(files: GeneratedFile[]): { files: GeneratedFile[]; fixed: number } {
+    let fixed = 0
+    const fixedFiles = files.map(file => {
+      // Check if .ts file contains JSX
+      if (file.path.endsWith('.ts') && !file.path.endsWith('.d.ts')) {
+        const hasJSX = /<[A-Z][A-Za-z0-9.]*[\s/>]/.test(file.content) ||
+                       (/<[a-z]+[\s/>]/.test(file.content) && file.content.includes('return'))
+
+        if (hasJSX) {
+          fixed++
+          console.log(`[OutputValidator] Auto-fix: ${file.path} → ${file.path.replace(/\.ts$/, '.tsx')}`)
+          return {
+            ...file,
+            path: file.path.replace(/\.ts$/, '.tsx')
+          }
+        }
+      }
+      return file
+    })
+
+    if (fixed > 0) {
+      console.log(`[OutputValidator] ✅ Auto-fixed ${fixed} file extension(s)`)
+    }
+
+    return { files: fixedFiles, fixed }
+  }
+
+  /**
    * Format validation results for logging/display
    */
   formatResults(result: ValidationResult): string {
