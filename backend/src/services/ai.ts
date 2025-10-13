@@ -441,25 +441,13 @@ Generate files that include (MINIMUM 6 FILES REQUIRED):
 - Types/interfaces file (types.ts) with proper TypeScript definitions
 - Mock data utilities (mockData.ts) with 20+ realistic items
 - Comprehensive README.md with setup instructions
-- 🚨 MANDATORY: tailwind.config.js with darkMode: 'class' for dark mode support
 
-🚨 CRITICAL: DARK MODE REQUIRES tailwind.config.js:
-Generate tailwind.config.js with this EXACT content:
-
-/** @type {import('tailwindcss').Config} */
-export default {
-  darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-
-Without this file, ALL dark: classes will be ignored and dark mode WON'T WORK!
+🚨 CRITICAL: DARK MODE USING CONDITIONAL RENDERING (Sandpack-compatible):
+- Create useDarkMode hook that returns { isDark, toggleDark }
+- Pass isDark prop to ALL components
+- Use conditional rendering: className={\`base-classes \${isDark ? 'dark-classes' : 'light-classes'}\`}
+- DO NOT use Tailwind dark: variants (dark:bg-gray-900) - Sandpack ignores these!
+- Apply conditional classes to backgrounds, text, borders, shadows on EVERY element
 
 🚨 REMEMBER: Generic class names = ZERO styling in preview!
 🚨 ONLY Tailwind CSS utility classes will work!
@@ -488,7 +476,7 @@ Without this file, ALL dark: classes will be ignored and dark mode WON'T WORK!
           files: z.array(z.object({
             path: z.string().describe('File path relative to project root (e.g., src/App.tsx, src/components/Dashboard.tsx)'),
             content: z.string().describe('CRITICAL: ONLY raw executable code with MANDATORY TAILWIND CSS CLASSES. NO generic class names like "metric-card", "dashboard", or "navigation". Use ONLY Tailwind utilities like "bg-white p-6 rounded-lg shadow-lg", "flex items-center justify-between", "text-2xl font-bold text-gray-900". EVERY className must be a valid Tailwind CSS utility class. Generate COMPLETE, WORKING code with imports, exports, hooks, and proper JSX/TSX syntax.'),
-            type: z.enum(['create', 'modify', 'delete']),
+            type: z.enum(['create', 'modify', 'delete']).default('create'),
           })).min(minFiles).describe(`🚨 CRITICAL - REQUIRED FIELD: Generate minimum ${minFiles} complete files with REAL, EXECUTABLE code. This field is MANDATORY. Use ONLY Tailwind CSS classes for styling.`),
           explanation: z.string().describe('Brief explanation of the application architecture and key features (2-3 sentences)'),
           dependencies: z.array(z.string()).optional().describe('Required NPM packages: react, react-dom, framer-motion, lucide-react, recharts, etc.'),
@@ -498,6 +486,12 @@ Without this file, ALL dark: classes will be ignored and dark mode WON'T WORK!
         mode: provider === 'anthropic' ? 'tool' : 'auto',
         maxTokens: maxTokens,
       })
+
+      // 🚨 FIX: Ensure all files have type='create' (some AI responses omit this field)
+      result.object.files = result.object.files.map(f => ({
+        ...f,
+        type: f.type || 'create'
+      }))
 
       const elapsed = Date.now() - startTime;
       console.log(`🔍 [AI Service] generateObject completed in ${elapsed}ms`);
@@ -1322,7 +1316,9 @@ REGENERATE WITH package.json NOW!`
       console.log(stylingValidator.formatResults(stylingValidation))
 
       // 🚀 AUTO-REGENERATE if styling quality is too low (like v0.dev)
-      if (!stylingValidation.isValid && stylingValidation.score < 50) {
+      // 🚨 TEMPORARILY DISABLED to debug blank screen issue
+      const ENABLE_STYLING_RETRY = false
+      if (ENABLE_STYLING_RETRY && !stylingValidation.isValid && stylingValidation.score < 50) {
         console.warn(`⚠️  [Styling Validator] Production quality TOO LOW:`)
         console.warn(`   Score: ${stylingValidation.score}/100 (need 70+)`)
         console.warn(`   Wireframe quality: ${stylingValidation.details.wireframeQuality}/100`)
@@ -1384,9 +1380,11 @@ YOU MUST FOLLOW THESE v0.dev-QUALITY STYLING RULES:
   </div>
 </Card>
 
-9. 🌓 DARK MODE TOGGLE (MANDATORY - must generate WORKING dark mode):
+9. 🌓 DARK MODE TOGGLE (MANDATORY - SANDPACK-PROVEN WORKING IMPLEMENTATION):
 
-Step 1: Create a SANDPACK-COMPATIBLE dark mode hook (src/hooks/useDarkMode.tsx):
+🚨 CRITICAL: Use manual dark mode classes, NOT Tailwind dark: variants (Sandpack limitation)
+
+Step 1: Create useDarkMode hook (src/hooks/useDarkMode.ts):
 
 import { useState, useEffect } from 'react'
 
@@ -1394,23 +1392,13 @@ export const useDarkMode = () => {
   const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
-    // Initialize from localStorage or system preference
     const stored = localStorage.getItem('darkMode')
-    const initialDark = stored ? stored === 'true' : window.matchMedia('(prefers-color-scheme: dark)').matches
+    const initialDark = stored === 'true'
     setIsDark(initialDark)
   }, [])
 
   useEffect(() => {
-    // Update body class and localStorage whenever isDark changes
-    if (isDark) {
-      document.body.classList.add('dark')
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('darkMode', 'true')
-    } else {
-      document.body.classList.remove('dark')
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('darkMode', 'false')
-    }
+    localStorage.setItem('darkMode', isDark.toString())
   }, [isDark])
 
   const toggleDark = () => setIsDark(!isDark)
@@ -1418,7 +1406,7 @@ export const useDarkMode = () => {
   return { isDark, toggleDark }
 }
 
-Step 2: Use the hook in App.tsx (NO context provider needed):
+Step 2: Use CONDITIONAL RENDERING for dark mode (NOT Tailwind dark: variants):
 
 import { useDarkMode } from './hooks/useDarkMode'
 import { DarkModeToggle } from './components/DarkModeToggle'
@@ -1427,17 +1415,23 @@ export default function App() {
   const { isDark, toggleDark } = useDarkMode()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-purple-950 dark:to-gray-900 transition-colors duration-300">
+    <div className={\`min-h-screen transition-colors duration-300 \${
+      isDark
+        ? 'bg-gradient-to-br from-gray-950 via-purple-950 to-gray-900'
+        : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'
+    }\`}>
       <header className="p-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Your App</h1>
+        <h1 className={\`text-2xl font-bold \${isDark ? 'text-white' : 'text-gray-900'}\`}>
+          Your App
+        </h1>
         <DarkModeToggle isDark={isDark} toggleDark={toggleDark} />
       </header>
-      {/* Rest of your app */}
+      {/* Rest of your app with conditional isDark classes */}
     </div>
   )
 }
 
-Step 3: Create DarkModeToggle component (src/components/DarkModeToggle.tsx):
+Step 3: DarkModeToggle with conditional rendering:
 
 import { Moon, Sun } from 'lucide-react'
 import { Button } from './ui/button'
@@ -1449,49 +1443,56 @@ interface DarkModeToggleProps {
 
 export const DarkModeToggle = ({ isDark, toggleDark }: DarkModeToggleProps) => {
   return (
-    <Button
+    <button
       onClick={toggleDark}
-      variant="ghost"
-      size="icon"
-      className="rounded-xl transition-all duration-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-110"
+      className={\`p-2 rounded-xl transition-all duration-200 hover:scale-110 \${
+        isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+      }\`}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {isDark ? (
         <Sun className="h-5 w-5 text-yellow-500" />
       ) : (
-        <Moon className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+        <Moon className="h-5 w-5 text-gray-700" />
       )}
-    </Button>
+    </button>
   )
 }
 
-🚨 CRITICAL: SANDPACK-COMPATIBLE Dark Mode Pattern:
-1. Create useDarkMode hook that toggles dark class on body AND documentElement
-2. Use the hook directly in App.tsx (no context provider needed - simpler!)
-3. Pass isDark and toggleDark as props to DarkModeToggle
-4. Hook updates both document.body.classList and document.documentElement.classList
-5. Generate tailwind.config.js with darkMode: 'class'
+Step 4: Apply conditional rendering to ALL components:
 
-Step 4: MANDATORY - Generate tailwind.config.js:
+// Example TaskCard
+<div className={\`p-8 rounded-2xl shadow-2xl transition-all \${
+  isDark
+    ? 'bg-gray-900 border-gray-800 shadow-purple-500/5'
+    : 'bg-white border-gray-100 shadow-purple-500/10'
+}\`}>
+  <h3 className={\`text-lg font-semibold \${isDark ? 'text-white' : 'text-gray-900'}\`}>
+    Task Title
+  </h3>
+  <p className={\`text-sm \${isDark ? 'text-gray-400' : 'text-gray-500'}\`}>
+    Description
+  </p>
+</div>
 
-/** @type {import('tailwindcss').Config} */
-export default {
-  darkMode: 'class',
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
+🚨 CRITICAL RULES FOR SANDPACK DARK MODE:
+1. NO Tailwind dark: variants (dark:bg-gray-900, dark:text-white) - Sandpack ignores these!
+2. USE conditional rendering: className={\`...\${isDark ? 'dark-class' : 'light-class'}\`}
+3. Pass isDark prop to ALL components that need dark mode
+4. Apply conditional classes to EVERY element (backgrounds, text, borders, shadows)
+5. NO tailwind.config.js needed - pure conditional rendering works!
 
-🚨 WITHOUT tailwind.config.js with darkMode: 'class', dark mode WILL NOT WORK!
-🚨 You MUST generate this file or dark: variants will be ignored!
+🚨 REGENERATE WITH THESE PATTERNS NOW!
+Every element must look like v0.dev quality with WORKING conditional dark mode!
 
-🚨 REGENERATE WITH THESE EXACT STYLING PATTERNS NOW!
-Every element must look like v0.dev quality - gradients, shadows, icons, WORKING dark mode!`
+MANDATORY CHECKLIST:
+✅ useDarkMode hook with localStorage
+✅ Pass isDark prop to ALL components
+✅ Use conditional rendering: \${isDark ? 'dark-classes' : 'light-classes'}
+✅ NO dark: Tailwind variants (Sandpack doesn't support them)
+✅ Apply conditional classes to backgrounds, text, borders, shadows
+✅ Beautiful gradients, deep shadows, smooth transitions
+✅ Working dark mode toggle that visually changes the UI`
 
         const stylingRetry = await generateObject({
           model,
@@ -1867,21 +1868,26 @@ MANDATORY RULES FOR THIS ATTEMPT:
 Generate your JSON response following these rules STRICTLY.
 Generate 8-12 complete, production-ready files NOW!`
 
+          // Get model instance for retry (it's out of scope from the try block)
+          const retryModel = this.getModelInstance(provider)
+
           const safeResult = await generateObject({
-            model,
+            model: retryModel,
             system: await this.buildSystemPrompt(request.prompt, request.context),
             prompt: jsonSafePrompt,
             schema: z.object({
               files: z.array(z.object({
                 path: z.string(),
                 content: z.string(),
-                type: z.enum(['create', 'modify', 'delete']),
-              })).min(6, '🚨 CRITICAL - REQUIRED FIELD: MUST generate at least 6 complete, substantial files. This field is MANDATORY and must come first.'),
+                type: z.enum(['create', 'modify', 'delete']).default('create'),
+              })).min(minFiles, `🚨 CRITICAL - REQUIRED FIELD: MUST generate at least ${minFiles} complete, substantial files. This field is MANDATORY and must come first.`),
               explanation: z.string(),
               code: z.string().optional(),
               dependencies: z.array(z.string()).optional(),
               instructions: z.string().optional(),
             }),
+            mode: provider === 'anthropic' ? 'tool' : 'auto',
+            maxTokens: maxTokens,
           })
 
           console.log('✅ JSON-safe retry successful!')
