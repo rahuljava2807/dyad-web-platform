@@ -360,8 +360,112 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
           </div>
         ) : (
           <div className="flex h-full">
-            {/* LEFT PANEL - Progress & Information (40%) */}
-            <div className="w-[40%] border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden">
+            {/* Conditional Layout: During generation vs Complete */}
+            {currentStep === 'preview' || currentStep === 'complete' ? (
+              <>
+                {/* PREVIEW MODE: Preview on LEFT (70%), Info on RIGHT (30%) */}
+                <div className="w-[70%] flex flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                  <div className="w-full h-full animate-fade-in">
+                    <ImprovedSandpackPreview files={files} />
+                  </div>
+
+                  {/* Floating Success Badge */}
+                  {currentStep === 'complete' && (
+                    <div className="absolute top-6 left-6 z-50 animate-success-pop">
+                      <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <CheckCircle className="h-6 w-6 text-blue-400" />
+                            <div className="absolute inset-0 bg-blue-400/30 rounded-full animate-ping" />
+                          </div>
+                          <div>
+                            <p className="text-base font-bold text-blue-300">✨ Generated!</p>
+                            <p className="text-xs text-blue-200/80">{files.length} production files</p>
+                          </div>
+                          <button
+                            onClick={() => router.push('/dashboard')}
+                            className="ml-2 px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                          >
+                            Back to Dashboard
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info Sidebar - Compact (30%) */}
+                <div className="w-[30%] border-l border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden">
+                  {/* Compact Stats Header */}
+                  <div className="flex-shrink-0 p-6 border-b border-white/10">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 border-2 border-green-500/50 mb-3">
+                        <CheckCircle className="h-8 w-8 text-green-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white mb-1">Generation Complete</h3>
+                      <p className="text-sm text-white/60">{files.length} files • {files.reduce((sum, f) => sum + f.content.split('\n').length, 0)} lines</p>
+                    </div>
+                  </div>
+
+                  {/* Scrollable Content */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                    {/* File Tree */}
+                    {files.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-white/80 mb-2 flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-purple-400" />
+                          Files Generated
+                        </h4>
+                        <FileTreePanel
+                          files={files}
+                          totalExpected={totalExpectedFiles}
+                        />
+                      </div>
+                    )}
+
+                    {/* Features */}
+                    {capabilities.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-white/80 mb-2 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-400" />
+                          Features
+                        </h4>
+                        <div className="space-y-1">
+                          {[...new Set(capabilities)].slice(0, 5).map((capability, index) => (
+                            <div
+                              key={`${capability}-${index}`}
+                              className="text-white/70 text-xs flex items-start gap-2 p-2 rounded-lg bg-white/5"
+                            >
+                              <CheckCircle className="h-3 w-3 text-green-400 flex-shrink-0 mt-0.5" />
+                              <span className="line-clamp-2">{capability}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Version History */}
+                    {generations.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-semibold text-white/80 mb-2 flex items-center gap-2">
+                          <Code className="h-4 w-4 text-orange-400" />
+                          History
+                        </h4>
+                        <VersionHistoryPanel
+                          generations={generations}
+                          currentGenerationId={currentGenerationId}
+                          onSelectVersion={handleSelectVersion}
+                          onRetry={handleRetry}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* GENERATION MODE: Info on LEFT (40%), Simulation on RIGHT (60%) */}
+                <div className="w-[40%] border-r border-white/10 bg-black/20 backdrop-blur-sm flex flex-col overflow-hidden">
               {/* Progress Ring & Current Step */}
               <div className="flex-shrink-0 p-8 border-b border-white/10">
                 <div className="flex items-center gap-6">
@@ -521,15 +625,9 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            {/* RIGHT PANEL - Live Preview & Simulation (60%) */}
+            {/* RIGHT PANEL - Simulation During Generation (60%) */}
             <div className="w-[60%] flex flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-              {currentStep === 'preview' || currentStep === 'complete' ? (
-                /* Full Preview Mode */
-                <div className="w-full h-full animate-fade-in">
-                  <ImprovedSandpackPreview files={files} />
-                </div>
-              ) : (
-                /* Simulation & Real-time Updates During Generation */
+              {/* Simulation & Real-time Updates During Generation */}
                 <div className="flex-1 flex flex-col items-center justify-center p-12 relative overflow-hidden">
                   {/* Animated Background Grid */}
                   <div className="absolute inset-0 opacity-20">
@@ -621,32 +719,9 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                     )}
                   </div>
                 </div>
-              )}
-
-              {/* Floating Success Badge - Only when complete */}
-              {currentStep === 'complete' && (
-                <div className="absolute top-6 right-6 z-50 animate-success-pop">
-                  <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <CheckCircle className="h-6 w-6 text-blue-400" />
-                        <div className="absolute inset-0 bg-blue-400/30 rounded-full animate-ping" />
-                      </div>
-                      <div>
-                        <p className="text-base font-bold text-blue-300">✨ Generated!</p>
-                        <p className="text-xs text-blue-200/80">{files.length} production files</p>
-                      </div>
-                      <button
-                        onClick={() => router.push('/dashboard')}
-                        className="ml-2 px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
-                      >
-                        Back to Dashboard
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
+            </>
+            )}
           </div>
         )}
       </main>
