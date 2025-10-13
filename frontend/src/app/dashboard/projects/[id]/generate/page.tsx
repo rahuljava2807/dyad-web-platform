@@ -51,6 +51,11 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
   const [generations, setGenerations] = useState<Array<{id: string, prompt: string, filesCount: number, timestamp: number, files: GeneratedFile[]}>>([])
   const [currentGenerationId, setCurrentGenerationId] = useState<string>('')
 
+  // Draggable badge state
+  const [badgePosition, setBadgePosition] = useState({ x: 24, y: 24 })
+  const [isDraggingBadge, setIsDraggingBadge] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+
   const steps = [
     { key: 'thinking', icon: Sparkles, label: 'Analyzing Requirements', color: 'text-blue-500' },
     { key: 'generating', icon: Zap, label: 'Generating Components', color: 'text-purple-500' },
@@ -92,6 +97,43 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
       return
     }
   }, [prompt])
+
+  // Handle badge dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingBadge) {
+        setBadgePosition({
+          x: e.clientX - dragOffset.x,
+          y: e.clientY - dragOffset.y
+        })
+      }
+    }
+
+    const handleMouseUp = () => {
+      setIsDraggingBadge(false)
+    }
+
+    if (isDraggingBadge) {
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
+      document.body.style.userSelect = 'none'
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.userSelect = ''
+    }
+  }, [isDraggingBadge, dragOffset])
+
+  const handleBadgeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    })
+    setIsDraggingBadge(true)
+  }
 
   const generateApplication = async () => {
     try {
@@ -369,10 +411,18 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                     <ImprovedSandpackPreview files={files} />
                   </div>
 
-                  {/* Floating Success Badge */}
+                  {/* Floating Success Badge - Draggable */}
                   {currentStep === 'complete' && (
-                    <div className="absolute top-6 left-6 z-50 animate-success-pop">
-                      <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl hover:scale-105 transition-all duration-300">
+                    <div
+                      className="fixed z-50 animate-success-pop"
+                      style={{
+                        left: `${badgePosition.x}px`,
+                        top: `${badgePosition.y}px`,
+                        cursor: isDraggingBadge ? 'grabbing' : 'grab'
+                      }}
+                      onMouseDown={handleBadgeMouseDown}
+                    >
+                      <div className="bg-gradient-to-br from-blue-900 to-indigo-900 border-2 border-blue-400/50 backdrop-blur-xl rounded-xl px-5 py-4 shadow-2xl hover:shadow-3xl transition-all duration-300">
                         <div className="flex items-center gap-3">
                           <div className="relative">
                             <CheckCircle className="h-6 w-6 text-blue-400" />
@@ -383,7 +433,11 @@ export default function GeneratePage({ params }: { params: { id: string } }) {
                             <p className="text-xs text-blue-200/80">{files.length} production files</p>
                           </div>
                           <button
-                            onClick={() => router.push('/dashboard')}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              router.push('/dashboard')
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
                             className="ml-2 px-4 py-2 bg-blue-500 text-white font-semibold text-sm rounded-lg hover:bg-blue-400 hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
                           >
                             Back to Dashboard
