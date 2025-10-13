@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowLeft, Sparkles, Rocket, Zap } from 'lucide-react'
 
 const templates = [
@@ -114,14 +115,32 @@ export default function NewProjectPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
       <header className="border-b border-white/10 bg-black/20 backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors group"
-          >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Dashboard
-          </Link>
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors group"
+            >
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              Back to Dashboard
+            </Link>
+
+            {/* Yavi Logo */}
+            <Link href="/dashboard" className="flex items-center gap-2 group">
+              <div className="relative w-8 h-8 transition-transform group-hover:scale-105">
+                <Image
+                  src="/images/logos/yavi-logo.svg"
+                  alt="Yavi Studio"
+                  fill
+                  className="object-contain brightness-0 invert"
+                  priority
+                />
+              </div>
+              <span className="text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
+                Yavi Studio
+              </span>
+            </Link>
+          </div>
         </div>
       </header>
 

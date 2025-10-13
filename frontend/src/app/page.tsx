@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -31,12 +32,20 @@ export default function HomePage() {
       <header className="bg-white/80 backdrop-blur-md border-b border-blue-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Code2 className="h-5 w-5 text-white" />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="relative w-10 h-10 transition-transform group-hover:scale-105">
+                <Image
+                  src="/images/logos/yavi-logo.svg"
+                  alt="Yavi Studio"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
-              <span className="text-xl font-bold text-gray-900">Yavi Studio</span>
-            </div>
+              <span className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                Yavi Studio
+              </span>
+            </Link>
             <div className="flex items-center gap-4">
               <Button variant="outline" asChild>
                 <Link href="#documentation">
@@ -376,9 +385,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Code2 className="h-5 w-5 text-white" />
+              <div className="flex items-center gap-3 mb-4">
+                <div className="relative w-10 h-10">
+                  <Image
+                    src="/images/logos/yavi-logo.svg"
+                    alt="Yavi Studio"
+                    fill
+                    className="object-contain brightness-0 invert"
+                  />
                 </div>
                 <span className="text-xl font-bold">Yavi Studio</span>
               </div>
