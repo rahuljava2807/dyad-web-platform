@@ -267,6 +267,7 @@ function assistantReducer(state: AssistantState, action: AssistantAction): Assis
         ui: {
           ...state.ui,
           isMinimized,
+          isOpen: !isMinimized, // Ensure isOpen is true when unminimizing
           isExpanded: isMinimized ? false : state.ui.isExpanded,
           // Reset notification count when opening
           notificationCount: isMinimized ? state.ui.notificationCount : 0,
