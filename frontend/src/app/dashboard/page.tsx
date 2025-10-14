@@ -59,7 +59,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <AssistantProvider projectId="dashboard">
+    <>
       <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
@@ -247,9 +247,14 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* Yavi Assistant Widget - Only render on client to avoid hydration errors */}
-      {mounted && <YaviAssistant />}
     </div>
-    </AssistantProvider>
+
+      {/* Yavi Assistant Widget - Only render on client to avoid hydration errors */}
+      {mounted && (
+        <AssistantProvider projectId="dashboard">
+          <YaviAssistant />
+        </AssistantProvider>
+      )}
+    </>
   )
 }
